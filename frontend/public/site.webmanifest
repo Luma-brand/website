@@ -1,0 +1,16 @@
+{
+  "name": "LUMA",
+  "short_name": "LUMA",
+  "description": "Professional beauty essentials for brows, lashes, and edges.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF6D6",
+  "theme_color": "#FFF6D6",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "64x64",
+      "type": "image/svg+xml"
+    }
+  ]
+}
