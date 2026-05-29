@@ -1,6 +1,6 @@
 import { Heart, Menu, ShoppingBag, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { navLinks } from "../../data/siteContent";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
@@ -9,6 +9,10 @@ import { useWishlist } from "../../context/WishlistContext";
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const { cartCount } = useCart();
   const { isAuthenticated } = useAuth();
   const { wishlistCount } = useWishlist();
@@ -32,17 +36,68 @@ export function Header() {
     };
   }, [isOpen]);
 
+  function handleSectionNavigation(event, href) {
+    if (!href.startsWith("/#")) return;
+
+    event.preventDefault();
+
+    const sectionId = href.replace("/#", "");
+
+    setIsOpen(false);
+
+    if (location.pathname !== "/") {
+      navigate(`/#${sectionId}`);
+
+      window.setTimeout(() => {
+        const section = document.getElementById(sectionId);
+     if (section) {
+  const headerOffset = 105;
+  const sectionTop = section.getBoundingClientRect().top + window.scrollY;
+  const scrollToPosition = sectionTop - headerOffset;
+
+  window.scrollTo({
+    top: scrollToPosition,
+    behavior: "smooth",
+  });
+}
+      }, 120);
+
+      return;
+    }
+
+    const section = document.getElementById(sectionId);
+    if (section) {
+  const headerOffset = 105;
+  const sectionTop = section.getBoundingClientRect().top + window.scrollY;
+  const scrollToPosition = sectionTop - headerOffset;
+
+  window.scrollTo({
+    top: scrollToPosition,
+    behavior: "smooth",
+  });
+}
+    window.history.pushState(null, "", `/#${sectionId}`);
+  }
+
   return (
     <header className={`site-header ${hasScrolled ? "is-scrolled" : ""}`}>
       <Link to="/" className="brand-logo-image-link" aria-label="LUMA homepage">
-        <img src="/assets/logos/luma-logo.svg" alt="LUMA" className="brand-logo-image" />
+        <img
+          src="/assets/logos/luma-logo.svg"
+          alt="LUMA"
+          className="brand-logo-image"
+        />
       </Link>
 
       <nav className="desktop-nav" aria-label="Main navigation">
         {navLinks.map((link) => (
-          <Link key={link.label} to={link.href}>
+          <a
+            key={link.label}
+            href={link.href}
+            onClick={(event) => handleSectionNavigation(event, link.href)}
+          >
             {link.label}
-          </Link>
+          </a>
         ))}
       </nav>
 
@@ -63,7 +118,7 @@ export function Header() {
         </Link>
 
         <Link to="/products" className="header-cta">
-          Shop
+          Shop the system
         </Link>
       </div>
 
@@ -80,9 +135,13 @@ export function Header() {
       {isOpen && (
         <div className="mobile-nav">
           {navLinks.map((link) => (
-            <Link key={link.label} to={link.href} onClick={() => setIsOpen(false)}>
+            <a
+              key={link.label}
+              href={link.href}
+              onClick={(event) => handleSectionNavigation(event, link.href)}
+            >
               {link.label}
-            </Link>
+            </a>
           ))}
 
           <Link to="/wishlist" onClick={() => setIsOpen(false)}>

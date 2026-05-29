@@ -5,7 +5,11 @@ export function Footer() {
     <footer className="site-footer">
       <div>
         <Link to="/" className="footer-logo-image-link">
-          <img src="/assets/logos/luma-logo.svg" alt="LUMA" className="footer-logo-image" />
+          <img
+            src="/assets/logos/luma-logo.svg"
+            alt="LUMA"
+            className="footer-logo-image"
+          />
         </Link>
 
         <p>
@@ -15,7 +19,7 @@ export function Footer() {
       </div>
 
       <div className="footer-links">
-        <Link to="/products">Products</Link>
+        <a href="/#products">Products</a>
         <Link to="/wishlist">Wishlist</Link>
         <Link to="/cart">Cart</Link>
         <Link to="/account">Account</Link>

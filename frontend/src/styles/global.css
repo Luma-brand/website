@@ -775,11 +775,29 @@ img {
     min-height: auto;
     padding: 116px 0 58px;
   }
+.hero-section {
+  gap: 34px;
+}
 
+.hero-copy {
+  max-width: 100%;
+  font-size: 0.96rem;
+  line-height: 1.65;
+}
+
+.eyebrow {
+  font-size: 0.98rem;
+  margin-bottom: 14px;
+}
+
+.hero-image-card {
+  min-height: 360px;
+}
   .hero-content h1 {
-    font-size: clamp(3.2rem, 18vw, 5.2rem);
-  }
-
+  font-size: clamp(2.75rem, 14vw, 4rem);
+  line-height: 0.96;
+  letter-spacing: -0.065em;
+}
   .hero-copy {
     font-size: 1rem;
   }
@@ -2782,4 +2800,113 @@ img {
   .skeleton-card {
     height: 120px;
   }
+}
+
+.product-image-fallback {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+.product-image {
+  background: var(--color-cream);
+}
+
+.product-image img {
+  position: relative;
+  z-index: 2;
+}
+
+.brand-logo-image-link,
+.footer-logo-image-link {
+  display: inline-flex;
+  align-items: center;
+  min-width: 92px;
+}
+
+.brand-logo-image {
+  width: 92px;
+  height: auto;
+  display: block;
+}
+
+.footer-logo-image {
+  width: 108px;
+  height: auto;
+  display: block;
+}
+
+.preloader-logo-image {
+  width: min(220px, 56vw);
+  height: auto;
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .brand-logo-image {
+    width: 82px;
+  }
+
+  .footer-logo-image {
+    width: 96px;
+  }
+}
+
+.brand-logo-image-link {
+  width: 88px;
+  height: 36px;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.brand-logo-image {
+  width: 118px;
+  max-width: none;
+  height: auto;
+  display: block;
+  transform: translateX(-14px) scale(1.18);
+  transform-origin: left center;
+}
+
+.footer-logo-image-link {
+  width: 108px;
+  height: 44px;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.footer-logo-image {
+  width: 138px;
+  max-width: none;
+  height: auto;
+  display: block;
+  transform: translateX(-15px) scale(1.15);
+  transform-origin: left center;
+}
+.site-header {
+  min-height: 58px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.header-icon-link,
+.mobile-menu-btn {
+  width: 38px;
+  height: 38px;
+}
+
+.header-cta {
+  min-height: 38px;
+}
+
+#products,
+#results,
+#ritual,
+#contact,
+#faq {
+  scroll-margin-top: 120px;
 }
