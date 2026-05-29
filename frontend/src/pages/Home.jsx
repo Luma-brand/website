@@ -81,7 +81,7 @@ function handleAddToCart(product) {
         >
           <div className="hero-image-card">
             <img
-              src="/assets/images/hero-closeup.png"
+              src="/assets/images/hero-closeup.jpg"
               alt="Close-up beauty image showing brows and lashes"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
@@ -205,7 +205,7 @@ function handleAddToCart(product) {
       <section id="results" className="benefits-section section-padding">
         <div className="benefits-image-panel">
           <img
-            src="/assets/images/brand-in-action.png"
+            src="/assets/images/brand-in-action.jpg"
             alt="LUMA beauty product in use"
             onError={(event) => {
               event.currentTarget.style.display = "none";

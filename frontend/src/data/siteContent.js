@@ -23,7 +23,7 @@ export const products = [
     bestFor: ["Brows", "Shape control", "Lifted finish"],
     howToUse:
       "Apply lightly to clean brows, guide hairs into shape, allow the product to set, and finish with your preferred LUMA detail tool.",
-    image: "/assets/images/product-lamifix.png",
+    image: "/assets/images/product-lamifix.jpg",
   },
   {
     id: "hybrid-stain",
@@ -42,7 +42,7 @@ export const products = [
     bestFor: ["Brows", "Edges", "Soft definition"],
     howToUse:
       "Start with clean skin, apply carefully in light layers, let it settle, then refine the edges for a controlled finish.",
-    image: "/assets/images/product-hybrid-stain.png",
+    image: "/assets/images/product-hybrid-stain.jpg",
   },
   {
     id: "precision-wand",
@@ -61,7 +61,7 @@ export const products = [
     bestFor: ["Brows", "Lashes", "Edges"],
     howToUse:
       "Use the wand to guide, lift, separate, or smooth small details. Keep strokes light and controlled for the cleanest finish.",
-    image: "/assets/images/product-wand.png",
+    image: "/assets/images/product-wand.jpg",
   },
 ];
 
