@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+*.pdf
+.env
+node_modules
+dist
+uploads
