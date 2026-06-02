@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ScrollToTop } from "../components/layout/ScrollToTop";
 import { Home } from "../pages/Home";
 import { Products } from "../pages/Products";
@@ -12,6 +12,16 @@ import { Settings } from "../pages/Settings";
 import { NotFound } from "../pages/NotFound";
 import { RouteSkeleton } from "../components/layout/RouteSkeleton";
 
+import { AdminLayout } from "../admin/components/AdminLayout";
+import { AdminLogin } from "../admin/pages/AdminLogin";
+import { AdminDashboard } from "../admin/pages/AdminDashboard";
+import { AdminWaitlist } from "../admin/pages/AdminWaitlist";
+import { AdminEnquiries } from "../admin/pages/AdminEnquiries";
+import { AdminProducts } from "../admin/pages/AdminProducts";
+import { AdminOrders } from "../admin/pages/AdminOrders";
+import { AdminContent } from "../admin/pages/AdminContent";
+import { AdminSettings } from "../admin/pages/AdminSettings";
+
 export function AppRoutes() {
   return (
     <BrowserRouter>
@@ -19,6 +29,7 @@ export function AppRoutes() {
       <RouteSkeleton />
 
       <Routes>
+        {/* Public website routes */}
         <Route path="/" element={<Home />} />
         <Route path="/products" element={<Products />} />
         <Route path="/products/:slug" element={<ProductDetails />} />
@@ -28,6 +39,21 @@ export function AppRoutes() {
         <Route path="/order-success/:orderId" element={<OrderSuccess />} />
         <Route path="/account" element={<Account />} />
         <Route path="/settings" element={<Settings />} />
+
+        {/* Admin routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="waitlist" element={<AdminWaitlist />} />
+          <Route path="enquiries" element={<AdminEnquiries />} />
+          <Route path="products" element={<AdminProducts />} />
+          <Route path="orders" element={<AdminOrders />} />
+          <Route path="content" element={<AdminContent />} />
+          <Route path="settings" element={<AdminSettings />} />
+        </Route>
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>

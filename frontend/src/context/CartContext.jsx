@@ -3,7 +3,6 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 const CartContext = createContext(null);
 
 const CART_STORAGE_KEY = "luma_cart";
-const ORDERS_STORAGE_KEY = "luma_orders";
 
 function getStoredCart() {
   try {
@@ -14,34 +13,20 @@ function getStoredCart() {
   }
 }
 
-function getStoredOrders() {
-  try {
-    const storedOrders = localStorage.getItem(ORDERS_STORAGE_KEY);
-    return storedOrders ? JSON.parse(storedOrders) : [];
-  } catch {
-    return [];
-  }
-}
-
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState(getStoredCart);
-  const [orders, setOrders] = useState(getStoredOrders);
 
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
   }, [cartItems]);
 
-  useEffect(() => {
-    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
-  }, [orders]);
-
   function addToCart(product) {
     setCartItems((currentItems) => {
-      const existingItem = currentItems.find((item) => item.name === product.name);
+      const existingItem = currentItems.find((item) => item.id === product.id);
 
       if (existingItem) {
         return currentItems.map((item) =>
-          item.name === product.name
+          item.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
@@ -51,38 +36,36 @@ export function CartProvider({ children }) {
         ...currentItems,
         {
           id: product.id,
-          slug: product.slug,
+          slug: product.slug || product.id,
           name: product.name,
-          category: product.category,
-          price: product.numericPrice || 0,
-          image: product.image,
+          size: product.size || "",
+          price: Number(product.priceValue ?? product.price ?? 0),
+          image: product.image || product.image_url || "",
           quantity: 1,
         },
       ];
     });
   }
 
-  function removeFromCart(productName) {
+  function removeFromCart(productId) {
     setCartItems((currentItems) =>
-      currentItems.filter((item) => item.name !== productName)
+      currentItems.filter((item) => item.id !== productId)
     );
   }
 
-  function increaseQuantity(productName) {
+  function increaseQuantity(productId) {
     setCartItems((currentItems) =>
       currentItems.map((item) =>
-        item.name === productName
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
+        item.id === productId ? { ...item, quantity: item.quantity + 1 } : item
       )
     );
   }
 
-  function decreaseQuantity(productName) {
+  function decreaseQuantity(productId) {
     setCartItems((currentItems) =>
       currentItems
         .map((item) =>
-          item.name === productName
+          item.id === productId
             ? { ...item, quantity: Math.max(item.quantity - 1, 0) }
             : item
         )
@@ -94,31 +77,10 @@ export function CartProvider({ children }) {
     setCartItems([]);
   }
 
-  function createOrder({ customer, paymentMethod, subtotal, delivery, total }) {
-    const newOrder = {
-      id: `LUMA-${Date.now()}`,
-      customer,
-      paymentMethod,
-      items: cartItems,
-      subtotal,
-      delivery,
-      total,
-      status: "Received",
-      createdAt: new Date().toISOString(),
-    };
-
-    setOrders((currentOrders) => [newOrder, ...currentOrders]);
-    return newOrder;
-  }
-
-  function clearOrders() {
-    setOrders([]);
-  }
-
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   const subtotal = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
+    (total, item) => total + Number(item.price || 0) * item.quantity,
     0
   );
 
@@ -127,16 +89,13 @@ export function CartProvider({ children }) {
       cartItems,
       cartCount,
       subtotal,
-      orders,
       addToCart,
       removeFromCart,
       increaseQuantity,
       decreaseQuantity,
       clearCart,
-      createOrder,
-      clearOrders,
     }),
-    [cartItems, cartCount, subtotal, orders]
+    [cartItems, cartCount, subtotal]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

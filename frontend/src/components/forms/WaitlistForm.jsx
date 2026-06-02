@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ArrowUpRight, CheckCircle2 } from "lucide-react";
+import { subscribeNewsletter } from "../../services/api";
 
 const initialForm = {
   name: "",
@@ -11,6 +12,8 @@ export function WaitlistForm() {
   const [formData, setFormData] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serverError, setServerError] = useState("");
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -24,6 +27,8 @@ export function WaitlistForm() {
       ...current,
       [name]: "",
     }));
+
+    setServerError("");
   }
 
   function validateForm() {
@@ -42,7 +47,7 @@ export function WaitlistForm() {
     return newErrors;
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
     const validationErrors = validateForm();
@@ -52,10 +57,25 @@ export function WaitlistForm() {
       return;
     }
 
-    console.log("LUMA waitlist submission:", formData);
+    try {
+      setIsSubmitting(true);
+      setServerError("");
 
-    setIsSubmitted(true);
-    setFormData(initialForm);
+      await subscribeNewsletter({
+  name: formData.name,
+  email: formData.email,
+  interest: formData.interest,
+});
+
+      console.log("LUMA waitlist submission:", formData);
+
+      setIsSubmitted(true);
+      setFormData(initialForm);
+    } catch (error) {
+      setServerError(error.message || "Failed to join waitlist. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   if (isSubmitted) {
@@ -64,7 +84,10 @@ export function WaitlistForm() {
         <CheckCircle2 size={26} />
         <div>
           <h3>You’re on the LUMA list.</h3>
-          <p>We’ll keep you updated about product drops, launch news, and beauty rituals.</p>
+          <p>
+            We’ll keep you updated about product drops, launch news, and beauty
+            rituals.
+          </p>
         </div>
       </div>
     );
@@ -81,6 +104,7 @@ export function WaitlistForm() {
           placeholder="Your name"
           value={formData.name}
           onChange={handleChange}
+          disabled={isSubmitting}
         />
         {errors.name && <small>{errors.name}</small>}
       </div>
@@ -94,6 +118,7 @@ export function WaitlistForm() {
           placeholder="you@example.com"
           value={formData.email}
           onChange={handleChange}
+          disabled={isSubmitting}
         />
         {errors.email && <small>{errors.email}</small>}
       </div>
@@ -105,6 +130,7 @@ export function WaitlistForm() {
           name="interest"
           value={formData.interest}
           onChange={handleChange}
+          disabled={isSubmitting}
         >
           <option>Product launch</option>
           <option>Retail / stockist enquiry</option>
@@ -113,8 +139,10 @@ export function WaitlistForm() {
         </select>
       </div>
 
-      <button type="submit" className="waitlist-button">
-        Join waitlist
+      {serverError && <p className="form-error">{serverError}</p>}
+
+      <button type="submit" className="waitlist-button" disabled={isSubmitting}>
+        {isSubmitting ? "Joining..." : "Join waitlist"}
         <ArrowUpRight size={17} />
       </button>
     </form>

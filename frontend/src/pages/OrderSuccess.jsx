@@ -1,33 +1,72 @@
-import { Link, useParams } from "react-router-dom";
-import { ArrowRight, CheckCircle2, PackageCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import { CheckCircle2 } from "lucide-react";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
-import { useCart } from "../context/CartContext";
-import { formatCurrency, formatOrderDate, getOrderById } from "../utils/orderUtils";
+import { formatNaira } from "../utils/currency";
+import { getPublicOrderById, verifyPaystackPayment } from "../services/api";
 
 export function OrderSuccess() {
   const { orderId } = useParams();
-  const { orders } = useCart();
+  const [searchParams] = useSearchParams();
 
-  const order = getOrderById(orders, orderId);
+  const reference = searchParams.get("reference");
 
-  if (!order) {
+  const [order, setOrder] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadOrder() {
+      try {
+        setIsLoading(true);
+        setError("");
+
+        if (reference) {
+          await verifyPaystackPayment(reference);
+        }
+
+        const response = await getPublicOrderById(orderId);
+        setOrder(response.data);
+      } catch (error) {
+        setError(error.message || "Failed to load order.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadOrder();
+  }, [orderId, reference]);
+
+  if (isLoading) {
     return (
       <main className="page-shell inner-page">
         <Header />
 
         <section className="commerce-page">
           <div className="empty-state">
-            <PackageCheck size={30} />
-            <h2>Receipt not found.</h2>
-            <p>
-              This order receipt could not be found in this browser. It may have
-              been cleared from local storage.
-            </p>
+            <h2>Loading order...</h2>
+            <p>Please wait while we confirm your LUMA order.</p>
+          </div>
+        </section>
+
+        <Footer />
+      </main>
+    );
+  }
+
+  if (error || !order) {
+    return (
+      <main className="page-shell inner-page">
+        <Header />
+
+        <section className="commerce-page">
+          <div className="empty-state">
+            <h2>Order not found.</h2>
+            <p>{error || "We could not find this order."}</p>
 
             <Link to="/products" className="btn btn-primary">
               Continue shopping
-              <ArrowRight size={18} />
             </Link>
           </div>
         </section>
@@ -41,123 +80,77 @@ export function OrderSuccess() {
     <main className="page-shell inner-page">
       <Header />
 
-      <section className="receipt-page">
-        <div className="receipt-hero">
+      <section className="commerce-page">
+        <div className="success-panel">
           <CheckCircle2 size={38} />
 
           <p className="eyebrow">Order received</p>
-          <h1>Your LUMA order is prepared.</h1>
+          <h1>Your LUMA order is confirmed.</h1>
+
           <p>
-            This is your frontend receipt. When backend/payment is connected,
-            this page will be powered by real order records and email
-            confirmations.
+            Thank you, {order.customer_name}. Your order has been saved and is
+            now awaiting processing.
           </p>
-        </div>
 
-        <div className="receipt-layout">
-          <div className="receipt-card">
-            <div className="receipt-card-header">
-              <div>
-                <span>Order number</span>
-                <h2>{order.id}</h2>
-              </div>
+          <div className="order-summary" style={{ marginTop: 24 }}>
+            <h2>Order summary</h2>
 
-              <strong>{order.status}</strong>
+            <div className="summary-row">
+              <span>Order ID</span>
+              <strong>{order.id?.slice(0, 8).toUpperCase()}</strong>
             </div>
 
-            <div className="receipt-meta-grid">
-              <div>
-                <span>Date</span>
-                <strong>{formatOrderDate(order.createdAt)}</strong>
-              </div>
-
-              <div>
-                <span>Payment</span>
-                <strong>{order.paymentMethod}</strong>
-              </div>
-
-              <div>
-                <span>Total</span>
-                <strong>{formatCurrency(order.total)}</strong>
-              </div>
+            <div className="summary-row">
+              <span>Email</span>
+              <strong>{order.customer_email}</strong>
             </div>
 
-            <div className="receipt-section">
-              <h3>Items</h3>
-
-              <div className="receipt-items">
-                {order.items.map((item) => (
-                  <div className="receipt-item" key={`${order.id}-${item.name}`}>
-                    <img src={item.image} alt={item.name} />
-
-                    <div>
-                      <h4>{item.name}</h4>
-                      <p>
-                        {item.category} · Qty {item.quantity}
-                      </p>
-                    </div>
-
-                    <strong>{formatCurrency(item.price * item.quantity)}</strong>
-                  </div>
-                ))}
-              </div>
+            <div className="summary-row">
+              <span>Status</span>
+              <strong>{order.status || "pending"}</strong>
             </div>
-          </div>
 
-          <aside className="receipt-summary">
-            <h2>Customer details</h2>
-
-            <div className="receipt-details-list">
-              <div>
-                <span>Name</span>
-                <strong>{order.customer.fullName}</strong>
-              </div>
-
-              <div>
-                <span>Email</span>
-                <strong>{order.customer.email}</strong>
-              </div>
-
-              <div>
-                <span>Phone</span>
-                <strong>{order.customer.phone}</strong>
-              </div>
-
-              <div>
-                <span>Delivery</span>
-                <strong>
-                  {order.customer.address}, {order.customer.city},{" "}
-                  {order.customer.country}
-                </strong>
-              </div>
+            <div className="summary-row">
+              <span>Payment</span>
+              <strong>{order.payment_status || "unpaid"}</strong>
             </div>
+
+            {reference && (
+              <div className="summary-row">
+                <span>Reference</span>
+                <strong>{reference}</strong>
+              </div>
+            )}
 
             <div className="summary-line" />
 
-            <div className="summary-row">
-              <span>Subtotal</span>
-              <strong>{formatCurrency(order.subtotal)}</strong>
-            </div>
+            {(order.items || []).map((item) => (
+              <div className="mini-cart-item" key={item.product_name}>
+                <span>
+                  {item.product_name} × {item.quantity}
+                </span>
 
-            <div className="summary-row">
-              <span>Delivery</span>
-              <strong>{formatCurrency(order.delivery)}</strong>
-            </div>
+                <strong>
+                  {formatNaira(Number(item.price) * Number(item.quantity))}
+                </strong>
+              </div>
+            ))}
+
+            <div className="summary-line" />
 
             <div className="summary-row total">
               <span>Total</span>
-              <strong>{formatCurrency(order.total)}</strong>
+              <strong>{formatNaira(order.total_amount)}</strong>
             </div>
+          </div>
 
-            <Link to="/account" className="btn btn-primary summary-button">
-              View account
-              <ArrowRight size={18} />
-            </Link>
-
-            <Link to="/products" className="receipt-secondary-link">
-              Continue shopping
-            </Link>
-          </aside>
+          <Link
+            to="/products"
+            className="btn btn-primary"
+            style={{ marginTop: 24 }}
+          >
+            Continue shopping
+          </Link>
         </div>
       </section>
 

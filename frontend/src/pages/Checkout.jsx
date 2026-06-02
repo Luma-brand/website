@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, LockKeyhole } from "lucide-react";
+import { Link, Navigate } from "react-router-dom";
+import { ArrowLeft, LockKeyhole } from "lucide-react";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { initializePaystackPayment } from "../services/api";
+import { formatNaira } from "../utils/currency";
 
 const initialCheckout = {
   fullName: "",
@@ -13,13 +15,11 @@ const initialCheckout = {
   address: "",
   city: "",
   country: "",
-  paymentMethod: "Card payment",
 };
 
 export function Checkout() {
-    const navigate = useNavigate();
-const { cartItems, subtotal, clearCart, createOrder } = useCart();
-  const { user } = useAuth();
+  const { cartItems, subtotal, clearCart } = useCart();
+  const { user, isAuthenticated } = useAuth();
 
   const [formData, setFormData] = useState({
     ...initialCheckout,
@@ -28,10 +28,15 @@ const { cartItems, subtotal, clearCart, createOrder } = useCart();
   });
 
   const [errors, setErrors] = useState({});
-  const [isComplete, setIsComplete] = useState(false);
+  const [serverError, setServerError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const delivery = cartItems.length > 0 ? 6 : 0;
   const total = subtotal + delivery;
+
+  if (!isAuthenticated) {
+    return <Navigate to="/account" replace />;
+  }
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -45,6 +50,8 @@ const { cartItems, subtotal, clearCart, createOrder } = useCart();
       ...current,
       [name]: "",
     }));
+
+    setServerError("");
   }
 
   function validate() {
@@ -79,7 +86,7 @@ const { cartItems, subtotal, clearCart, createOrder } = useCart();
     return nextErrors;
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
     const nextErrors = validate();
@@ -89,51 +96,40 @@ const { cartItems, subtotal, clearCart, createOrder } = useCart();
       return;
     }
 
-  const order = createOrder({
-  customer: {
-    fullName: formData.fullName,
-    email: formData.email,
-    phone: formData.phone,
-    address: formData.address,
-    city: formData.city,
-    country: formData.country,
-  },
-  paymentMethod: formData.paymentMethod,
-  subtotal,
-  delivery,
-  total,
-});
+    try {
+      setIsSubmitting(true);
+      setServerError("");
 
-console.log("LUMA checkout order:", order);
+      const orderPayload = {
+        customerName: formData.fullName,
+        customerEmail: formData.email,
+        customerPhone: formData.phone,
+        deliveryAddress: formData.address,
+        city: formData.city,
+        country: formData.country,
+        totalAmount: total,
+        items: cartItems.map((item) => ({
+          productId: item.id,
+          name: item.name,
+          image: item.image,
+          price: Number(item.price),
+          quantity: item.quantity,
+          size: item.size,
+        })),
+      };
 
-clearCart();
-navigate(`/order-success/${order.id}`);
-  }
+      const response = await initializePaystackPayment(orderPayload);
 
-  if (isComplete) {
-    return (
-      <main className="page-shell inner-page">
-        <Header />
+      clearCart();
 
-        <section className="commerce-page">
-          <div className="success-panel">
-            <CheckCircle2 size={34} />
-            <p className="eyebrow">Order received</p>
-            <h1>Your LUMA order is prepared.</h1>
-            <p>
-              This is a frontend confirmation. When backend/payment is connected,
-              this page will save orders and send email confirmations.
-            </p>
-
-            <Link to="/" className="btn btn-primary">
-              Back to homepage
-            </Link>
-          </div>
-        </section>
-
-        <Footer />
-      </main>
-    );
+      window.location.href = response.data.authorizationUrl;
+    } catch (error) {
+      setServerError(
+        error.message || "Failed to initialize Paystack payment. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -149,10 +145,7 @@ navigate(`/order-success/${order.id}`);
 
           <p className="eyebrow">Checkout</p>
           <h1>Complete your routine.</h1>
-          <p>
-            Add delivery details and choose a payment method. Payment connection
-            will be added when backend or payment provider is ready.
-          </p>
+          <p>Add your delivery details and pay securely with Paystack.</p>
         </div>
 
         {cartItems.length === 0 && (
@@ -183,6 +176,7 @@ navigate(`/order-success/${order.id}`);
                     value={formData.fullName}
                     onChange={handleChange}
                     placeholder="Your full name"
+                    disabled={isSubmitting}
                   />
                   {errors.fullName && <small>{errors.fullName}</small>}
                 </div>
@@ -196,6 +190,7 @@ navigate(`/order-success/${order.id}`);
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="you@example.com"
+                    disabled={isSubmitting}
                   />
                   {errors.email && <small>{errors.email}</small>}
                 </div>
@@ -209,6 +204,7 @@ navigate(`/order-success/${order.id}`);
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="+234..."
+                  disabled={isSubmitting}
                 />
                 {errors.phone && <small>{errors.phone}</small>}
               </div>
@@ -221,6 +217,7 @@ navigate(`/order-success/${order.id}`);
                   value={formData.address}
                   onChange={handleChange}
                   placeholder="Street address"
+                  disabled={isSubmitting}
                 />
                 {errors.address && <small>{errors.address}</small>}
               </div>
@@ -234,6 +231,7 @@ navigate(`/order-success/${order.id}`);
                     value={formData.city}
                     onChange={handleChange}
                     placeholder="City"
+                    disabled={isSubmitting}
                   />
                   {errors.city && <small>{errors.city}</small>}
                 </div>
@@ -246,6 +244,7 @@ navigate(`/order-success/${order.id}`);
                     value={formData.country}
                     onChange={handleChange}
                     placeholder="Country"
+                    disabled={isSubmitting}
                   />
                   {errors.country && <small>{errors.country}</small>}
                 </div>
@@ -253,20 +252,23 @@ navigate(`/order-success/${order.id}`);
 
               <div className="form-field">
                 <label htmlFor="paymentMethod">Payment method</label>
-                <select
-                  id="paymentMethod"
-                  name="paymentMethod"
-                  value={formData.paymentMethod}
-                  onChange={handleChange}
-                >
-                  <option>Card payment</option>
-                  <option>Bank transfer</option>
-                  <option>Paystack later</option>
+                <select id="paymentMethod" name="paymentMethod" value="Paystack" disabled>
+                  <option>Paystack</option>
                 </select>
               </div>
 
-              <button type="submit" className="waitlist-button">
-                Place frontend order
+              {serverError && (
+                <div className="empty-state">
+                  <p>{serverError}</p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="waitlist-button"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Redirecting to Paystack..." : "Pay with Paystack"}
               </button>
             </form>
 
@@ -275,11 +277,14 @@ navigate(`/order-success/${order.id}`);
 
               <div className="mini-cart-list">
                 {cartItems.map((item) => (
-                  <div className="mini-cart-item" key={item.name}>
+                  <div className="mini-cart-item" key={item.id}>
                     <span>
                       {item.name} × {item.quantity}
                     </span>
-                    <strong>${(item.price * item.quantity).toFixed(2)}</strong>
+
+                    <strong>
+                      {formatNaira(Number(item.price) * item.quantity)}
+                    </strong>
                   </div>
                 ))}
               </div>
@@ -288,17 +293,17 @@ navigate(`/order-success/${order.id}`);
 
               <div className="summary-row">
                 <span>Subtotal</span>
-                <strong>${subtotal.toFixed(2)}</strong>
+                <strong>{formatNaira(subtotal)}</strong>
               </div>
 
               <div className="summary-row">
                 <span>Delivery</span>
-                <strong>${delivery.toFixed(2)}</strong>
+                <strong>{formatNaira(delivery)}</strong>
               </div>
 
               <div className="summary-row total">
                 <span>Total</span>
-                <strong>${total.toFixed(2)}</strong>
+                <strong>{formatNaira(total)}</strong>
               </div>
             </aside>
           </div>

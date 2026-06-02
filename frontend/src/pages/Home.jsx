@@ -6,8 +6,6 @@ import { NewsletterSection } from "../components/sections/NewsletterSection";
 import { TrustStrip } from "../components/sections/TrustStrip";
 import { ContactSection } from "../components/sections/ContactSection";
 import { benefits, faqs, products, ritualSteps } from "../data/siteContent";
-import { useCart } from "../context/CartContext";
-import { useToast } from "../context/ToastContext";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 26 },
@@ -28,15 +26,8 @@ const stagger = {
 };
 
 export function Home() {
-      const { addToCart } = useCart();
-      const { showToast } = useToast();
-
-function handleAddToCart(product) {
-  addToCart(product);
-  showToast(`${product.name} added to cart.`);
-}
   return (
-   <main id="main-content" className="page-shell">
+    <main id="main-content" className="page-shell">
       <Header />
 
       <section className="hero-section">
@@ -67,6 +58,7 @@ function handleAddToCart(product) {
               Explore products
               <ArrowUpRight size={18} />
             </a>
+
             <a href="#ritual" className="btn btn-secondary">
               See the ritual
             </a>
@@ -87,6 +79,7 @@ function handleAddToCart(product) {
                 event.currentTarget.style.display = "none";
               }}
             />
+
             <div className="image-fallback">
               <span>LUMA.</span>
             </div>
@@ -104,7 +97,9 @@ function handleAddToCart(product) {
           </div>
         </motion.div>
       </section>
-<TrustStrip />
+
+      <TrustStrip />
+
       <section className="intro-section section-padding">
         <motion.div
           className="intro-grid"
@@ -124,13 +119,16 @@ function handleAddToCart(product) {
               brows, lashes, and edges. The system feels precise, clean, and
               elevated while staying simple enough for everyday use.
             </p>
+
             <div className="intro-points">
               <span>
                 <Check size={16} /> At-home friendly
               </span>
+
               <span>
                 <Check size={16} /> Soft luxury finish
               </span>
+
               <span>
                 <Check size={16} /> Consistent daily results
               </span>
@@ -143,10 +141,14 @@ function handleAddToCart(product) {
         <div className="section-heading">
           <p className="eyebrow">The system</p>
           <h2>Essentials for controlled, polished beauty.</h2>
+          <p>
+            A curated preview of the LUMA product system. Visit the shop to
+            explore prices, stock, and checkout.
+          </p>
         </div>
 
         <div className="product-grid">
-          {products.map((product, index) => (
+          {products.slice(0, 3).map((product, index) => (
             <motion.article
               className="product-card"
               key={product.name}
@@ -163,42 +165,40 @@ function handleAddToCart(product) {
                     event.currentTarget.style.display = "none";
                   }}
                 />
+
                 <div className="product-image-fallback">
                   <span>{product.name}</span>
                 </div>
               </div>
 
-            <div className="product-card-content">
-  <div className="product-meta">
-    <p>{product.category}</p>
-    <strong>{product.price}</strong>
-  </div>
+              <div className="product-card-content">
+                <div className="product-meta">
+                  <p>{product.category}</p>
+                </div>
 
-  <h3>{product.name}</h3>
-  <span>{product.description}</span>
+                <h3>{product.name}</h3>
+                <span>{product.description}</span>
 
-  <div className="product-details">
-    {product.details.map((detail) => (
-      <small key={detail}>{detail}</small>
-    ))}
-  </div>
+                <div className="product-details">
+                  {product.details.map((detail) => (
+                    <small key={detail}>{detail}</small>
+                  ))}
+                </div>
 
-  <button
-  type="button"
-  className="product-button"
-  onClick={() => handleAddToCart(product)}
->
-  {product.tag}
-  <ArrowUpRight size={16} />
-</button>
-
-<a href={`/products/${product.slug}`} className="product-home-link">
-  View product details
-</a>
-
-</div>
+                <a href={`/products/${product.slug}`} className="product-home-link">
+                  Product info
+                  <ArrowUpRight size={16} />
+                </a>
+              </div>
             </motion.article>
           ))}
+        </div>
+
+        <div className="hero-actions" style={{ justifyContent: "center", marginTop: 32 }}>
+          <a href="/products" className="btn btn-primary">
+            Shop the system
+            <ArrowUpRight size={18} />
+          </a>
         </div>
       </section>
 
@@ -211,6 +211,7 @@ function handleAddToCart(product) {
               event.currentTarget.style.display = "none";
             }}
           />
+
           <div className="benefits-fallback">
             <span>Your brows but better.</span>
           </div>
@@ -231,6 +232,7 @@ function handleAddToCart(product) {
                 transition={{ duration: 0.65 }}
               >
                 <span>{item.eyebrow}</span>
+
                 <div>
                   <h3>{item.title}</h3>
                   <p>{item.text}</p>
@@ -274,15 +276,19 @@ function handleAddToCart(product) {
           transition={{ duration: 0.8 }}
         >
           <Sparkles size={24} />
-          <h2>Making professional-level results accessible, effortless, and part of daily life.</h2>
+          <h2>
+            Making professional-level results accessible, effortless, and part
+            of daily life.
+          </h2>
           <p>LUMA.</p>
         </motion.div>
       </section>
-<ContactSection />
 
-<NewsletterSection />
+      <ContactSection />
 
-<section id="faq" className="faq-section section-padding">
+      <NewsletterSection />
+
+      <section id="faq" className="faq-section section-padding">
         <div className="section-heading">
           <p className="eyebrow">Questions</p>
           <h2>Everything kept simple.</h2>

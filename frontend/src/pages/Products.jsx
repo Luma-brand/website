@@ -1,51 +1,91 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Heart, Search } from "lucide-react";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
-import { products } from "../data/siteContent";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { useToast } from "../context/ToastContext";
+import { getProducts } from "../services/api";
+import { formatNaira } from "../utils/currency";
 
-const categories = ["All", ...new Set(products.map((product) => product.category))];
+function formatProduct(product) {
+  return {
+    ...product,
+    slug: product.id,
+    image: product.image_url,
+    priceValue: Number(product.price),
+    price: formatNaira(product.price),
+    description: product.description || "A soft luxury LUMA beauty product.",
+    details: [
+      product.size ? `Size: ${product.size}` : null,
+      `Stock: ${product.stock_quantity ?? 0}`,
+    ].filter(Boolean),
+  };
+}
 
 export function Products() {
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const { showToast } = useToast();
 
+  const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
-const { showToast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
-function handleAddToCart(product) {
-  addToCart(product);
-  showToast(`${product.name} added to cart.`);
-}
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        setIsLoading(true);
+        setError("");
 
-function handleToggleWishlist(product) {
-  const alreadySaved = isInWishlist(product.slug);
-  toggleWishlist(product);
-  showToast(
-    alreadySaved
-      ? `${product.name} removed from wishlist.`
-      : `${product.name} saved to wishlist.`,
-    alreadySaved ? "info" : "success"
-  );
-}
+        const response = await getProducts();
+
+        const activeProducts = (response.data || [])
+          .filter((product) => product.status === "active")
+          .map(formatProduct);
+
+        setProducts(activeProducts);
+      } catch (error) {
+        setError(error.message || "Failed to load products.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadProducts();
+  }, []);
+
+  function handleAddToCart(product) {
+    addToCart(product);
+    showToast(`${product.name} added to cart.`);
+  }
+
+  function handleToggleWishlist(product) {
+    const alreadySaved = isInWishlist(product.slug);
+
+    toggleWishlist(product);
+
+    showToast(
+      alreadySaved
+        ? `${product.name} removed from wishlist.`
+        : `${product.name} saved to wishlist.`,
+      alreadySaved ? "info" : "success"
+    );
+  }
+
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      const matchesSearch =
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const value = searchTerm.toLowerCase();
 
-      const matchesCategory =
-        activeCategory === "All" || product.category === activeCategory;
-
-      return matchesSearch && matchesCategory;
+      return (
+        product.name.toLowerCase().includes(value) ||
+        product.description.toLowerCase().includes(value) ||
+        product.size?.toLowerCase().includes(value)
+      );
     });
-  }, [searchTerm, activeCategory]);
+  }, [products, searchTerm]);
 
   return (
     <main className="page-shell inner-page">
@@ -56,8 +96,8 @@ function handleToggleWishlist(product) {
           <p className="eyebrow">Shop LUMA</p>
           <h1>The full beauty system.</h1>
           <p>
-            Explore clean, functional essentials for brows, lashes, and edges —
-            made to bring professional-level results into everyday life.
+            Explore clean, functional beauty essentials created for refined
+            everyday rituals.
           </p>
         </div>
 
@@ -71,25 +111,24 @@ function handleToggleWishlist(product) {
               onChange={(event) => setSearchTerm(event.target.value)}
             />
           </label>
-
-          <div className="category-filters" aria-label="Product categories">
-            {categories.map((category) => (
-              <button
-                type="button"
-                key={category}
-                className={activeCategory === category ? "active" : ""}
-                onClick={() => setActiveCategory(category)}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
         </div>
 
-        {filteredProducts.length === 0 ? (
+        {error && (
+          <div className="empty-state">
+            <h2>Unable to load products.</h2>
+            <p>{error}</p>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="empty-state">
+            <h2>Loading products...</h2>
+            <p>Please wait while we prepare the LUMA collection.</p>
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className="empty-state">
             <h2>No products found.</h2>
-            <p>Try another search term or category.</p>
+            <p>Add active products from the admin dashboard or try another search.</p>
           </div>
         ) : (
           <div className="shop-grid">
@@ -97,14 +136,26 @@ function handleToggleWishlist(product) {
               const saved = isInWishlist(product.slug);
 
               return (
-                <article className="shop-product-card" key={product.slug}>
-                  <Link to={`/products/${product.slug}`} className="shop-product-image">
-                    <img src={product.image} alt={product.name} />
+                <article className="shop-product-card" key={product.id}>
+                  <Link
+                    to={`/products/${product.id}`}
+                    className="shop-product-image"
+                  >
+                    {product.image ? (
+                     <img
+  src={product.image || product.image_url}
+  alt={product.name}
+/>
+                    ) : (
+                      <div className="empty-state">
+                        <p>No image</p>
+                      </div>
+                    )}
                   </Link>
 
                   <div className="shop-product-content">
                     <div className="product-meta">
-                      <p>{product.category}</p>
+                      <p>{product.size || "LUMA Beauty"}</p>
                       <strong>{product.price}</strong>
                     </div>
 
@@ -122,21 +173,29 @@ function handleToggleWishlist(product) {
                         type="button"
                         className="product-button"
                         onClick={() => handleAddToCart(product)}
+                        disabled={Number(product.stock_quantity) <= 0}
                       >
-                        Add to cart
+                        {Number(product.stock_quantity) <= 0
+                          ? "Out of stock"
+                          : "Add to cart"}
                       </button>
 
                       <button
                         type="button"
                         className={`wishlist-toggle ${saved ? "saved" : ""}`}
                         onClick={() => handleToggleWishlist(product)}
-                        aria-label={saved ? "Remove from wishlist" : "Add to wishlist"}
+                        aria-label={
+                          saved ? "Remove from wishlist" : "Add to wishlist"
+                        }
                       >
                         <Heart size={18} />
                         {saved ? "Saved" : "Save"}
                       </button>
 
-                      <Link to={`/products/${product.slug}`} className="product-learn-link">
+                      <Link
+                        to={`/products/${product.id}`}
+                        className="product-learn-link"
+                      >
                         View details
                         <ArrowRight size={16} />
                       </Link>
