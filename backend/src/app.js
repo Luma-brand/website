@@ -16,14 +16,17 @@ const app = express();
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
+  process.env.FRONTEND_URL_2,
   "http://localhost:5173",
   "http://localhost:3000",
 ].filter(Boolean);
 
+const vercelPreviewRegex = /^https:\/\/.*\.vercel\.app$/;
+
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin, like Postman, server-to-server, health checks
+    origin(origin, callback) {
+      // Allows Postman, curl, server health checks, and direct browser visits
       if (!origin) {
         return callback(null, true);
       }
@@ -31,6 +34,13 @@ app.use(
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
+
+      // Allows Vercel preview deployments while testing
+      if (vercelPreviewRegex.test(origin)) {
+        return callback(null, true);
+      }
+
+      console.log("Blocked by CORS:", origin);
 
       return callback(new Error(`Not allowed by CORS: ${origin}`));
     },
@@ -47,13 +57,14 @@ app.use(
     crossOriginResourcePolicy: {
       policy: "cross-origin",
     },
+    crossOriginEmbedderPolicy: false,
   })
 );
 
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
@@ -69,6 +80,8 @@ app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
     message: "Server is healthy",
+    environment: process.env.NODE_ENV || "development",
+    frontendUrl: process.env.FRONTEND_URL || null,
     allowedOrigins,
   });
 });
@@ -100,7 +113,10 @@ app.use((error, req, res, next) => {
 
   return res.status(500).json({
     success: false,
-    message: "Internal server error",
+    message:
+      process.env.NODE_ENV === "production"
+        ? "Internal server error"
+        : error.message || "Internal server error",
   });
 });
 
