@@ -116,7 +116,6 @@ const initializePaystackPayment = async (req, res) => {
           amount: amountInKobo,
           currency: process.env.PAYSTACK_CURRENCY || "NGN",
           reference,
-          channels: ["card", "bank_transfer"],
           callback_url: `${process.env.PAYSTACK_CALLBACK_URL}/${order.id}`,
           metadata: {
             orderId: order.id,

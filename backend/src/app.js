@@ -17,6 +17,7 @@ const app = express();
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   process.env.FRONTEND_URL_2,
+  "https://luma-beta-eight.vercel.app",
   "http://localhost:5173",
   "http://localhost:3000",
 ].filter(Boolean);
