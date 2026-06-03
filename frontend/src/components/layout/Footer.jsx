@@ -23,8 +23,7 @@ export function Footer() {
         <Link to="/wishlist">Wishlist</Link>
         <Link to="/cart">Cart</Link>
         <Link to="/account">Account</Link>
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-<Route path="/terms-and-conditions" element={<TermsConditions />} />
+        
       </div>
 
       <div className="footer-small">
