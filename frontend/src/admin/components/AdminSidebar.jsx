@@ -13,48 +13,40 @@ import {
 const navItems = [
   {
     label: "Overview",
-    path: "/admin/dashboard",
-    icon: LayoutDashboard,
+    path: "/luma-control-room/dashboard",
   },
   {
     label: "Waitlist",
-    path: "/admin/waitlist",
-    icon: Users,
+    path: "/luma-control-room/waitlist",
   },
   {
     label: "Enquiries",
-    path: "/admin/enquiries",
-    icon: Mail,
+    path: "/luma-control-room/enquiries",
   },
   {
     label: "Products",
-    path: "/admin/products",
-    icon: Package,
+    path: "/luma-control-room/products",
   },
   {
     label: "Orders",
-    path: "/admin/orders",
-    icon: ShoppingBag,
+    path: "/luma-control-room/orders",
   },
   {
-    label: "Website Content",
-    path: "/admin/content",
-    icon: FileText,
+    label: "Website content",
+    path: "/luma-control-room/content",
   },
   {
-    label: "Settings",
-    path: "/admin/settings",
-    icon: Settings,
+    label: "Admin settings",
+    path: "/luma-control-room/settings",
   },
 ];
-
 export function AdminSidebar() {
   const navigate = useNavigate();
 
   function handleLogout() {
     localStorage.removeItem("luma_admin_token");
     localStorage.removeItem("luma_admin_user");
-    navigate("/admin/login");
+    navigate("/luma-control-room/login");
   }
 
   return (

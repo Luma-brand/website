@@ -17,7 +17,7 @@ export function AdminLogin() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (token) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to="/luma-control-room/dashboard" replace />;
   }
 
   function handleChange(event) {
@@ -43,7 +43,7 @@ export function AdminLogin() {
       localStorage.setItem("luma_admin_token", response.token);
       localStorage.setItem("luma_admin_user", JSON.stringify(response.admin));
 
-      navigate("/admin/dashboard");
+     navigate("/luma-control-room/dashboard");
     } catch (error) {
       setError(error.message || "Unable to login. Please try again.");
     } finally {
@@ -63,7 +63,7 @@ export function AdminLogin() {
             <input
               type="email"
               name="email"
-              placeholder="admin@luma.com"
+              placeholder="email@luma.com"
               value={formData.email}
               onChange={handleChange}
               required
