@@ -9,10 +9,12 @@ import { Checkout } from "../pages/Checkout";
 import { OrderSuccess } from "../pages/OrderSuccess";
 import { Account } from "../pages/Account";
 import { Settings } from "../pages/Settings";
-import { NotFound } from "../pages/NotFound";
-import { RouteSkeleton } from "../components/layout/RouteSkeleton";
 import { PrivacyPolicy } from "../pages/PrivacyPolicy";
 import { TermsConditions } from "../pages/TermsConditions";
+import { Forbidden } from "../pages/Forbidden";
+import { NotFound } from "../pages/NotFound";
+import { RouteSkeleton } from "../components/layout/RouteSkeleton";
+
 import { AdminLayout } from "../admin/components/AdminLayout";
 import { AdminLogin } from "../admin/pages/AdminLogin";
 import { AdminDashboard } from "../admin/pages/AdminDashboard";
@@ -41,14 +43,23 @@ export function AppRoutes() {
         <Route path="/account" element={<Account />} />
         <Route path="/settings" element={<Settings />} />
 
+        {/* Legal pages */}
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-<Route path="/terms-and-conditions" element={<TermsConditions />} />
+        <Route path="/terms-and-conditions" element={<TermsConditions />} />
 
-        {/* Admin routes */}
-        <Route path="/admin/login" element={<AdminLogin />} />
+        {/* Public admin route is blocked */}
+        <Route path="/admin" element={<Forbidden />} />
+        <Route path="/admin/*" element={<Forbidden />} />
 
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        {/* Hidden admin login route */}
+        <Route path="/luma-control-room/login" element={<AdminLogin />} />
+
+        {/* Hidden admin dashboard routes */}
+        <Route path="/luma-control-room" element={<AdminLayout />}>
+          <Route
+            index
+            element={<Navigate to="/luma-control-room/dashboard" replace />}
+          />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="waitlist" element={<AdminWaitlist />} />
           <Route path="enquiries" element={<AdminEnquiries />} />
@@ -58,6 +69,7 @@ export function AppRoutes() {
           <Route path="settings" element={<AdminSettings />} />
         </Route>
 
+        {/* 404 */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>

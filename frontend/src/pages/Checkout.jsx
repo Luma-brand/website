@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { ArrowLeft, LockKeyhole } from "lucide-react";
 import { Header } from "../components/layout/Header";
@@ -19,20 +19,46 @@ const initialCheckout = {
 
 export function Checkout() {
   const { cartItems, subtotal, clearCart } = useCart();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isAuthLoading, displayName } = useAuth();
 
-  const [formData, setFormData] = useState({
-    ...initialCheckout,
-    fullName: user?.name || "",
-    email: user?.email || "",
-  });
-
+  const [formData, setFormData] = useState(initialCheckout);
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const delivery = cartItems.length > 0 ? 6 : 0;
   const total = subtotal + delivery;
+
+  useEffect(() => {
+    if (user) {
+      setFormData((current) => ({
+        ...current,
+        fullName:
+          user.user_metadata?.name ||
+          user.user_metadata?.full_name ||
+          displayName ||
+          "",
+        email: user.email || "",
+      }));
+    }
+  }, [user, displayName]);
+
+  if (isAuthLoading) {
+    return (
+      <main className="page-shell inner-page">
+        <Header />
+
+        <section className="commerce-page">
+          <div className="empty-state">
+            <h2>Checking account...</h2>
+            <p>Please wait while we confirm your LUMA session.</p>
+          </div>
+        </section>
+
+        <Footer />
+      </main>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/account" replace />;
@@ -93,6 +119,11 @@ export function Checkout() {
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      setServerError("Your cart is empty. Please add a product before checkout.");
       return;
     }
 
@@ -252,7 +283,12 @@ export function Checkout() {
 
               <div className="form-field">
                 <label htmlFor="paymentMethod">Payment method</label>
-                <select id="paymentMethod" name="paymentMethod" value="Paystack" disabled>
+                <select
+                  id="paymentMethod"
+                  name="paymentMethod"
+                  value="Paystack"
+                  disabled
+                >
                   <option>Paystack</option>
                 </select>
               </div>
