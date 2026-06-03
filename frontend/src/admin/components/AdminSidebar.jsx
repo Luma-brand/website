@@ -14,30 +14,37 @@ const navItems = [
   {
     label: "Overview",
     path: "/luma-control-room/dashboard",
+    icon: LayoutDashboard,
   },
   {
     label: "Waitlist",
     path: "/luma-control-room/waitlist",
+    icon: Users,
   },
   {
     label: "Enquiries",
     path: "/luma-control-room/enquiries",
+    icon: Mail,
   },
   {
     label: "Products",
     path: "/luma-control-room/products",
+    icon: Package,
   },
   {
     label: "Orders",
     path: "/luma-control-room/orders",
+    icon: ShoppingBag,
   },
   {
     label: "Website content",
     path: "/luma-control-room/content",
+    icon: FileText,
   },
   {
     label: "Admin settings",
     path: "/luma-control-room/settings",
+    icon: Settings,
   },
 ];
 export function AdminSidebar() {
