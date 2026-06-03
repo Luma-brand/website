@@ -41,6 +41,9 @@ export function AppRoutes() {
         <Route path="/account" element={<Account />} />
         <Route path="/settings" element={<Settings />} />
 
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+<Route path="/terms-and-conditions" element={<TermsConditions />} />
+
         {/* Admin routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
 
