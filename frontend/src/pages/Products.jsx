@@ -57,11 +57,10 @@ export function Products() {
     loadProducts();
   }, []);
 
-  function handleAddToCart(product) {
-    addToCart(product);
-    showToast(`${product.name} added to cart.`);
-  }
-
+ function handleAddToCart(product) {
+  addToCart(product);
+  showToast(`${product.name} added to cart. Go to your cart to checkout.`);
+}
   function handleToggleWishlist(product) {
     const alreadySaved = isInWishlist(product.slug);
 
@@ -179,7 +178,10 @@ export function Products() {
                           ? "Out of stock"
                           : "Add to cart"}
                       </button>
-
+<Link to="/cart" className="product-learn-link mobile-cart-link">
+  Go to cart
+  <ArrowRight size={16} />
+</Link>
                       <button
                         type="button"
                         className={`wishlist-toggle ${saved ? "saved" : ""}`}

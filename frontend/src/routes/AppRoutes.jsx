@@ -11,7 +11,8 @@ import { Account } from "../pages/Account";
 import { Settings } from "../pages/Settings";
 import { NotFound } from "../pages/NotFound";
 import { RouteSkeleton } from "../components/layout/RouteSkeleton";
-
+import { PrivacyPolicy } from "../pages/PrivacyPolicy";
+import { TermsConditions } from "../pages/TermsConditions";
 import { AdminLayout } from "../admin/components/AdminLayout";
 import { AdminLogin } from "../admin/pages/AdminLogin";
 import { AdminDashboard } from "../admin/pages/AdminDashboard";
