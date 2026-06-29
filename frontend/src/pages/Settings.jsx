@@ -9,14 +9,18 @@ export function Settings() {
   const { user, isAuthenticated, updateUser } = useAuth();
 
   const [formData, setFormData] = useState({
-    name: user?.name || "",
+    name: user?.name || user?.full_name || user?.user_metadata?.name || "",
     email: user?.email || "",
-    beautyFocus: user?.beautyFocus || "Brows",
-    marketing: true,
+    phone: user?.phone || "",
+    customerType: user?.customer_type || "regular_customer",
+    lumaUseCase: user?.luma_use_case || "",
+    referralSource: user?.referral_source || "",
+    marketing: user?.marketing_opt_in !== false,
     launchUpdates: true,
   });
 
   const [saved, setSaved] = useState(false);
+  const [serverError, setServerError] = useState("");
 
   function handleChange(event) {
     const { name, value, type, checked } = event.target;
@@ -27,20 +31,28 @@ export function Settings() {
     }));
 
     setSaved(false);
+    setServerError("");
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    updateUser({
-      name: formData.name,
-      email: formData.email,
-      beautyFocus: formData.beautyFocus,
-      marketing: formData.marketing,
-      launchUpdates: formData.launchUpdates,
-    });
+    try {
+      await updateUser({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        customerType: formData.customerType,
+        lumaUseCase: formData.lumaUseCase,
+        referralSource: formData.referralSource,
+        marketing: formData.marketing,
+        launchUpdates: formData.launchUpdates,
+      });
 
-    setSaved(true);
+      setSaved(true);
+    } catch (error) {
+      setServerError(error.message || "Unable to save settings.");
+    }
   }
 
   return (
@@ -57,8 +69,7 @@ export function Settings() {
           <p className="eyebrow">Settings</p>
           <h1>Personalize your LUMA profile.</h1>
           <p>
-            Manage account details, beauty focus, and update preferences. Saved
-            locally for now until backend accounts are connected.
+            Manage account details, contact information, and update preferences.
           </p>
         </div>
 
@@ -95,19 +106,50 @@ export function Settings() {
               </div>
             </div>
 
+            <div className="form-grid two">
+              <div className="form-field">
+                <label htmlFor="settings-phone">Phone</label>
+                <input
+                  id="settings-phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="settings-customer-type">Customer type</label>
+                <select
+                  id="settings-customer-type"
+                  name="customerType"
+                  value={formData.customerType}
+                  onChange={handleChange}
+                >
+                  <option value="regular_customer">Regular customer</option>
+                  <option value="vendor">Vendor</option>
+                  <option value="retailer">Retailer</option>
+                </select>
+              </div>
+            </div>
+
             <div className="form-field">
-              <label htmlFor="settings-focus">Beauty focus</label>
-              <select
-                id="settings-focus"
-                name="beautyFocus"
-                value={formData.beautyFocus}
+              <label htmlFor="settings-use-case">What are you using LUMA for?</label>
+              <input
+                id="settings-use-case"
+                name="lumaUseCase"
+                value={formData.lumaUseCase}
                 onChange={handleChange}
-              >
-                <option>Brows</option>
-                <option>Lashes</option>
-                <option>Edges</option>
-                <option>Full LUMA system</option>
-              </select>
+              />
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="settings-referral">Where did you hear about LUMA?</label>
+              <input
+                id="settings-referral"
+                name="referralSource"
+                value={formData.referralSource}
+                onChange={handleChange}
+              />
             </div>
 
             <div className="settings-options">
@@ -138,6 +180,7 @@ export function Settings() {
             </button>
 
             {saved && <p className="settings-saved">Settings saved successfully.</p>}
+            {serverError && <p className="settings-saved">{serverError}</p>}
           </form>
         )}
       </section>

@@ -1,85 +1,228 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import {
+  BadgePercent,
+  BarChart3,
+  Bell,
+  CreditCard,
+  CircleDollarSign,
+  FileText,
   LayoutDashboard,
-  Users,
+  LogOut,
   Mail,
   Package,
-  ShoppingBag,
-  FileText,
   Settings,
-  LogOut,
+  ShoppingBag,
+  ShoppingCart,
+  Sparkles,
+  Truck,
+  TrendingUp,
+  Workflow,
+  UserRound,
+  Users,
+  Warehouse,
+  X,
 } from "lucide-react";
 
-const navItems = [
+const navGroups = [
   {
     label: "Overview",
-    path: "/luma-control-room/dashboard",
-    icon: LayoutDashboard,
+    items: [
+      {
+        label: "Dashboard",
+        path: "/luma-control-room/dashboard",
+        icon: LayoutDashboard,
+      },
+      {
+        label: "Analytics",
+        path: "/luma-control-room/analytics",
+        icon: BarChart3,
+      },
+    ],
   },
   {
-    label: "Waitlist",
-    path: "/luma-control-room/waitlist",
-    icon: Users,
+    label: "Store",
+    items: [
+      {
+        label: "Products",
+        path: "/luma-control-room/products",
+        icon: Package,
+      },
+      {
+        label: "Product sales",
+        path: "/luma-control-room/product-sales",
+        icon: Sparkles,
+      },
+      {
+        label: "Orders",
+        path: "/luma-control-room/orders",
+        icon: ShoppingBag,
+      },
+      {
+        label: "Discounts",
+        path: "/luma-control-room/discounts",
+        icon: BadgePercent,
+      },
+      {
+        label: "Currency rates",
+        path: "/luma-control-room/currency-rates",
+        icon: CircleDollarSign,
+      },
+    ],
   },
   {
-    label: "Enquiries",
-    path: "/luma-control-room/enquiries",
-    icon: Mail,
+    label: "Customers",
+    items: [
+      {
+        label: "Customers",
+        path: "/luma-control-room/customers",
+        icon: UserRound,
+      },
+      {
+        label: "Waitlist",
+        path: "/luma-control-room/waitlist",
+        icon: Users,
+      },
+      {
+        label: "Enquiries",
+        path: "/luma-control-room/enquiries",
+        icon: Mail,
+      },
+      {
+        label: "Mail",
+        path: "/luma-control-room/mail",
+        icon: Mail,
+      },
+    ],
   },
   {
-    label: "Products",
-    path: "/luma-control-room/products",
-    icon: Package,
+    label: "Operations",
+    items: [
+      {
+        label: "Inventory",
+        path: "/luma-control-room/inventory",
+        icon: Warehouse,
+      },
+      {
+        label: "Delivery",
+        path: "/luma-control-room/delivery",
+        icon: Truck,
+      },
+    ],
   },
   {
-    label: "Orders",
-    path: "/luma-control-room/orders",
-    icon: ShoppingBag,
+    label: "Growth",
+    items: [
+      {
+        label: "Growth tools",
+        path: "/luma-control-room/growth",
+        icon: TrendingUp,
+  Workflow,
+      },
+      {
+        label: "Email broadcasts",
+        path: "/luma-control-room/email-broadcasts",
+        icon: Mail,
+      },
+      {
+        label: "Automations",
+        path: "/luma-control-room/automations",
+        icon: Workflow,
+      },
+
+      {
+        label: "Abandoned carts",
+        path: "/luma-control-room/abandoned-carts",
+        icon: ShoppingCart,
+      },
+      {
+        label: "Abandoned checkouts",
+        path: "/luma-control-room/abandoned-checkouts",
+        icon: CreditCard,
+      },
+      {
+        label: "Product waitlists",
+        path: "/luma-control-room/product-waitlists",
+        icon: Bell,
+      },
+    ],
   },
   {
-    label: "Website content",
-    path: "/luma-control-room/content",
-    icon: FileText,
-  },
-  {
-    label: "Admin settings",
-    path: "/luma-control-room/settings",
-    icon: Settings,
+    label: "Manage",
+    items: [
+      {
+        label: "Website content",
+        path: "/luma-control-room/content",
+        icon: FileText,
+      },
+      {
+        label: "Settings",
+        path: "/luma-control-room/settings",
+        icon: Settings,
+      },
+    ],
   },
 ];
-export function AdminSidebar() {
+
+export function AdminSidebar({ onClose }) {
   const navigate = useNavigate();
 
   function handleLogout() {
     localStorage.removeItem("luma_admin_token");
     localStorage.removeItem("luma_admin_user");
+    onClose?.();
     navigate("/luma-control-room/login");
   }
 
   return (
-    <aside className="admin-sidebar">
-      <div className="admin-logo">
-        <span>Control Panel</span>
-        <h2>LUMA Admin</h2>
+    <aside className="admin-sidebar" aria-label="Admin navigation">
+      <div className="admin-sidebar-top">
+        <div className="admin-logo">
+          <span>Control Room</span>
+          <h2>LUMA</h2>
+        </div>
+
+        <button
+          type="button"
+          className="admin-sidebar-close"
+          onClick={onClose}
+          aria-label="Close admin navigation"
+        >
+          <X size={18} />
+        </button>
       </div>
 
       <nav className="admin-nav">
-        {navItems.map((item) => {
-          const Icon = item.icon;
+        {navGroups.map((group) => (
+          <section className="admin-nav-group" key={group.label}>
+            <p>{group.label}</p>
 
-          return (
-            <NavLink key={item.path} to={item.path}>
-              <Icon size={18} />
-              {item.label}
-            </NavLink>
-          );
-        })}
+            {group.items.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <NavLink key={item.path} to={item.path} onClick={onClose}>
+                  <Icon size={18} />
+                  <span>{item.label}</span>
+                </NavLink>
+              );
+            })}
+          </section>
+        ))}
       </nav>
 
-      <button type="button" className="admin-logout" onClick={handleLogout}>
-        <LogOut size={18} />
-        Logout
-      </button>
+      <div className="admin-sidebar-footer">
+        <button type="button" className="admin-logout" onClick={handleLogout}>
+          <LogOut size={18} />
+          Logout
+        </button>
+      </div>
     </aside>
   );
 }
+
+
+
+
+
+
+

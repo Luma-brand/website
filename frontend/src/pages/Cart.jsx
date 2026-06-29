@@ -1,10 +1,16 @@
 import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Minus, Plus, Trash2, LockKeyhole } from "lucide-react";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
+import { ProductSalesStrip } from "../components/product/ProductSalesStrip";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
+import { getCartSalesRecommendations } from "../services/api";
 import { formatNaira } from "../utils/currency";
+import { getDeliveryFee } from "../utils/delivery";
+import { getImageUrl } from "../utils/images";
 
 export function Cart() {
   const {
@@ -13,12 +19,55 @@ export function Cart() {
     increaseQuantity,
     decreaseQuantity,
     removeFromCart,
+    validateCartStock,
   } = useCart();
 
   const { isAuthenticated } = useAuth();
+  const { showToast } = useToast();
+  const [crossSells, setCrossSells] = useState([]);
 
-  const delivery = cartItems.length > 0 ? 6 : 0;
+  const delivery = getDeliveryFee(cartItems);
   const total = subtotal + delivery;
+  const cartStockValidation = validateCartStock();
+  const cartProductIds = useMemo(
+    () => cartItems.map((item) => item.id).filter(Boolean),
+    [cartItems]
+  );
+
+  useEffect(() => {
+    if (!cartProductIds.length) {
+      queueMicrotask(() => {
+        setCrossSells([]);
+      });
+      return;
+    }
+
+    let isMounted = true;
+
+    getCartSalesRecommendations({
+      productIds: cartProductIds,
+      limit: 4,
+    })
+      .then((response) => {
+        if (!isMounted) return;
+        setCrossSells(response.data?.crossSells || []);
+      })
+      .catch(() => {
+        if (isMounted) setCrossSells([]);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [cartProductIds]);
+
+  function handleIncreaseQuantity(productId) {
+    const result = increaseQuantity(productId);
+
+    if (!result.success) {
+      showToast(result.message || "Unable to increase quantity.", "error");
+    }
+  }
 
   return (
     <main className="page-shell inner-page">
@@ -55,13 +104,24 @@ export function Cart() {
               {cartItems.map((item) => (
                 <article className="cart-item" key={item.id}>
                   <div className="cart-item-image">
-                    <img src={item.image} alt={item.name} />
+                    {getImageUrl(item.image) ? (
+                      <img src={getImageUrl(item.image)} alt={item.name} />
+                    ) : (
+                      <span className="image-fallback">LUMA</span>
+                    )}
                   </div>
 
                   <div className="cart-item-content">
                     <p>{item.size || "LUMA Beauty"}</p>
                     <h2>{item.name}</h2>
                     <strong>{formatNaira(item.price)}</strong>
+                    <small className="stock-note">
+                      {item.isActive === false
+                        ? "Currently unavailable"
+                        : Number(item.stockQuantity || 0) <= 0
+                        ? "Out of stock"
+                        : `${item.stockQuantity} available`}
+                    </small>
                   </div>
 
                   <div
@@ -74,7 +134,15 @@ export function Cart() {
 
                     <span>{item.quantity}</span>
 
-                    <button type="button" onClick={() => increaseQuantity(item.id)}>
+                    <button
+                      type="button"
+                      onClick={() => handleIncreaseQuantity(item.id)}
+                      disabled={
+                        item.isActive === false ||
+                        Number(item.stockQuantity || 0) <= 0 ||
+                        item.quantity >= Number(item.stockQuantity || 0)
+                      }
+                    >
                       <Plus size={15} />
                     </button>
                   </div>
@@ -111,7 +179,25 @@ export function Cart() {
                 <strong>{formatNaira(total)}</strong>
               </div>
 
-              {isAuthenticated ? (
+              {!cartStockValidation.isValid && (
+                <div className="cart-stock-alert">
+                  {cartStockValidation.issues.map((issue) => (
+                    <p key={`${issue.productId}-${issue.message}`}>
+                      {issue.message}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              {!cartStockValidation.isValid ? (
+                <button
+                  type="button"
+                  className="btn btn-primary summary-button"
+                  disabled
+                >
+                  Resolve stock issues
+                </button>
+              ) : isAuthenticated ? (
                 <Link to="/checkout" className="btn btn-primary summary-button">
                   Checkout
                   <ArrowRight size={18} />
@@ -129,6 +215,15 @@ export function Cart() {
               </p>
             </aside>
           </div>
+        )}
+
+        {cartItems.length > 0 && (
+          <ProductSalesStrip
+            eyebrow="Complete your cart"
+            title="Customers also pair these with LUMA essentials."
+            products={crossSells}
+            actionLabel="Add"
+          />
         )}
       </section>
 

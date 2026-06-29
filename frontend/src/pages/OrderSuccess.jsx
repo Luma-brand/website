@@ -5,6 +5,8 @@ import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
 import { formatNaira } from "../utils/currency";
 import { getPublicOrderById, verifyPaystackPayment } from "../services/api";
+import { useCart } from "../context/CartContext";
+import { markAbandonedCartRecovered } from "../services/growthApi";
 
 export function OrderSuccess() {
   const { orderId } = useParams();
@@ -15,6 +17,7 @@ export function OrderSuccess() {
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const { clearCart } = useCart();
 
   useEffect(() => {
     async function loadOrder() {
@@ -28,6 +31,20 @@ export function OrderSuccess() {
 
         const response = await getPublicOrderById(orderId);
         setOrder(response.data);
+
+        if (response.data?.payment_status === "paid") {
+          const purchaseTrackingKey = `luma_purchase_tracked_${response.data.id}`;
+
+          if (!sessionStorage.getItem(purchaseTrackingKey)) {
+            sessionStorage.setItem(purchaseTrackingKey, "true");
+          }
+
+          clearCart();
+          void markAbandonedCartRecovered({
+            orderId,
+            customerEmail: response.data.customer_email,
+          }).catch(() => {});
+        }
       } catch (error) {
         setError(error.message || "Failed to load order.");
       } finally {
@@ -36,7 +53,7 @@ export function OrderSuccess() {
     }
 
     loadOrder();
-  }, [orderId, reference]);
+  }, [clearCart, orderId, reference]);
 
   if (isLoading) {
     return (
@@ -136,6 +153,20 @@ export function OrderSuccess() {
               </div>
             ))}
 
+            {order.delivery_fee !== undefined && order.delivery_fee !== null && (
+              <div className="summary-row">
+                <span>Delivery</span>
+                <strong>{formatNaira(order.delivery_fee)}</strong>
+              </div>
+            )}
+
+            {Number(order.discount_amount || 0) > 0 && (
+              <div className="summary-row discount">
+                <span>{order.discount_code || "Discount"}</span>
+                <strong>-{formatNaira(order.discount_amount)}</strong>
+              </div>
+            )}
+
             <div className="summary-line" />
 
             <div className="summary-row total">
@@ -158,3 +189,4 @@ export function OrderSuccess() {
     </main>
   );
 }
+

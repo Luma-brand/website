@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, Trash2 } from "lucide-react";
 import { AdminTopbar } from "../components/AdminTopbar";
 import { deleteWaitlistUser, getWaitlistUsers } from "../../services/api";
@@ -10,11 +10,7 @@ export function AdminWaitlist() {
   const [actionLoadingId, setActionLoadingId] = useState("");
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    loadWaitlist();
-  }, []);
-
-  async function loadWaitlist() {
+  const loadWaitlist = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await getWaitlistUsers();
@@ -24,7 +20,13 @@ export function AdminWaitlist() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      loadWaitlist();
+    });
+  }, [loadWaitlist]);
 
   const filteredWaitlist = useMemo(() => {
     const searchValue = search.toLowerCase();

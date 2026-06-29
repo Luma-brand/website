@@ -4,6 +4,7 @@ import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
+import { getImageUrl } from "../utils/images";
 
 export function Wishlist() {
   const { addToCart } = useCart();
@@ -54,7 +55,11 @@ export function Wishlist() {
               {wishlistItems.map((product) => (
                 <article className="wishlist-card" key={product.slug}>
                   <Link to={`/products/${product.slug}`} className="wishlist-image">
-                    <img src={product.image} alt={product.name} />
+                    {getImageUrl(product.image) ? (
+                      <img src={getImageUrl(product.image)} alt={product.name} />
+                    ) : (
+                      <span className="image-fallback">LUMA</span>
+                    )}
                   </Link>
 
                   <div className="wishlist-content">

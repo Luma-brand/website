@@ -1,38 +1,7 @@
 import { ArrowUpRight, Mail } from "lucide-react";
 import { motion } from "framer-motion";
-import { submitContactForm } from "../../services/api";
-
 
 export function ContactSection() {
-  const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  try {
-    setIsSubmitting(true);
-
-    await submitContactForm({
-      fullName: formData.fullName,
-      email: formData.email,
-      phone: formData.phone,
-      subject: formData.subject,
-      message: formData.message,
-    });
-
-    alert("Message sent successfully!");
-
-    setFormData({
-      fullName: "",
-      email: "",
-      phone: "",
-      subject: "",
-      message: "",
-    });
-  } catch (error) {
-    alert(error.message || "Failed to send message");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
   return (
     <section id="contact" className="contact-section">
       <motion.div

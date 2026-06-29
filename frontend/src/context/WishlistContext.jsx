@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { getProductImage } from "../utils/images";
 
 const WishlistContext = createContext(null);
 
@@ -20,11 +28,11 @@ export function WishlistProvider({ children }) {
     localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlistItems));
   }, [wishlistItems]);
 
-  function isInWishlist(productSlug) {
+  const isInWishlist = useCallback((productSlug) => {
     return wishlistItems.some((item) => item.slug === productSlug);
-  }
+  }, [wishlistItems]);
 
-  function toggleWishlist(product) {
+  const toggleWishlist = useCallback((product) => {
     setWishlistItems((currentItems) => {
       const alreadySaved = currentItems.some((item) => item.slug === product.slug);
 
@@ -42,15 +50,15 @@ export function WishlistProvider({ children }) {
           price: product.price,
           numericPrice: product.numericPrice,
           description: product.description,
-          image: product.image,
+          image: getProductImage(product),
         },
       ];
     });
-  }
+  }, []);
 
-  function clearWishlist() {
+  const clearWishlist = useCallback(() => {
     setWishlistItems([]);
-  }
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -60,7 +68,7 @@ export function WishlistProvider({ children }) {
       toggleWishlist,
       clearWishlist,
     }),
-    [wishlistItems]
+    [wishlistItems, isInWishlist, toggleWishlist, clearWishlist]
   );
 
   return (

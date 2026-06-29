@@ -1,4 +1,28 @@
 const pool = require("../config/db");
+const { buildCartPricingSnapshot } = require("../services/inventoryService");
+const {
+  buildOrderDeliveryFields,
+  getDeliveryQuote,
+} = require("../services/deliveryService");
+
+const isValidProductId = (productId) => {
+  return productId && /^[0-9a-fA-F-]{36}$/.test(productId);
+};
+
+async function getExistingOrderColumns(columnNames = []) {
+  const result = await pool.query(
+    `
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'orders'
+        AND column_name = ANY($1::text[])
+    `,
+    [columnNames]
+  );
+
+  return new Set(result.rows.map((row) => row.column_name));
+}
 
 const createOrder = async (req, res) => {
   const client = await pool.connect();
@@ -10,48 +34,107 @@ const createOrder = async (req, res) => {
       customerPhone,
       deliveryAddress,
       city,
+      state,
       country,
-      totalAmount,
+      deliveryNotes,
       items,
     } = req.body;
 
-    if (!customerName || !customerEmail || !totalAmount || !items?.length) {
+    if (!customerName || !customerEmail || !items?.length) {
       return res.status(400).json({
         success: false,
-        message: "Customer name, email, total amount, and order items are required",
+        message: "Customer name, email, and order items are required",
       });
     }
 
+    const normalizedItems = items.map((item) => ({
+      ...item,
+      productId: isValidProductId(item.productId) ? item.productId : null,
+      quantity: Number(item.quantity || 0),
+    }));
+
+    const invalidItem = normalizedItems.find(
+      (item) => !item.productId || item.quantity <= 0
+    );
+
+    if (invalidItem) {
+      return res.status(400).json({
+        success: false,
+        message: "Each order item must have a valid product ID and quantity.",
+      });
+    }
+
+    const deliveryState = state || city;
+    const deliveryQuote = await getDeliveryQuote({
+      country,
+      state: deliveryState,
+      region: city,
+    });
+
     await client.query("BEGIN");
+
+    const cartSnapshot = await buildCartPricingSnapshot(normalizedItems, {
+      client,
+      deliveryFee: deliveryQuote.deliveryFee,
+    });
+
+    if (!cartSnapshot.isValid) {
+      await client.query("ROLLBACK");
+
+      return res.status(409).json({
+        success: false,
+        message: "Some products in your cart are no longer available.",
+        issues: cartSnapshot.issues,
+      });
+    }
+
+    const deliveryFields = await buildOrderDeliveryFields({
+      client,
+      deliveryQuote,
+      deliveryNotes,
+      state: deliveryState,
+    });
+
+    const orderColumns = [
+      "customer_name",
+      "customer_email",
+      "customer_phone",
+      "delivery_address",
+      "city",
+      "country",
+      "total_amount",
+    ];
+    const orderValues = [
+      customerName,
+      customerEmail,
+      customerPhone || null,
+      deliveryAddress || null,
+      city || null,
+      country || null,
+      cartSnapshot.totalAmount,
+    ];
+
+    deliveryFields.forEach((field) => {
+      orderColumns.push(field.column);
+      orderValues.push(field.value);
+    });
+
+    const orderPlaceholders = orderValues
+      .map((_, index) => `$${index + 1}`)
+      .join(", ");
 
     const orderResult = await client.query(
       `
-      INSERT INTO orders (
-        customer_name,
-        customer_email,
-        customer_phone,
-        delivery_address,
-        city,
-        country,
-        total_amount
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO orders (${orderColumns.join(", ")})
+      VALUES (${orderPlaceholders})
       RETURNING *
       `,
-      [
-        customerName,
-        customerEmail,
-        customerPhone || null,
-        deliveryAddress || null,
-        city || null,
-        country || null,
-        totalAmount,
-      ]
+      orderValues
     );
 
     const order = orderResult.rows[0];
 
-    for (const item of items) {
+    for (const item of cartSnapshot.items) {
       await client.query(
         `
         INSERT INTO order_items (
@@ -65,35 +148,16 @@ const createOrder = async (req, res) => {
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         `,
-[
-  order.id,
-  item.productId && /^[0-9a-fA-F-]{36}$/.test(item.productId)
-    ? item.productId
-    : null,
-  item.name,
-  item.image || null,
-  Number(item.price),
-  Number(item.quantity),
-  item.size || null,
-]
+        [
+          order.id,
+          item.productId,
+          item.name,
+          item.image || null,
+          item.price,
+          item.quantity,
+          item.size || null,
+        ]
       );
-
-     const validProductId =
-  item.productId && /^[0-9a-fA-F-]{36}$/.test(item.productId)
-    ? item.productId
-    : null;
-
-if (validProductId) {
-  await client.query(
-    `
-    UPDATE products
-    SET stock_quantity = GREATEST(stock_quantity - $1, 0),
-        updated_at = CURRENT_TIMESTAMP
-    WHERE id = $2
-    `,
-    [Number(item.quantity), validProductId]
-  );
-}
     }
 
     await client.query("COMMIT");
@@ -107,6 +171,13 @@ if (validProductId) {
     await client.query("ROLLBACK");
 
     console.error("Create order error:", error.message);
+
+    if (error.code === "NO_DELIVERY_ZONE") {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
 
     return res.status(500).json({
       success: false,
@@ -268,10 +339,31 @@ const deleteOrder = async (req, res) => {
 const getPublicOrder = async (req, res) => {
   try {
     const { id } = req.params;
+    const optionalColumns = [
+      "delivery_fee",
+      "discount_code",
+      "discount_amount",
+      "final_amount",
+      "subtotal_amount",
+    ];
+    const existingColumns = await getExistingOrderColumns(optionalColumns);
+    const selectedOptionalColumns = optionalColumns.filter((column) =>
+      existingColumns.has(column)
+    );
+    const selectColumns = [
+      "id",
+      "customer_name",
+      "customer_email",
+      "total_amount",
+      "status",
+      "payment_status",
+      "created_at",
+      ...selectedOptionalColumns,
+    ];
 
     const orderResult = await pool.query(
       `
-      SELECT id, customer_name, customer_email, total_amount, status, payment_status, created_at
+      SELECT ${selectColumns.join(", ")}
       FROM orders
       WHERE id = $1
       `,

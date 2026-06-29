@@ -1,7 +1,98 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  completeCustomerProfile,
+  clearStoredCustomerToken,
+  getCustomerMe,
+  getStoredCustomerToken,
+  loginCustomer,
+  loginCustomerWithGoogle,
+  logoutCustomer,
+  registerCustomer,
+  requestPasswordReset,
+  resetCustomerPassword,
+  storeCustomerToken,
+  updateCustomerProfile,
+  verifyResetCode,
+} from "../services/authApi";
 
 const AuthContext = createContext(null);
+
+function normalizeCustomer(customer) {
+  if (!customer) return null;
+
+  const fullName =
+    customer.full_name ||
+    customer.fullName ||
+    customer.name ||
+    customer.user_metadata?.name ||
+    "";
+  const customerType = customer.customer_type || customer.customerType || "";
+  const lumaUseCase = customer.luma_use_case || customer.lumaUseCase || "";
+  const referralSource = customer.referral_source || customer.referralSource || "";
+  const phone = customer.phone || customer.user_metadata?.phone || "";
+  const onboardingCompleted = Boolean(
+    customer.onboarding_completed ||
+      customer.onboardingCompleted ||
+      customer.profile_completed
+  );
+  const profileCompleted = Boolean(
+    customer.profile_completed ||
+      (fullName &&
+        customer.email &&
+        phone &&
+        onboardingCompleted &&
+        customer.why_luma &&
+        customer.first_time_luma &&
+        customer.brow_goal &&
+        referralSource)
+  );
+
+  return {
+    ...customer,
+    full_name: fullName,
+    name: fullName,
+    phone,
+    phone_country_name: customer.phone_country_name || "",
+    phone_country_iso2: customer.phone_country_iso2 || "",
+    phone_country_code: customer.phone_country_code || "",
+    phone_e164: customer.phone_e164 || phone,
+    whatsapp_number: customer.whatsapp_number || "",
+    whatsapp_e164: customer.whatsapp_e164 || "",
+    whatsapp_country_name: customer.whatsapp_country_name || "",
+    whatsapp_country_iso2: customer.whatsapp_country_iso2 || "",
+    whatsapp_country_code: customer.whatsapp_country_code || "",
+    whatsapp_is_account_phone: customer.whatsapp_is_account_phone === true,
+    onboarding_completed: onboardingCompleted,
+    why_luma: customer.why_luma || "",
+    first_time_luma: customer.first_time_luma || "",
+    brow_goal: customer.brow_goal || "",
+    referral_source_other: customer.referral_source_other || "",
+    customer_type: customerType,
+    customerType,
+    luma_use_case: lumaUseCase,
+    lumaUseCase,
+    referral_source: referralSource,
+    referralSource,
+    profile_completed: profileCompleted,
+    user_metadata: {
+      ...(customer.user_metadata || {}),
+      name: fullName,
+      full_name: fullName,
+      phone,
+    },
+  };
+}
+
+function getCustomerFromResponse(response) {
+  return normalizeCustomer(response.customer || response.user || response.data);
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -11,95 +102,188 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true;
 
-    async function loadSession() {
-      const { data, error } = await supabase.auth.getSession();
+    async function loadCustomerSession() {
+      const token = getStoredCustomerToken();
 
-      if (!mounted) return;
-
-      if (error) {
-        console.error("Supabase get session error:", error.message);
+      if (!token) {
+        if (mounted) {
+          setIsAuthLoading(false);
+        }
+        return;
       }
 
-      setSession(data?.session || null);
-      setUser(data?.session?.user || null);
-      setIsAuthLoading(false);
+      try {
+        const response = await getCustomerMe(token);
+        const customer = getCustomerFromResponse(response);
+
+        if (!customer) {
+          throw new Error("Customer session could not be loaded.");
+        }
+
+        if (mounted) {
+          setUser(customer);
+          setSession({ token, user: customer });
+        }
+      } catch {
+        clearStoredCustomerToken();
+
+        if (mounted) {
+          setUser(null);
+          setSession(null);
+        }
+      } finally {
+        if (mounted) {
+          setIsAuthLoading(false);
+        }
+      }
     }
 
-    loadSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
-      setSession(currentSession);
-      setUser(currentSession?.user || null);
-      setIsAuthLoading(false);
-    });
+    loadCustomerSession();
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
     };
   }, []);
 
-  async function signUp({ name, email, password, beautyFocus }) {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name,
-          beautyFocus,
-        },
-        emailRedirectTo: `${window.location.origin}/account`,
+  const applyCustomerSession = useCallback((response) => {
+    const token = response.token;
+    const customer = getCustomerFromResponse(response);
+
+    if (!token || !customer) {
+      throw new Error("Customer auth response was incomplete.");
+    }
+
+    storeCustomerToken(token);
+    setUser(customer);
+    setSession({ token, user: customer });
+
+    return { token, customer };
+  }, []);
+
+  const signUp = useCallback(
+    async (payload) => {
+      const response = await registerCustomer({
+        fullName: payload.name || payload.fullName,
+        email: payload.email,
+        phone: payload.phone,
+        phoneCountryName: payload.phoneCountryName,
+        phoneCountryIso2: payload.phoneCountryIso2,
+        phoneCountryCode: payload.phoneCountryCode,
+        phoneE164: payload.phoneE164,
+        password: payload.password,
+        confirmPassword: payload.confirmPassword,
+      });
+
+      return applyCustomerSession(response);
+    },
+    [applyCustomerSession]
+  );
+
+  const signIn = useCallback(
+    async ({ email, password }) => {
+      const response = await loginCustomer({ email, password });
+
+      return applyCustomerSession(response);
+    },
+    [applyCustomerSession]
+  );
+
+  const signInWithGoogle = useCallback(
+    async (credential) => {
+      const response = await loginCustomerWithGoogle({ credential });
+
+      return applyCustomerSession(response);
+    },
+    [applyCustomerSession]
+  );
+
+  const signOut = useCallback(async () => {
+    await logoutCustomer(session?.token).catch(() => {});
+    clearStoredCustomerToken();
+    setUser(null);
+    setSession(null);
+  }, [session?.token]);
+
+  const completeProfile = useCallback(async (profile) => {
+    const token = session?.token;
+
+    if (!token) {
+      throw new Error("You need to sign in before updating your profile.");
+    }
+
+    const response = await completeCustomerProfile(
+      {
+        fullName: profile.name || profile.fullName,
+        phone: profile.phone,
+        phoneCountryName: profile.phoneCountryName,
+        phoneCountryIso2: profile.phoneCountryIso2,
+        phoneCountryCode: profile.phoneCountryCode,
+        phoneE164: profile.phoneE164,
+        whatsappNumber: profile.whatsappNumber,
+        whatsappE164: profile.whatsappE164,
+        whatsappCountryName: profile.whatsappCountryName,
+        whatsappCountryIso2: profile.whatsappCountryIso2,
+        whatsappCountryCode: profile.whatsappCountryCode,
+        whatsappIsAccountPhone: profile.whatsappIsAccountPhone,
+        customerType: profile.customerType,
+        whyLuma: profile.whyLuma,
+        firstTimeLuma: profile.firstTimeLuma,
+        browGoal: profile.browGoal,
+        referralSource: profile.referralSource,
+        referralSourceOther: profile.referralSourceOther,
+        marketingOptIn: profile.marketing,
       },
-    });
+      token
+    );
+    const customer = getCustomerFromResponse(response);
 
-    if (error) {
-      throw new Error(error.message);
+    setUser(customer);
+    setSession({ token, user: customer });
+
+    return customer;
+  }, [session]);
+
+  const updateUser = useCallback(async (profile) => {
+    const token = session?.token;
+
+    if (!token) {
+      throw new Error("You need to sign in before updating your profile.");
     }
 
-    return data;
-  }
-
-  async function signIn({ email, password }) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return data;
-  }
-
-  async function signInWithGoogle() {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/account`,
+    const response = await updateCustomerProfile(
+      {
+        fullName: profile.name || profile.fullName,
+        phone: profile.phone,
+        customerType: profile.customerType,
+        lumaUseCase: profile.lumaUseCase,
+        referralSource: profile.referralSource,
+        marketingOptIn: profile.marketing,
       },
-    });
+      token
+    );
+    const customer = getCustomerFromResponse(response);
 
-    if (error) {
-      throw new Error(error.message);
-    }
+    setUser(customer);
+    setSession({ token, user: customer });
 
-    return data;
-  }
+    return customer;
+  }, [session]);
 
-  async function signOut() {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      throw new Error(error.message);
-    }
-  }
+  const forgotPassword = useCallback((payload) => requestPasswordReset(payload), []);
+  const verifyPasswordResetCode = useCallback(
+    (payload) => verifyResetCode(payload),
+    []
+  );
+  const resetPassword = useCallback(
+    (payload) => resetCustomerPassword(payload),
+    []
+  );
 
   const displayName =
     user?.user_metadata?.name ||
     user?.user_metadata?.full_name ||
+    user?.full_name ||
+    user?.name ||
     user?.email?.split("@")[0] ||
     "LUMA customer";
 
@@ -108,14 +292,36 @@ export function AuthProvider({ children }) {
       user,
       session,
       isAuthLoading,
-      isAuthenticated: Boolean(session?.user),
+      isAuthConfigured: true,
+      authConfigError: "",
+      isAuthenticated: Boolean(session?.token && user),
+      needsProfileCompletion: Boolean(session?.token && user && !user.profile_completed),
       displayName,
       signUp,
       signIn,
       signInWithGoogle,
       signOut,
+      updateUser,
+      completeProfile,
+      forgotPassword,
+      verifyPasswordResetCode,
+      resetPassword,
     }),
-    [user, session, isAuthLoading, displayName]
+    [
+      user,
+      session,
+      isAuthLoading,
+      displayName,
+      signUp,
+      signIn,
+      signInWithGoogle,
+      signOut,
+      updateUser,
+      completeProfile,
+      forgotPassword,
+      verifyPasswordResetCode,
+      resetPassword,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

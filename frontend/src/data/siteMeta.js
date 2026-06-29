@@ -3,7 +3,7 @@ export const siteMeta = {
   title: "LUMA — Professional Beauty Essentials for Brows, Lashes & Edges",
   description:
     "LUMA is a functional beauty system for brows, lashes, and edges — making professional-level results accessible, effortless, and part of daily life.",
-  url: "https://your-domain.com",
+  url: "https://website-umber-xi-40.vercel.app/",
   email: "hello@luma.com",
   keywords: [
     "LUMA beauty",

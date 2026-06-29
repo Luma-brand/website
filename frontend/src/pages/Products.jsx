@@ -3,17 +3,24 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Heart, Search } from "lucide-react";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
+import { PageSeo } from "../components/seo/PageSeo";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { useToast } from "../context/ToastContext";
 import { getProducts } from "../services/api";
 import { formatNaira } from "../utils/currency";
+import { getProductImage } from "../utils/images";
+import {
+  getStockMessage,
+  isLowStock,
+  isProductUnavailable,
+} from "../utils/stock";
 
 function formatProduct(product) {
   return {
     ...product,
-    slug: product.id,
-    image: product.image_url,
+    slug: product.slug || product.id,
+    image: getProductImage(product),
     priceValue: Number(product.price),
     price: formatNaira(product.price),
     description: product.description || "A soft luxury LUMA beauty product.",
@@ -57,10 +64,17 @@ export function Products() {
     loadProducts();
   }, []);
 
- function handleAddToCart(product) {
-  addToCart(product);
-  showToast(`${product.name} added to cart. Go to your cart to checkout.`);
-}
+  function handleAddToCart(product) {
+    const result = addToCart(product);
+
+    showToast(
+      result.message ||
+        (result.success
+          ? `${product.name} added to cart. Go to your cart to checkout.`
+          : "Unable to add product to cart."),
+      result.success ? "success" : "error"
+    );
+  }
   function handleToggleWishlist(product) {
     const alreadySaved = isInWishlist(product.slug);
 
@@ -88,6 +102,14 @@ export function Products() {
 
   return (
     <main className="page-shell inner-page">
+      <PageSeo
+        title="Shop LUMA Skincare | Beauty Essentials"
+        description="Shop LUMA Skincare products, stock, prices, and refined everyday beauty essentials."
+        canonical={`${
+          import.meta.env.VITE_SITE_URL ||
+          (typeof window !== "undefined" ? window.location.origin : "")
+        }/products`}
+      />
       <Header />
 
       <section className="commerce-page">
@@ -133,11 +155,12 @@ export function Products() {
           <div className="shop-grid">
             {filteredProducts.map((product) => {
               const saved = isInWishlist(product.slug);
+              const unavailable = isProductUnavailable(product);
 
               return (
                 <article className="shop-product-card" key={product.id}>
                   <Link
-                    to={`/products/${product.id}`}
+                    to={`/products/${product.slug}`}
                     className="shop-product-image"
                   >
                     {product.image ? (
@@ -165,19 +188,30 @@ export function Products() {
                       {product.details.map((detail) => (
                         <small key={detail}>{detail}</small>
                       ))}
+                      {isLowStock(product) && (
+                        <small className="stock-warning">
+                          {getStockMessage(product)}
+                        </small>
+                      )}
                     </div>
 
                     <div className="shop-product-actions">
-                      <button
-                        type="button"
-                        className="product-button"
-                        onClick={() => handleAddToCart(product)}
-                        disabled={Number(product.stock_quantity) <= 0}
-                      >
-                        {Number(product.stock_quantity) <= 0
-                          ? "Out of stock"
-                          : "Add to cart"}
-                      </button>
+                      {unavailable ? (
+                        <Link
+                          to={`/products/${product.slug}`}
+                          className="product-button product-button-link"
+                        >
+                          Notify me
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          className="product-button"
+                          onClick={() => handleAddToCart(product)}
+                        >
+                          Add to cart
+                        </button>
+                      )}
 <Link to="/cart" className="product-learn-link mobile-cart-link">
   Go to cart
   <ArrowRight size={16} />
@@ -195,7 +229,7 @@ export function Products() {
                       </button>
 
                       <Link
-                        to={`/products/${product.id}`}
+                        to={`/products/${product.slug}`}
                         className="product-learn-link"
                       >
                         View details

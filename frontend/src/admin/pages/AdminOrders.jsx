@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Eye, Trash2 } from "lucide-react";
 import { AdminTopbar } from "../components/AdminTopbar";
 import { formatNaira } from "../../utils/currency";
@@ -20,11 +20,7 @@ export function AdminOrders() {
   const [actionLoadingId, setActionLoadingId] = useState("");
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    loadOrders();
-  }, []);
-
-  async function loadOrders() {
+  const loadOrders = useCallback(async () => {
     try {
       setIsLoading(true);
       setError("");
@@ -36,7 +32,13 @@ export function AdminOrders() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      loadOrders();
+    });
+  }, [loadOrders]);
 
   const filteredOrders = useMemo(() => {
     const value = search.toLowerCase();
@@ -301,11 +303,25 @@ export function AdminOrders() {
                 </p>
 
                 <p>
-                  <strong>City:</strong> {selectedOrder.city || "—"}
+                  <strong>City / state:</strong>{" "}
+                  {selectedOrder.state || selectedOrder.city || "—"}
                 </p>
 
                 <p>
                   <strong>Country:</strong> {selectedOrder.country || "—"}
+                </p>
+
+                <p>
+                  <strong>Delivery fee:</strong>{" "}
+                  {selectedOrder.delivery_fee !== undefined &&
+                  selectedOrder.delivery_fee !== null
+                    ? formatNaira(selectedOrder.delivery_fee)
+                    : "—"}
+                </p>
+
+                <p>
+                  <strong>Notes:</strong>{" "}
+                  {selectedOrder.delivery_notes || "—"}
                 </p>
               </div>
 
@@ -332,9 +348,26 @@ export function AdminOrders() {
                 </p>
 
                 <p>
+                  <strong>Discount:</strong>{" "}
+                  {Number(selectedOrder.discount_amount || 0) > 0
+                    ? `${selectedOrder.discount_code || "Discount"} - ${formatNaira(
+                        selectedOrder.discount_amount
+                      )}`
+                    : "—"}
+                </p>
+
+                <p>
                   <strong>Total:</strong>{" "}
                   {formatNaira(selectedOrder.total_amount)}
                 </p>
+
+                {selectedOrder.final_amount !== undefined &&
+                  selectedOrder.final_amount !== null && (
+                    <p>
+                      <strong>Final amount:</strong>{" "}
+                      {formatNaira(selectedOrder.final_amount)}
+                    </p>
+                  )}
               </div>
             </div>
 

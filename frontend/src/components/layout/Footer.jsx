@@ -23,8 +23,8 @@ export function Footer() {
         <Link to="/wishlist">Wishlist</Link>
         <Link to="/cart">Cart</Link>
         <Link to="/account">Account</Link>
-       <Link to="/privacy-policy">Privacy Policy</Link>
-<Link to="/terms-and-conditions">Terms & Conditions</Link>
+        <Link to="/privacy-policy">Privacy Policy</Link>
+        <Link to="/terms-and-conditions">Terms & Conditions</Link>
       </div>
 
       <div className="footer-small">

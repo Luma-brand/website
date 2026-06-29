@@ -1,13 +1,15 @@
 import { useCallback } from "react";
-import { api } from "../lib/api";
+import { recordAnalyticsEvent } from "../services/growthApi";
 
 export function useAnalytics() {
   const track = useCallback((eventType, metadata = {}) => {
-    api.post("/analytics/track", {
+    recordAnalyticsEvent({
       eventType,
-      page: window.location.pathname,
-      metadata,
-      source: document.referrer || "direct",
+      metadata: {
+        ...metadata,
+        page: window.location.pathname,
+        referrer: document.referrer || "direct",
+      },
     }).catch(() => {});
   }, []);
 

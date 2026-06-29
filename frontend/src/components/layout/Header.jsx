@@ -1,14 +1,18 @@
-import { Heart, Menu, ShoppingBag, User, X } from "lucide-react";
+import { Heart, Menu, ShoppingCart, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { navLinks } from "../../data/siteContent";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { useWishlist } from "../../context/WishlistContext";
+import { getPublicCurrencyRates } from "../../services/api";
+import { getStoredCurrency, setStoredCurrency, setStoredCurrencyRates } from "../../utils/currency";
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [currencyRates, setCurrencyRates] = useState([]);
+  const [selectedCurrency, setSelectedCurrency] = useState(getStoredCurrency);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,6 +40,40 @@ export function Header() {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    getPublicCurrencyRates()
+      .then((response) => {
+        if (!isMounted) return;
+
+        const rates = response.data?.rates || [];
+        setCurrencyRates(rates);
+        setStoredCurrencyRates(rates);
+
+        const storedCurrency = getStoredCurrency();
+        const hasStoredCurrency = rates.some((rate) => rate.code === storedCurrency);
+
+        if (rates.length > 0 && !hasStoredCurrency) {
+          setStoredCurrency("NGN");
+          setSelectedCurrency("NGN");
+        } else {
+          setSelectedCurrency(storedCurrency);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  function handleCurrencyChange(event) {
+    const nextCurrency = event.target.value;
+    setSelectedCurrency(nextCurrency);
+    setStoredCurrency(nextCurrency);
+    window.location.reload();
+  }
   function handleSectionNavigation(event, href) {
     if (!href.startsWith("/#")) return;
 
@@ -102,6 +140,18 @@ export function Header() {
       </nav>
 
       <div className="header-actions">
+        {currencyRates.length > 1 && (
+          <label className="currency-selector" aria-label="Display currency">
+            <span>Currency</span>
+            <select value={selectedCurrency} onChange={handleCurrencyChange}>
+              {currencyRates.map((rate) => (
+                <option key={rate.code} value={rate.code}>
+                  {rate.symbol} {rate.code}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <Link to="/wishlist" className="header-icon-link" aria-label="Wishlist">
           <Heart size={18} />
           {wishlistCount > 0 && <span className="cart-count">{wishlistCount}</span>}
@@ -113,7 +163,7 @@ export function Header() {
         </Link>
 
         <Link to="/cart" className="header-icon-link cart-link" aria-label="Cart">
-          <ShoppingBag size={18} />
+          <ShoppingCart size={18} />
           {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
         </Link>
 
@@ -164,3 +214,6 @@ export function Header() {
     </header>
   );
 }
+
+
+

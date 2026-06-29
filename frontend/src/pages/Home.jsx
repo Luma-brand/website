@@ -5,6 +5,7 @@ import { Footer } from "../components/layout/Footer";
 import { NewsletterSection } from "../components/sections/NewsletterSection";
 import { TrustStrip } from "../components/sections/TrustStrip";
 import { ContactSection } from "../components/sections/ContactSection";
+import { PageSeo } from "../components/seo/PageSeo";
 import { benefits, faqs, products, ritualSteps } from "../data/siteContent";
 
 const fadeUp = {
@@ -26,8 +27,17 @@ const stagger = {
 };
 
 export function Home() {
+  const siteOrigin =
+    import.meta.env.VITE_SITE_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+
   return (
     <main id="main-content" className="page-shell">
+      <PageSeo
+        title="LUMA Skincare | Soft Luxury Beauty Rituals"
+        description="Shop LUMA Skincare beauty essentials for refined everyday rituals, clean product routines, and secure checkout."
+        canonical={siteOrigin}
+      />
       <Header />
 
       <section className="hero-section">

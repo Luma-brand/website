@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const { sendNewsletterConfirmationEmail, sendWaitlistConfirmationEmail } = require("../services/emailService");
 
 const subscribeNewsletter = async (req, res) => {
   try {
@@ -20,10 +21,27 @@ const subscribeNewsletter = async (req, res) => {
       [name || null, email, interest || null]
     );
 
+    const subscriber = result.rows[0];
+    const emailResult = await sendNewsletterConfirmationEmail({
+      email: subscriber.email,
+      name: subscriber.full_name,
+      source: "newsletter_signup",
+    });
+    await sendWaitlistConfirmationEmail({
+      email: subscriber.email,
+      name: subscriber.full_name,
+      source: "waitlist_signup",
+    }).catch(() => null);
+
     return res.status(201).json({
       success: true,
       message: "Waitlist subscription successful",
-      data: result.rows[0],
+      data: subscriber,
+      email: {
+        attempted: true,
+        success: Boolean(emailResult?.success),
+        status: emailResult?.status || (emailResult?.skipped ? "skipped" : "unknown"),
+      },
     });
   } catch (error) {
     if (error.code === "23505") {

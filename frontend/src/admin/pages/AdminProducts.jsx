@@ -1,14 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Edit3, ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { AdminTopbar } from "../components/AdminTopbar";
 import {
   createProduct,
   deleteProduct,
-  getProducts,
+  getAdminProducts,
   updateProduct,
 } from "../../services/api";
 import { formatNaira } from "../../utils/currency";
-
 
 const initialForm = {
   name: "",
@@ -16,56 +15,86 @@ const initialForm = {
   price: "",
   size: "",
   stockQuantity: "",
+  lowStockThreshold: "20",
   status: "draft",
+  isActive: true,
+  isFeatured: false,
+  slug: "",
+  metaTitle: "",
+  metaDescription: "",
   image: null,
 };
+
+function getStockLabel(product) {
+  if (product.stock_status === "out_of_stock") return "Out of stock";
+  if (product.stock_status === "low_stock") return "Low stock";
+  return "In stock";
+}
 
 export function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [formData, setFormData] = useState(initialForm);
   const [editingProduct, setEditingProduct] = useState(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [imagePreview, setImagePreview] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState("");
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  async function loadProducts() {
+  const loadProducts = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await getProducts();
+      setError("");
+
+      const response = await getAdminProducts();
       setProducts(response.data || []);
     } catch (error) {
       setError(error.message || "Failed to load products.");
     } finally {
       setIsLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      loadProducts();
+    });
+  }, [loadProducts]);
 
   const filteredProducts = useMemo(() => {
     const value = search.toLowerCase();
 
     return products.filter((product) => {
-      return (
+      const matchesSearch =
         product.name?.toLowerCase().includes(value) ||
         product.description?.toLowerCase().includes(value) ||
         product.size?.toLowerCase().includes(value) ||
-        product.status?.toLowerCase().includes(value)
-      );
+        product.status?.toLowerCase().includes(value);
+
+      if (!matchesSearch) return false;
+
+      if (statusFilter === "all") return true;
+      if (statusFilter === "active") return product.is_active !== false;
+      if (statusFilter === "inactive") return product.is_active === false;
+      if (statusFilter === "featured") return product.is_featured === true;
+      if (statusFilter === "in-stock") return product.stock_status === "in_stock";
+      if (statusFilter === "low-stock") return product.stock_status === "low_stock";
+      if (statusFilter === "out-of-stock") {
+        return product.stock_status === "out_of_stock";
+      }
+
+      return true;
     });
-  }, [products, search]);
+  }, [products, search, statusFilter]);
 
   function handleChange(event) {
-    const { name, value } = event.target;
+    const { name, value, type, checked } = event.target;
 
     setFormData((current) => ({
       ...current,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   }
 
@@ -89,8 +118,14 @@ export function AdminProducts() {
     data.append("description", formData.description);
     data.append("price", formData.price);
     data.append("size", formData.size);
-    data.append("stockQuantity", formData.stockQuantity);
+    data.append("stockQuantity", formData.stockQuantity || "0");
+    data.append("lowStockThreshold", formData.lowStockThreshold || "20");
     data.append("status", formData.status);
+    data.append("isActive", String(formData.isActive));
+    data.append("isFeatured", String(formData.isFeatured));
+    data.append("slug", formData.slug);
+    data.append("metaTitle", formData.metaTitle);
+    data.append("metaDescription", formData.metaDescription);
 
     if (formData.image) {
       data.append("image", formData.image);
@@ -113,8 +148,14 @@ export function AdminProducts() {
       description: product.description || "",
       price: product.price || "",
       size: product.size || "",
-      stockQuantity: product.stock_quantity || "",
+      stockQuantity: product.stock_quantity ?? "",
+      lowStockThreshold: product.low_stock_threshold ?? "20",
       status: product.status || "draft",
+      isActive: product.is_active !== false,
+      isFeatured: product.is_featured === true,
+      slug: product.slug || "",
+      metaTitle: product.meta_title || "",
+      metaDescription: product.meta_description || "",
       image: null,
     });
 
@@ -189,7 +230,7 @@ export function AdminProducts() {
     <>
       <AdminTopbar
         title="Products"
-        subtitle="Create, edit, and manage LUMA products."
+        subtitle="Create, edit, and manage all LUMA products."
       />
 
       <section className="admin-content">
@@ -241,11 +282,11 @@ export function AdminProducts() {
               </label>
 
               <label>
-              Price NGN
+                Price NGN
                 <input
                   type="number"
                   name="price"
-                  placeholder="35.00"
+                  placeholder="35000"
                   min="0"
                   step="0.01"
                   value={formData.price}
@@ -278,6 +319,18 @@ export function AdminProducts() {
               </label>
 
               <label>
+                Low-stock threshold
+                <input
+                  type="number"
+                  name="lowStockThreshold"
+                  placeholder="20"
+                  min="0"
+                  value={formData.lowStockThreshold}
+                  onChange={handleChange}
+                />
+              </label>
+
+              <label>
                 Status
                 <select
                   name="status"
@@ -289,6 +342,63 @@ export function AdminProducts() {
                 </select>
               </label>
 
+              <label>
+                <span>Product visibility</span>
+                <select
+                  name="isActive"
+                  value={formData.isActive ? "true" : "false"}
+                  onChange={(event) =>
+                    setFormData((current) => ({
+                      ...current,
+                      isActive: event.target.value === "true",
+                    }))
+                  }
+                >
+                  <option value="true">Visible / Active</option>
+                  <option value="false">Hidden / Inactive</option>
+                </select>
+              </label>
+
+              <label>
+                <span>Featured product</span>
+                <select
+                  name="isFeatured"
+                  value={formData.isFeatured ? "true" : "false"}
+                  onChange={(event) =>
+                    setFormData((current) => ({
+                      ...current,
+                      isFeatured: event.target.value === "true",
+                    }))
+                  }
+                >
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </label>
+
+              <label>
+                SEO slug
+                <input
+                  type="text"
+                  name="slug"
+                  placeholder="luma-glow-serum"
+                  value={formData.slug}
+                  onChange={handleChange}
+                />
+              </label>
+
+              <label>
+                Meta title
+                <input
+                  type="text"
+                  name="metaTitle"
+                  placeholder="LUMA Glow Serum"
+                  maxLength="180"
+                  value={formData.metaTitle}
+                  onChange={handleChange}
+                />
+              </label>
+
               <label className="full">
                 Description
                 <textarea
@@ -297,6 +407,18 @@ export function AdminProducts() {
                   value={formData.description}
                   onChange={handleChange}
                   rows="4"
+                />
+              </label>
+
+              <label className="full">
+                Meta description
+                <textarea
+                  name="metaDescription"
+                  placeholder="Short SEO description for search and link previews..."
+                  value={formData.metaDescription}
+                  onChange={handleChange}
+                  rows="3"
+                  maxLength="300"
                 />
               </label>
 
@@ -320,13 +442,29 @@ export function AdminProducts() {
           <div className="admin-table-header">
             <h2>All products</h2>
 
-            <input
-              className="admin-search"
-              type="search"
-              placeholder="Search products..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <input
+                className="admin-search"
+                type="search"
+                placeholder="Search products..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+
+              <select
+                className="admin-search"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
+                <option value="all">All</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="featured">Featured</option>
+                <option value="in-stock">In stock</option>
+                <option value="low-stock">Low stock</option>
+                <option value="out-of-stock">Out of stock</option>
+              </select>
+            </div>
           </div>
 
           {error && <div className="admin-error">{error}</div>}
@@ -344,6 +482,8 @@ export function AdminProducts() {
                     <th>Price</th>
                     <th>Size</th>
                     <th>Stock</th>
+                    <th>Low stock</th>
+                    <th>Visibility</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -362,14 +502,28 @@ export function AdminProducts() {
 
                           <div>
                             <strong>{product.name}</strong>
+                            <small>/{product.slug || product.id}</small>
                             <small>{product.description || "No description"}</small>
+                            {product.is_featured && (
+                              <small>Featured product</small>
+                            )}
                           </div>
                         </div>
                       </td>
 
-                    <td>{formatNaira(product.price)}</td>
+                      <td>{formatNaira(product.price)}</td>
                       <td>{product.size || "—"}</td>
-                      <td>{product.stock_quantity ?? 0}</td>
+                      <td>
+                        <strong>{product.stock_quantity ?? 0}</strong>
+                        <br />
+                        <small>{getStockLabel(product)}</small>
+                      </td>
+                      <td>{product.low_stock_threshold ?? 20}</td>
+                      <td>
+                        <span className="admin-badge">
+                          {product.is_active === false ? "Hidden" : "Visible"}
+                        </span>
+                      </td>
                       <td>
                         <span className="admin-badge">
                           {product.status || "draft"}
