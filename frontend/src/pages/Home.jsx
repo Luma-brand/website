@@ -55,7 +55,7 @@ export function Home() {
           </motion.p>
 
           <motion.h1 variants={fadeUp}>
-            Professional-level results, made effortless at home.
+            Professional secret, made effortless at home.
           </motion.h1>
 
           <motion.p className="hero-copy" variants={fadeUp}>
