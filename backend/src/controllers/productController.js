@@ -302,15 +302,29 @@ const getProducts = async (req, res) => {
       return getAdminProducts(req, res);
     }
 
+    const reviewTable = await pool.query(
+      `SELECT to_regclass('public.product_reviews') IS NOT NULL AS available`
+    );
+    const reviewFields = reviewTable.rows[0]?.available
+      ? `, COALESCE(reviews.average_rating, 0)::numeric AS average_rating
+         , COALESCE(reviews.review_count, 0)::int AS review_count`
+      : `, 0::numeric AS average_rating, 0::int AS review_count`;
+    const reviewJoin = reviewTable.rows[0]?.available
+      ? `LEFT JOIN LATERAL (
+           SELECT AVG(pr.rating) AS average_rating, COUNT(*) AS review_count
+           FROM product_reviews pr
+           WHERE pr.product_id = p.id AND pr.status = 'approved'
+         ) reviews ON TRUE`
+      : "";
+
     const result = await pool.query(
-      `
-        SELECT *
-        FROM products
-        WHERE COALESCE(is_active, TRUE) = TRUE
-          AND status = 'active'
-          AND COALESCE(stock_quantity, 0) > 0
-        ORDER BY created_at DESC
-      `
+      `SELECT p.* ${reviewFields}
+       FROM products p
+       ${reviewJoin}
+       WHERE COALESCE(p.is_active, TRUE) = TRUE
+         AND p.status = 'active'
+         AND COALESCE(p.stock_quantity, 0) > 0
+       ORDER BY p.created_at DESC`
     );
 
     const products = result.rows.map(formatProduct);

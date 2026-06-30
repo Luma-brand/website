@@ -5,8 +5,9 @@ import { Footer } from "../components/layout/Footer";
 import { NewsletterSection } from "../components/sections/NewsletterSection";
 import { TrustStrip } from "../components/sections/TrustStrip";
 import { ContactSection } from "../components/sections/ContactSection";
+import { HomeProductSlider } from "../components/product/HomeProductSlider";
 import { PageSeo } from "../components/seo/PageSeo";
-import { benefits, faqs, products, ritualSteps } from "../data/siteContent";
+import { benefits, faqs, ritualSteps } from "../data/siteContent";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 26 },
@@ -157,52 +158,7 @@ export function Home() {
           </p>
         </div>
 
-        <div className="product-grid">
-          {products.slice(0, 3).map((product, index) => (
-            <motion.article
-              className="product-card"
-              key={product.name}
-              initial={{ opacity: 0, y: 28 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.25 }}
-              transition={{ duration: 0.7, delay: index * 0.08 }}
-            >
-              <div className="product-image">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  onError={(event) => {
-                    event.currentTarget.style.display = "none";
-                  }}
-                />
-
-                <div className="product-image-fallback">
-                  <span>{product.name}</span>
-                </div>
-              </div>
-
-              <div className="product-card-content">
-                <div className="product-meta">
-                  <p>{product.category}</p>
-                </div>
-
-                <h3>{product.name}</h3>
-                <span>{product.description}</span>
-
-                <div className="product-details">
-                  {product.details.map((detail) => (
-                    <small key={detail}>{detail}</small>
-                  ))}
-                </div>
-
-                <a href={`/products/${product.slug}`} className="product-home-link">
-                  Product info
-                  <ArrowUpRight size={16} />
-                </a>
-              </div>
-            </motion.article>
-          ))}
-        </div>
+        <HomeProductSlider />
 
         <div className="hero-actions" style={{ justifyContent: "center", marginTop: 32 }}>
           <a href="/products" className="btn btn-primary">
