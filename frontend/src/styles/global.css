@@ -5587,3 +5587,459 @@ textarea::placeholder {
     width: 132px !important;
   }
 }
+/* =========================================================
+   FINAL SAFE LUMA MOBILE HERO FIX
+   Keeps desktop untouched.
+   Only fixes mobile hero image + real overlay classes.
+========================================================= */
+
+/* Desktop/tablet: keep the original polished layout */
+@media (min-width: 641px) {
+  .hero-visual {
+    position: relative !important;
+    overflow: visible !important;
+  }
+
+  .hero-image-card {
+    overflow: hidden !important;
+  }
+
+  .hero-image-card img {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center 34% !important;
+  }
+
+  .floating-product-card {
+    left: -24px !important;
+    bottom: 58px !important;
+    transform: none !important;
+  }
+
+  .hero-product-strip {
+    right: -22px !important;
+    top: 48px !important;
+    bottom: auto !important;
+    transform: none !important;
+  }
+}
+
+/* Mobile only */
+@media (max-width: 640px) {
+  .hero-section {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    min-height: auto !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto !important;
+    gap: 22px !important;
+    padding: 102px 0 42px !important;
+    align-content: start !important;
+    overflow: visible !important;
+  }
+
+  .hero-visual {
+    order: -1 !important;
+    position: relative !important;
+    width: 100% !important;
+    height: clamp(430px, 56svh, 540px) !important;
+    min-height: 430px !important;
+    overflow: visible !important;
+    z-index: 2 !important;
+  }
+
+  .hero-image-card {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    border-radius: 30px !important;
+  }
+
+  .hero-image-card img {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    object-fit: cover !important;
+    object-position: center top !important;
+    border-radius: inherit !important;
+  }
+
+  .hero-content {
+    position: relative !important;
+    z-index: 3 !important;
+    width: 100% !important;
+  }
+
+  .hero-content h1 {
+    max-width: 100% !important;
+    font-size: clamp(3rem, 13vw, 4rem) !important;
+    line-height: 0.94 !important;
+    letter-spacing: -0.075em !important;
+  }
+
+  .hero-copy {
+    max-width: 100% !important;
+    margin-top: 18px !important;
+    font-size: 0.96rem !important;
+    line-height: 1.62 !important;
+  }
+
+  .hero-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+    margin-top: 24px !important;
+  }
+
+  .hero-actions .btn {
+    width: 100% !important;
+    min-height: 50px !important;
+    padding: 0 12px !important;
+    font-size: 0.84rem !important;
+    white-space: nowrap !important;
+  }
+
+  /* Cream card: shift left so it stops blocking the product bottle */
+  .floating-product-card {
+    display: block !important;
+    position: absolute !important;
+    left: -18px !important;
+    bottom: 22px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 158px !important;
+    padding: 10px 12px !important;
+    border-radius: 17px !important;
+    z-index: 10 !important;
+    transform: none !important;
+  }
+
+  .floating-product-card span {
+    margin-bottom: 2px !important;
+    font-size: 0.66rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .floating-product-card strong {
+    font-size: 0.9rem !important;
+    line-height: 1.05 !important;
+  }
+
+  /* Black tags: shift right so they sit partly on the image edge */
+  .hero-product-strip {
+    display: grid !important;
+    position: absolute !important;
+    top: 45% !important;
+    right: -28px !important;
+    bottom: auto !important;
+    gap: 6px !important;
+    justify-items: end !important;
+    z-index: 11 !important;
+    transform: translateY(-50%) !important;
+  }
+
+  .hero-product-strip span {
+    display: block !important;
+    width: max-content !important;
+    max-width: max-content !important;
+    margin: 0 !important;
+    padding: 7px 10px !important;
+    border-radius: 999px !important;
+    font-size: 0.68rem !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* Smaller phones */
+@media (max-width: 380px) {
+  .hero-visual {
+    height: 420px !important;
+    min-height: 420px !important;
+  }
+
+  .floating-product-card {
+    left: -20px !important;
+    bottom: 20px !important;
+    max-width: 150px !important;
+  }
+
+  .hero-product-strip {
+    right: -30px !important;
+    top: 45% !important;
+  }
+
+  .hero-product-strip span {
+    font-size: 0.64rem !important;
+    padding: 7px 9px !important;
+  }
+}
+/* =========================================================
+   LUMA HERO TAG RESTORE FIX
+   PC: tags stay top-right like original.
+   Mobile: tags move lower/right without disappearing.
+========================================================= */
+
+/* Make sure hero overlays position from the hero image area */
+.hero-visual {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* Keep image card clean and rounded */
+.hero-image-card {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Restore the black tag styling */
+.hero-product-strip,
+.hero-product-tags,
+.hero-tags,
+.hero-badges {
+  position: absolute !important;
+  display: grid !important;
+  gap: 8px !important;
+  justify-items: end !important;
+  z-index: 30 !important;
+}
+
+.hero-product-strip span,
+.hero-product-tags span,
+.hero-tags span,
+.hero-badges span,
+.hero-product-strip > *,
+.hero-product-tags > *,
+.hero-tags > *,
+.hero-badges > * {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: max-content !important;
+  max-width: max-content !important;
+  margin: 0 !important;
+  padding: 10px 15px !important;
+  border-radius: 999px !important;
+  background: rgba(34, 25, 18, 0.88) !important;
+  color: #fff6d6 !important;
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  box-shadow: 0 14px 36px rgba(22, 22, 22, 0.16) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+}
+
+/* PC / desktop: keep tags at the original top-right position */
+@media (min-width: 641px) {
+  .hero-product-strip,
+  .hero-product-tags,
+  .hero-tags,
+  .hero-badges {
+    top: 48px !important;
+    right: -22px !important;
+    bottom: auto !important;
+    transform: none !important;
+  }
+
+  .floating-product-card {
+    left: -24px !important;
+    bottom: 58px !important;
+    transform: none !important;
+  }
+}
+
+/* Mobile: move tags lower and slightly to the right edge */
+@media (max-width: 640px) {
+  .hero-product-strip,
+  .hero-product-tags,
+  .hero-tags,
+  .hero-badges {
+    top: 52% !important;
+    right: -12px !important;
+    bottom: auto !important;
+    transform: translateY(-50%) !important;
+    gap: 6px !important;
+  }
+
+  .hero-product-strip span,
+  .hero-product-tags span,
+  .hero-tags span,
+  .hero-badges span,
+  .hero-product-strip > *,
+  .hero-product-tags > *,
+  .hero-tags > *,
+  .hero-badges > * {
+    padding: 7px 10px !important;
+    font-size: 0.68rem !important;
+  }
+
+  /* Cream card: slightly left, but still visible */
+  .floating-product-card {
+    left: -10px !important;
+    bottom: 22px !important;
+    max-width: 160px !important;
+    padding: 10px 12px !important;
+    border-radius: 17px !important;
+    z-index: 31 !important;
+  }
+
+  .floating-product-card span {
+    font-size: 0.66rem !important;
+  }
+
+  .floating-product-card strong {
+    font-size: 0.9rem !important;
+  }
+}
+
+/* Extra small phones */
+@media (max-width: 380px) {
+  .hero-product-strip,
+  .hero-product-tags,
+  .hero-tags,
+  .hero-badges {
+    top: 53% !important;
+    right: -14px !important;
+  }
+
+  .floating-product-card {
+    left: -12px !important;
+    bottom: 20px !important;
+    max-width: 150px !important;
+  }
+}
+/* =========================================================
+   LUMA MOBILE HERO BUTTON POSITION FIX
+   Pulls Explore products / See the ritual back up on mobile
+========================================================= */
+
+@media (max-width: 640px) {
+  .hero-section {
+    min-height: auto !important;
+    gap: 14px !important;
+    padding-top: 96px !important;
+    padding-bottom: 30px !important;
+    align-content: start !important;
+  }
+
+  /* Keep image tall, but not so tall that it pushes buttons out */
+  .hero-visual {
+    height: clamp(390px, 48svh, 455px) !important;
+    min-height: 390px !important;
+  }
+
+  .hero-content {
+    margin-top: 0 !important;
+  }
+
+  .eyebrow {
+    margin-bottom: 8px !important;
+    font-size: 0.92rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .hero-content h1 {
+    font-size: clamp(2.65rem, 11.5vw, 3.55rem) !important;
+    line-height: 0.91 !important;
+    letter-spacing: -0.075em !important;
+    margin: 0 !important;
+  }
+
+  .hero-copy {
+    margin-top: 12px !important;
+    font-size: 0.88rem !important;
+    line-height: 1.48 !important;
+  }
+
+  .hero-actions {
+    margin-top: 14px !important;
+    gap: 10px !important;
+  }
+
+  .hero-actions .btn {
+    min-height: 46px !important;
+    padding: 0 10px !important;
+    font-size: 0.78rem !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .hero-section {
+    padding-top: 90px !important;
+    gap: 12px !important;
+  }
+
+  .hero-visual {
+    height: 365px !important;
+    min-height: 365px !important;
+  }
+
+  .hero-content h1 {
+    font-size: clamp(2.45rem, 11vw, 3.2rem) !important;
+  }
+
+  .hero-copy {
+    font-size: 0.84rem !important;
+    line-height: 1.42 !important;
+  }
+
+  .hero-actions {
+    margin-top: 12px !important;
+  }
+
+  .hero-actions .btn {
+    min-height: 44px !important;
+    font-size: 0.74rem !important;
+  }
+}
+/* =========================================================
+   LUMA MOBILE HERO FULL SCREEN FIX
+   Pushes the next section/trust strip below the first screen
+========================================================= */
+
+@media (max-width: 640px) {
+  .hero-section {
+    min-height: 100svh !important;
+    padding-top: 96px !important;
+    padding-bottom: 72px !important;
+    gap: 14px !important;
+    align-content: start !important;
+  }
+
+  .hero-visual {
+    height: clamp(390px, 47svh, 445px) !important;
+    min-height: 390px !important;
+  }
+
+  .hero-actions {
+    margin-top: 14px !important;
+  }
+
+  /* Push the strip after hero completely below the first screen */
+  .trust-strip {
+    margin-top: 0 !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .hero-section {
+    min-height: 100svh !important;
+    padding-top: 90px !important;
+    padding-bottom: 68px !important;
+  }
+
+  .hero-visual {
+    height: 365px !important;
+    min-height: 365px !important;
+  }
+}

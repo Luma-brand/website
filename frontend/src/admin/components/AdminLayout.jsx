@@ -20,6 +20,13 @@ export function AdminLayout() {
       window.removeEventListener("luma-admin-menu-open", openSidebar);
     };
   }, []);
+  useEffect(() => {
+  document.body.classList.toggle("admin-menu-open", isMobileSidebarOpen);
+
+  return () => {
+    document.body.classList.remove("admin-menu-open");
+  };
+}, [isMobileSidebarOpen]);
 
   if (!token) {
     return <Navigate to={ADMIN_LOGIN_PATH} replace />;

@@ -100,7 +100,7 @@ export function Home() {
             <strong>No appointment.</strong>
           </div>
 
-          <div className="hero-product-strip">
+          <div className="hero-product-tags">
             <span>LamiFix</span>
             <span>Hybrid Stain</span>
             
