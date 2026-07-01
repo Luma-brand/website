@@ -531,7 +531,33 @@ export function Account({ initialMode = "signup" }) {
       <Header />
 
       <section className="commerce-page auth-page-section">
-        <div className="account-panel auth-panel auth-card-shell">
+        <div className="account-panel auth-panel auth-panel-split">
+          <aside className="auth-side-panel" aria-label="LUMA account benefits">
+            <Link to="/cart" className="auth-side-back">
+              <ArrowLeft size={16} /> Back to cart
+            </Link>
+            <div className="auth-side-brand">
+              <span>LUMA</span>
+              <small>Obsessively well made</small>
+            </div>
+            <div className="auth-side-content">
+              <p className="eyebrow">Your brow ritual, remembered</p>
+              <h2>A more personal way to shop LUMA.</h2>
+              <p>Save your details, move through checkout faster, and stay close to product and restock updates.</p>
+            </div>
+            <div className="auth-visual-card" aria-hidden="true">
+              <div className="auth-product-scene">
+                <span className="auth-product-bottle auth-product-bottle-one" />
+                <span className="auth-product-bottle auth-product-bottle-two" />
+                <span className="auth-product-jar" />
+              </div>
+            </div>
+            <div className="auth-benefit-list">
+              <span><CheckCircle2 size={16} /> Secure customer access</span>
+              <span><CheckCircle2 size={16} /> Faster checkout</span>
+              <span><CheckCircle2 size={16} /> Brow-first recommendations</span>
+            </div>
+          </aside>
           <div className="auth-card">
             <Link to="/cart" className="auth-mobile-back">
               <ArrowLeft size={16} />

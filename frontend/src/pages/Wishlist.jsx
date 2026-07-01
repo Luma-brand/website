@@ -58,7 +58,7 @@ export function Wishlist() {
                     {getImageUrl(product.image) ? (
                       <img src={getImageUrl(product.image)} alt={product.name} />
                     ) : (
-                      <span className="image-fallback">LUMA</span>
+                      <span className="image-fallback" aria-hidden="true" />
                     )}
                   </Link>
 

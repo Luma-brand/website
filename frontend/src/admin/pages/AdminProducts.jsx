@@ -42,6 +42,7 @@ export function AdminProducts() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const loadProducts = useCallback(async () => {
     try {
@@ -96,12 +97,20 @@ export function AdminProducts() {
       ...current,
       [name]: type === "checkbox" ? checked : value,
     }));
+    setError("");
+    setSuccess("");
   }
 
   function handleImageChange(event) {
     const file = event.target.files?.[0];
 
     if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Product images must be 5 MB or smaller.");
+      event.target.value = "";
+      return;
+    }
 
     setFormData((current) => ({
       ...current,
@@ -171,12 +180,14 @@ export function AdminProducts() {
     event.preventDefault();
 
     if (!formData.name.trim() || !formData.price) {
-      alert("Product name and price are required.");
+      setError("Product name and price are required before saving.");
       return;
     }
 
     try {
       setIsSubmitting(true);
+      setError("");
+      setSuccess("");
 
       const productPayload = buildProductFormData();
 
@@ -195,8 +206,15 @@ export function AdminProducts() {
       }
 
       resetForm();
+      setSuccess(
+        editingProduct
+          ? "Product updated successfully."
+          : formData.status === "active" && formData.isActive
+          ? "Product created and published. It is now eligible for the shop and homepage."
+          : "Product created as a draft. Publish it when it is ready for the shop."
+      );
     } catch (error) {
-      alert(error.message || "Failed to save product.");
+      setError(error.message || "Failed to save product. Check the required fields and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -234,6 +252,8 @@ export function AdminProducts() {
       />
 
       <section className="admin-content">
+        {error && <div className="admin-error" role="alert">{error}</div>}
+        {success && <div className="admin-success" role="status">{success}</div>}
         <div className="admin-card admin-product-form-card">
           <div className="admin-table-header">
             <h2>{editingProduct ? "Edit product" : "Add new product"}</h2>
@@ -466,8 +486,6 @@ export function AdminProducts() {
               </select>
             </div>
           </div>
-
-          {error && <div className="admin-error">{error}</div>}
 
           {isLoading ? (
             <div className="admin-empty">Loading products...</div>

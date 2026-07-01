@@ -107,7 +107,7 @@ export function Cart() {
                     {getImageUrl(item.image) ? (
                       <img src={getImageUrl(item.image)} alt={item.name} />
                     ) : (
-                      <span className="image-fallback">LUMA</span>
+                      <span className="image-fallback" aria-hidden="true" />
                     )}
                   </div>
 

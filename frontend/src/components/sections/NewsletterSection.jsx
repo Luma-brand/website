@@ -13,10 +13,10 @@ export function NewsletterSection() {
       >
         <div>
           <p className="eyebrow">Join the LUMA list</p>
-          <h2>Beauty details, product drops, and soft rituals.</h2>
+          <h2>Brow details, product drops, and soft rituals.</h2>
           <p className="newsletter-copy">
-            Be first to know when LUMA launches new essentials for brows, lashes,
-            and edges.
+            Be first to know when LUMA launches new essentials for polished,
+            beautifully groomed brows.
           </p>
         </div>
 

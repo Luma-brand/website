@@ -282,6 +282,7 @@ const createProduct = async (req, res) => {
 
     console.error("Create product error:", error);
 
+    const isSchemaMismatch = error.code === "42703";
     return res.status(error.statusCode || (error.code === "23505" ? 409 : 500)).json({
       success: false,
       message:
@@ -289,6 +290,8 @@ const createProduct = async (req, res) => {
           ? error.message
           : error.code === "23505"
           ? "Product slug must be unique."
+          : isSchemaMismatch
+          ? "The product database schema is out of date. Run migration 032_products_seo_timestamp_sync.sql and try again."
           : "Server error while creating product.",
     });
   } finally {
@@ -323,8 +326,7 @@ const getProducts = async (req, res) => {
        ${reviewJoin}
        WHERE COALESCE(p.is_active, TRUE) = TRUE
          AND p.status = 'active'
-         AND COALESCE(p.stock_quantity, 0) > 0
-       ORDER BY p.created_at DESC`
+       ORDER BY COALESCE(p.is_featured, FALSE) DESC, p.created_at DESC`
     );
 
     const products = result.rows.map(formatProduct);

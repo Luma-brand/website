@@ -1,5 +1,5 @@
-import { memo, useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getProducts } from "../../services/api";
 import { formatNaira } from "../../utils/currency";
@@ -22,13 +22,12 @@ function asList(value) {
 function normalizeProduct(product) {
   const rating = Number(product.average_rating ?? product.rating ?? 0);
   const reviewCount = Number(product.review_count ?? product.reviews_count ?? 0);
-
   return {
     ...product,
     slug: product.slug || product.id,
     image: getProductImage(product),
-    category: product.category || product.product_category || product.size || "LUMA Beauty",
-    description: product.description || "A soft luxury LUMA beauty essential.",
+    category: product.category || product.product_category || product.size || "LUMA Brow Care",
+    description: product.description || "A soft luxury LUMA brow essential.",
     priceLabel: formatNaira(product.price),
     rating: Number.isFinite(rating) ? Math.max(0, Math.min(5, rating)) : 0,
     reviewCount: Number.isFinite(reviewCount) ? reviewCount : 0,
@@ -38,47 +37,35 @@ function normalizeProduct(product) {
 
 const ProductSlide = memo(function ProductSlide({ product }) {
   const roundedRating = Math.round(product.rating);
-
   return (
     <article className="product-card home-product-slide">
       <Link to={`/products/${product.slug}`} className="product-image" tabIndex={-1} aria-hidden="true">
         {product.image ? (
-          <img
-            src={product.image}
-            alt={product.name}
-            loading="lazy"
-            decoding="async"
-            sizes="(max-width: 640px) 82vw, (max-width: 1024px) 42vw, 24vw"
-          />
+          <img src={product.image} alt={product.name} loading="lazy" decoding="async" sizes="(max-width: 640px) 82vw, (max-width: 1024px) 42vw, 24vw" />
         ) : (
-          <div className="product-image-fallback"><span>{product.name}</span></div>
+          <div className="product-image-fallback"><small>Image coming soon</small></div>
         )}
       </Link>
-
       <div className="product-card-content">
         <p className="home-product-category">{product.category}</p>
         <h3>{product.name}</h3>
         <p className="home-product-description">{product.description}</p>
-
         <div className="home-product-rating" aria-label={product.reviewCount ? `${product.rating.toFixed(1)} out of 5 stars from ${product.reviewCount} reviews` : "No reviews yet"}>
           {product.reviewCount > 0 ? (
             <>
-              <span aria-hidden="true">{"★★★★★".split("").map((star, index) => (
+              <span aria-hidden="true">{"\u2605\u2605\u2605\u2605\u2605".split("").map((star, index) => (
                 <i key={index} className={index < roundedRating ? "filled" : ""}>{star}</i>
               ))}</span>
               <small>({product.reviewCount})</small>
             </>
           ) : <small>No reviews yet</small>}
         </div>
-
         <strong className="home-product-price">{product.priceLabel}</strong>
-
         {product.tags.length > 0 && (
           <div className="product-details home-product-tags">
             {product.tags.map((tag) => <small key={tag}>{tag}</small>)}
           </div>
         )}
-
         <Link to={`/products/${product.slug}`} className="product-home-link">
           Product info <ArrowUpRight size={16} />
         </Link>
@@ -93,17 +80,19 @@ export function HomeProductSlider() {
   const [products, setProducts] = useState([]);
   const [status, setStatus] = useState("loading");
 
-  useEffect(() => {
-    let active = true;
-    getProducts()
+  const loadProducts = useCallback((showLoading = true) => {
+    if (showLoading) setStatus("loading");
+    return getProducts()
       .then((response) => {
-        if (!active) return;
         setProducts((response.data || []).map(normalizeProduct));
         setStatus("ready");
       })
-      .catch(() => active && setStatus("error"));
-    return () => { active = false; };
+      .catch(() => setStatus("error"));
   }, []);
+
+  useEffect(() => {
+    queueMicrotask(() => { void loadProducts(false); });
+  }, [loadProducts]);
 
   function scroll(direction) {
     const track = trackRef.current;
@@ -140,8 +129,21 @@ export function HomeProductSlider() {
     trackRef.current.scrollLeft += event.deltaY;
   }
 
-  if (status === "loading") return <div className="home-product-state" aria-live="polite">Preparing the collection…</div>;
-  if (status === "error" || products.length === 0) return <div className="home-product-state">The collection is being prepared. Visit the shop to explore availability.</div>;
+  if (status === "loading") return <div className="home-product-state" aria-live="polite">Preparing the brow collection…</div>;
+  if (status === "error") return (
+    <div className="home-product-state" role="alert">
+      <strong>We couldn’t load the collection.</strong>
+      <span>Please check your connection or try again.</span>
+      <button type="button" className="btn btn-secondary" onClick={loadProducts}><RefreshCw size={16} /> Try again</button>
+    </div>
+  );
+  if (products.length === 0) return (
+    <div className="home-product-state">
+      <strong>The next brow ritual is almost here.</strong>
+      <span>Published LUMA products will appear here as soon as they are available.</span>
+      <Link to="/products" className="product-home-link">View the shop <ArrowUpRight size={16} /></Link>
+    </div>
+  );
 
   return (
     <div className="home-product-carousel" role="region" aria-roledescription="carousel" aria-label="LUMA products">
@@ -149,20 +151,13 @@ export function HomeProductSlider() {
         <button type="button" onClick={() => scroll(-1)} aria-label="Previous products"><ArrowLeft size={18} /></button>
         <button type="button" onClick={() => scroll(1)} aria-label="Next products"><ArrowRight size={18} /></button>
       </div>
-      <div
-        ref={trackRef}
-        className="home-product-track"
-        tabIndex="0"
-        aria-label="Scrollable product list"
+      <div ref={trackRef} className="home-product-track" tabIndex={0} aria-label="Scrollable product list"
         onKeyDown={(event) => {
           if (event.key === "ArrowLeft") { event.preventDefault(); scroll(-1); }
           if (event.key === "ArrowRight") { event.preventDefault(); scroll(1); }
         }}
-        onWheel={handleWheel}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
+        onWheel={handleWheel} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove}
+        onPointerUp={endDrag} onPointerCancel={endDrag}
         onClickCapture={(event) => {
           if (dragRef.current.moved) { event.preventDefault(); event.stopPropagation(); dragRef.current.moved = false; }
         }}

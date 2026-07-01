@@ -1083,7 +1083,8 @@ export const deleteEnquiry = async (id) => {
 
 /**
  * Public products.
- * This returns only active + in-stock products from the backend.
+ * This returns visible, published products from the backend. Stock state is
+ * included so out-of-stock products can still support waitlist flows.
  */
 export const getProducts = async () => {
   const response = await fetch(`${API_BASE_URL}/products`);

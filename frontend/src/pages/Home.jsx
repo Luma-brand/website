@@ -56,8 +56,7 @@ export function Home() {
           </motion.p>
 
           <motion.h1 variants={fadeUp}>
-           Obsessively
-           Well Made.
+            Obsessively<br />Well Made.
           </motion.h1>
 
           <motion.p className="hero-copy" variants={fadeUp}>
@@ -86,15 +85,13 @@ export function Home() {
           <div className="hero-image-card">
             <img
               src="/assets/images/hero-closeup.jpg"
-              alt="Close-up beauty image showing brows and lashes"
+              alt="Close-up beauty image highlighting polished brows"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
               }}
             />
 
-            <div className="image-fallback">
-              <span>LUMA.</span>
-            </div>
+            <div className="image-fallback" aria-hidden="true" />
           </div>
 
           <div className="floating-product-card">
@@ -179,9 +176,7 @@ export function Home() {
             }}
           />
 
-          <div className="benefits-fallback">
-            <span>Your brows but better.</span>
-          </div>
+          <div className="benefits-fallback" aria-hidden="true" />
         </div>
 
         <div className="benefits-content">

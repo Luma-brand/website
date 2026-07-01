@@ -116,7 +116,6 @@ const navGroups = [
         label: "Growth tools",
         path: "/luma-control-room/growth",
         icon: TrendingUp,
-  Workflow,
       },
       {
         label: "Email broadcasts",

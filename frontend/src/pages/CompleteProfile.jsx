@@ -189,14 +189,15 @@ export function CompleteProfile() {
     setCurrentStep((step) => Math.max(step - 1, 0));
   }
 
+  function handleSkipStep() {
+    setErrors({});
+    setCurrentStep((step) => Math.min(step + 1, stepLabels.length - 1));
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     const nextErrors = {};
 
-    if (!formData.whyLuma) nextErrors.whyLuma = "Choose the reason that fits best.";
-    if (!formData.firstTimeLuma) nextErrors.firstTimeLuma = "Choose one option.";
-    if (!formData.browGoal) nextErrors.browGoal = "Choose your brow goal.";
-    if (!formData.referralSource) nextErrors.referralSource = "Choose where you heard about LUMA.";
     if (formData.referralSource === "Other" && !formData.referralSourceOther.trim()) {
       nextErrors.referralSourceOther = "Add where you heard about LUMA.";
     }
@@ -232,10 +233,10 @@ export function CompleteProfile() {
         phoneCountryCode: user?.phone_country_code || accountCountry.callingCode,
         phoneE164: user?.phone_e164 || buildE164Phone(user?.phone || "", accountCountry),
         customerType: user?.customer_type || "regular_customer",
-        whyLuma: formData.whyLuma,
-        firstTimeLuma: formData.firstTimeLuma,
-        browGoal: formData.browGoal,
-        referralSource: formData.referralSource,
+        whyLuma: formData.whyLuma || "Prefer not to say",
+        firstTimeLuma: formData.firstTimeLuma || "Prefer not to say",
+        browGoal: formData.browGoal || "Prefer not to say",
+        referralSource: formData.referralSource || "Prefer not to say",
         referralSourceOther: formData.referralSourceOther,
         whatsappIsAccountPhone: formData.whatsappIsAccountPhone,
         whatsappNumber,
@@ -314,19 +315,22 @@ export function CompleteProfile() {
               </div>
             )}
 
-                        <div className="onboarding-stepper" aria-label="Profile completion steps">
+            <div className="onboarding-stepper" aria-label="Profile completion steps">
               {stepLabels.map((label, index) => (
                 <button
                   type="button"
                   key={label}
-                  className={index === currentStep ? "onboarding-step active" : "onboarding-step"}
+                  className={`${index === currentStep ? "onboarding-step active" : "onboarding-step"}${index < currentStep ? " complete" : ""}`}
                   onClick={() => setCurrentStep(index)}
+                  aria-label={`Go to ${label} step`}
+                  aria-current={index === currentStep ? "step" : undefined}
+                  title={label}
                 >
-                  <span>{index + 1}</span>
-                  {label}
+                  <span aria-hidden="true" />
                 </button>
               ))}
             </div>
+            <p className="onboarding-step-label">{stepLabels[currentStep]}</p>
 
             {currentStep === 0 && (
               <ChoiceGrid
@@ -442,6 +446,21 @@ export function CompleteProfile() {
               </>
             )}
 
+            {currentStep === 5 && (
+              <div className="onboarding-question onboarding-review">
+                <p className="auth-kicker">Ready when you are</p>
+                <h2>Your brow profile</h2>
+                <p className="auth-muted">Review your choices. Anything skipped stays private and can be updated later.</p>
+                <div className="onboarding-summary-grid">
+                  <div><span>Why LUMA</span><strong>{formData.whyLuma || "Skipped"}</strong></div>
+                  <div><span>Experience</span><strong>{formData.firstTimeLuma || "Skipped"}</strong></div>
+                  <div><span>Brow goal</span><strong>{formData.browGoal || "Skipped"}</strong></div>
+                  <div><span>Referral</span><strong>{formData.referralSource || "Skipped"}</strong></div>
+                  <div><span>Updates</span><strong>{formData.marketing ? "Subscribed" : "Not subscribed"}</strong></div>
+                </div>
+              </div>
+            )}
+
             <div className="onboarding-actions">
               {currentStep > 0 && (
                 <button
@@ -471,6 +490,12 @@ export function CompleteProfile() {
                 </button>
               )}
             </div>
+
+            {!isFinalStep && (
+              <button type="button" className="onboarding-skip" onClick={handleSkipStep} disabled={isSubmitting}>
+                Skip this question
+              </button>
+            )}
           </div>
         </form>
       </section>
