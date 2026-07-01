@@ -6043,3 +6043,394 @@ textarea::placeholder {
     min-height: 365px !important;
   }
 }
+/* =========================================================
+   LUMA PRODUCT CARD HEIGHT FIX
+   Makes product cards shorter without removing anything
+========================================================= */
+
+/* Product listing page cards */
+.shop-product-card {
+  min-height: auto !important;
+  padding: 14px !important;
+  gap: 18px !important;
+  align-items: stretch !important;
+}
+
+/* Reduce image height on desktop */
+.shop-product-image {
+  min-height: 300px !important;
+  max-height: 340px !important;
+  height: 340px !important;
+  border-radius: 24px !important;
+}
+
+.shop-product-image img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+/* Reduce empty vertical spacing inside product info */
+.shop-product-content {
+  align-content: start !important;
+  padding: 10px 8px !important;
+}
+
+.shop-product-content h2 {
+  font-size: clamp(2rem, 3.8vw, 4rem) !important;
+  line-height: 0.92 !important;
+}
+
+.shop-product-content > p {
+  margin-top: 10px !important;
+  line-height: 1.55 !important;
+}
+
+.shop-product-actions {
+  margin-top: 16px !important;
+}
+
+.product-details {
+  margin-top: 12px !important;
+}
+
+.product-button {
+  margin-top: 14px !important;
+}
+
+/* Home page horizontal product cards */
+.home-product-slide .product-card-content {
+  min-height: auto !important;
+  padding: 20px !important;
+}
+
+.home-product-slide .product-image {
+  aspect-ratio: 4 / 4.2 !important;
+}
+
+.home-product-slide .product-card-content h3 {
+  font-size: clamp(1.3rem, 1.7vw, 1.65rem) !important;
+}
+
+.product-card-content .home-product-description {
+  min-height: auto !important;
+  margin-top: 8px !important;
+  line-height: 1.45 !important;
+}
+
+.home-product-rating {
+  margin-top: 10px !important;
+}
+
+.home-product-tags {
+  margin-top: 10px !important;
+}
+
+.home-product-slide .product-home-link {
+  padding-top: 14px !important;
+}
+
+/* Mobile product cards */
+@media (max-width: 640px) {
+  .shop-product-card {
+    padding: 12px !important;
+    gap: 14px !important;
+    border-radius: 26px !important;
+  }
+
+  .shop-product-image {
+    min-height: 260px !important;
+    height: 260px !important;
+    max-height: 260px !important;
+    border-radius: 22px !important;
+  }
+
+  .shop-product-content {
+    padding: 4px 2px 8px !important;
+  }
+
+  .shop-product-content h2 {
+    font-size: clamp(2.2rem, 11vw, 3.2rem) !important;
+    line-height: 0.9 !important;
+  }
+
+  .shop-product-content > p {
+    margin-top: 8px !important;
+    font-size: 0.95rem !important;
+    line-height: 1.45 !important;
+  }
+
+  .product-meta {
+    margin-bottom: 6px !important;
+    gap: 4px !important;
+  }
+
+  .product-details {
+    margin-top: 10px !important;
+    gap: 7px !important;
+  }
+
+  .product-details small {
+    padding: 7px 10px !important;
+    font-size: 0.72rem !important;
+  }
+
+  .shop-product-actions {
+    margin-top: 14px !important;
+    gap: 10px !important;
+  }
+
+  .product-button,
+  .wishlist-toggle,
+  .product-learn-link {
+    min-height: 44px !important;
+  }
+
+  .product-button {
+    margin-top: 12px !important;
+  }
+
+  .wishlist-toggle {
+    padding: 0 14px !important;
+  }
+
+  /* Home carousel mobile */
+  .home-product-slide {
+    flex-basis: 78% !important;
+  }
+
+  .home-product-slide .product-image {
+    aspect-ratio: 4 / 4 !important;
+  }
+
+  .home-product-slide .product-card-content {
+    min-height: auto !important;
+    padding: 18px !important;
+  }
+}
+/* =========================================================
+   LUMA CLEAN REFERENCE-STYLE PRODUCT CARD
+   Image top, cream content bottom, Product info CTA
+   No fake chips, no add-to-cart styling
+========================================================= */
+
+/* Main home product cards */
+.home-product-slide,
+.product-card {
+  position: relative !important;
+  overflow: hidden !important;
+  border-radius: 34px !important;
+  border: 1px solid rgba(34, 25, 18, 0.1) !important;
+  background: #fffaf0 !important;
+  box-shadow: 0 24px 70px rgba(34, 25, 18, 0.08) !important;
+  transition: transform 220ms ease, box-shadow 220ms ease !important;
+}
+
+@media (hover: hover) {
+  .home-product-slide:hover,
+  .product-card:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 34px 90px rgba(34, 25, 18, 0.12) !important;
+  }
+}
+
+/* Product image area like the reference */
+.home-product-slide .product-image,
+.product-card .product-image {
+  height: auto !important;
+  aspect-ratio: 1 / 0.82 !important;
+  padding: 18px !important;
+  border-radius: 0 !important;
+  border: 0 !important;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 241, 159, 0.62), transparent 34%),
+    linear-gradient(180deg, #fff4bf 0%, #fffaf0 100%) !important;
+  box-shadow: none !important;
+}
+
+.home-product-slide .product-image img,
+.product-card .product-image img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  border-radius: 26px !important;
+}
+
+/* Bottom content panel */
+.home-product-slide .product-card-content,
+.product-card .product-card-content {
+  position: relative !important;
+  margin-top: -18px !important;
+  min-height: auto !important;
+  padding: 28px 28px 26px !important;
+  border-radius: 32px 32px 0 0 !important;
+  background: rgba(255, 252, 244, 0.96) !important;
+  box-shadow: 0 -14px 34px rgba(34, 25, 18, 0.04) !important;
+}
+
+/* Category / small label */
+.product-card-content .home-product-category,
+.product-card-content p {
+  margin: 0 0 8px !important;
+  color: rgba(34, 25, 18, 0.55) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.78rem !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+}
+
+/* Product name */
+.home-product-slide .product-card-content h3,
+.product-card-content h3 {
+  margin: 0 !important;
+  color: #17120f !important;
+  font-size: clamp(1.7rem, 2.3vw, 2.25rem) !important;
+  line-height: 0.95 !important;
+  letter-spacing: -0.06em !important;
+}
+
+/* Description */
+.product-card-content .home-product-description,
+.product-card-content > span:not(.home-product-price) {
+  display: -webkit-box !important;
+  margin-top: 12px !important;
+  min-height: auto !important;
+  overflow: hidden !important;
+  color: rgba(34, 25, 18, 0.62) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.92rem !important;
+  line-height: 1.55 !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+}
+
+/* Rating row should be simple, not chip-heavy */
+.home-product-rating {
+  margin-top: 14px !important;
+  padding: 0 !important;
+  gap: 7px !important;
+  background: transparent !important;
+  border: 0 !important;
+  color: rgba(34, 25, 18, 0.55) !important;
+}
+
+.home-product-rating small {
+  font-size: 0.76rem !important;
+  font-weight: 800 !important;
+}
+
+/* Remove heavy chip look from actual product tags/details */
+.home-product-tags,
+.product-details {
+  margin-top: 12px !important;
+  gap: 7px !important;
+}
+
+.home-product-tags small,
+.product-details small {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: rgba(34, 25, 18, 0.56) !important;
+  box-shadow: none !important;
+  font-size: 0.76rem !important;
+  font-weight: 800 !important;
+}
+
+/* Price + product info CTA row */
+.home-product-price,
+.product-card-content strong {
+  display: block !important;
+  margin-top: 18px !important;
+  color: #17120f !important;
+  font-size: 1.35rem !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.04em !important;
+}
+
+/* Product info button replaces the need for Add to cart */
+.home-product-slide .product-home-link,
+.product-home-link,
+.product-learn-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-height: 50px !important;
+  margin-top: 18px !important;
+  padding: 0 18px !important;
+  border-radius: 999px !important;
+  background: #17120f !important;
+  color: #fff6d6 !important;
+  font-size: 0.92rem !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+  box-shadow: 0 16px 36px rgba(34, 25, 18, 0.16) !important;
+  transition: transform 180ms ease, box-shadow 180ms ease !important;
+}
+
+.product-home-link:hover,
+.product-learn-link:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 20px 44px rgba(34, 25, 18, 0.2) !important;
+}
+
+/* Do not show Add to cart inside product card grids/carousels */
+.home-product-slide .product-button,
+.product-card .product-button {
+  display: none !important;
+}
+
+/* Keep card shorter */
+.home-product-slide .product-card-content {
+  padding-bottom: 24px !important;
+}
+
+/* Mobile version */
+@media (max-width: 640px) {
+  .home-product-slide {
+    flex-basis: 84% !important;
+    border-radius: 30px !important;
+  }
+
+  .home-product-slide .product-image,
+  .product-card .product-image {
+    aspect-ratio: 1 / 0.86 !important;
+    padding: 14px !important;
+  }
+
+  .home-product-slide .product-card-content,
+  .product-card .product-card-content {
+    margin-top: -14px !important;
+    padding: 24px 22px 22px !important;
+    border-radius: 28px 28px 0 0 !important;
+  }
+
+  .home-product-slide .product-card-content h3,
+  .product-card-content h3 {
+    font-size: clamp(1.55rem, 7vw, 2.05rem) !important;
+  }
+
+  .product-card-content .home-product-description,
+  .product-card-content > span:not(.home-product-price) {
+    font-size: 0.86rem !important;
+    line-height: 1.48 !important;
+  }
+
+  .home-product-price,
+  .product-card-content strong {
+    margin-top: 14px !important;
+    font-size: 1.18rem !important;
+  }
+
+  .home-product-slide .product-home-link,
+  .product-home-link,
+  .product-learn-link {
+    min-height: 46px !important;
+    margin-top: 14px !important;
+    font-size: 0.86rem !important;
+  }
+}
