@@ -52,11 +52,12 @@ export function Home() {
           animate="visible"
         >
           <motion.p className="eyebrow" variants={fadeUp}>
-            Functional beauty for brows, lashes & edges
+            Functional beauty for brows
           </motion.p>
 
           <motion.h1 variants={fadeUp}>
-            Professional secret, made effortless at home.
+           Obsessively
+           Well Made.
           </motion.h1>
 
           <motion.p className="hero-copy" variants={fadeUp}>
@@ -104,7 +105,7 @@ export function Home() {
           <div className="hero-product-strip">
             <span>LamiFix</span>
             <span>Hybrid Stain</span>
-            <span>Precision Wand</span>
+            
           </div>
         </motion.div>
       </section>
@@ -127,7 +128,7 @@ export function Home() {
           <motion.div className="intro-copy" variants={fadeUp}>
             <p>
               LUMA is designed for the beauty details that frame the face —
-              brows, lashes, and edges. The system feels precise, clean, and
+              brows. The system feels precise, clean, and
               elevated while staying simple enough for everyday use.
             </p>
 
@@ -184,7 +185,7 @@ export function Home() {
         </div>
 
         <div className="benefits-content">
-          <p className="eyebrow">Brows. Lashes. Edges.</p>
+          <p className="eyebrow">Brows</p>
           <h2>The tiny details that change the whole face.</h2>
 
           <div className="benefit-list">

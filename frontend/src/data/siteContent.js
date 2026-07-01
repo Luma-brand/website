@@ -48,7 +48,7 @@ export const products = [
     id: "precision-wand",
     slug: "precision-wand",
     name: "LUMA Precision Wand",
-    category: "Brows, Lashes & Edges",
+    category: "Brows",
     price: "$18",
     numericPrice: 18,
     tag: "Add to cart",
@@ -58,7 +58,7 @@ export const products = [
       "The LUMA Precision Wand is the everyday detail tool for finishing brows, lashes, and edges. It is made for clean application, soft control, and polished touch-ups.",
     details: ["Precise application", "Smooth detailing", "Everyday control"],
     includes: ["1 Precision Wand", "Protective cap", "LUMA detail guide"],
-    bestFor: ["Brows", "Lashes", "Edges"],
+    bestFor: ["Your Brows"],
     howToUse:
       "Use the wand to guide, lift, separate, or smooth small details. Keep strokes light and controlled for the cleanest finish.",
     image: "/assets/images/product-wand.jpg",
@@ -71,16 +71,7 @@ export const benefits = [
     title: "Lifted shape without the salon wait.",
     text: "Get a polished brow finish that feels controlled, soft, and easy to repeat.",
   },
-  {
-    eyebrow: "Lashes",
-    title: "Clean definition for everyday beauty.",
-    text: "Simple essentials made to support a refined look without overcomplication.",
-  },
-  {
-    eyebrow: "Edges",
-    title: "Smooth details that complete the face.",
-    text: "A functional beauty system for precise, consistent, at-home finishing.",
-  },
+ 
 ];
 
 export const ritualSteps = [
@@ -109,7 +100,7 @@ export const ritualSteps = [
 export const trustItems = [
   "Professional-level finish",
   "At-home beauty system",
-  "Brows, lashes & edges",
+  "Brows",
   "Clean daily ritual",
 ];
 
@@ -129,9 +120,15 @@ export const faqs = [
     answer:
       "The frontend is ready for launch and product drops. Product purchasing can be connected later when the store, checkout, or backend is ready.",
   },
-  {
-    question: "Is this a luxury or clinical brand?",
+ {
+    question: "Are the products available now?",
     answer:
-      "LUMA balances both. The identity feels clean, functional, precise, and elevated without feeling cold.",
+      "The frontend is ready for launch and product drops. Product purchasing can be connected later when the store, checkout, or backend is ready.",
   },
+ {
+    question: "Are the products available now?",
+    answer:
+      "The frontend is ready for launch and product drops. Product purchasing can be connected later when the store, checkout, or backend is ready.",
+  },
+ 
 ];
