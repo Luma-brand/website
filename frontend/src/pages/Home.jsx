@@ -56,8 +56,9 @@ export function Home() {
           </motion.p>
 
           <motion.h1 variants={fadeUp}>
-            Obsessively<br />Well Made.
-          </motion.h1>
+  <span>Obsessively</span>
+  <span>Well Made.</span>
+</motion.h1>
 
           <motion.p className="hero-copy" variants={fadeUp}>
             LUMA turns treatment expertise into simple daily essentials —

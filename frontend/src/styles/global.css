@@ -5079,3 +5079,511 @@ textarea::placeholder {
     display: none;
   }
 }
+/* =========================================================
+   LUMA LAUNCH HERO + HEADER POLISH OVERRIDE
+   Add this at the VERY BOTTOM of global.css
+========================================================= */
+
+/* Stop older logo rules from cropping the logo */
+.brand-logo-image-link,
+.footer-logo-image-link {
+  width: auto !important;
+  min-width: 124px !important;
+  height: auto !important;
+  min-height: 42px;
+  overflow: visible !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  flex: 0 0 auto;
+  line-height: 0;
+}
+
+.brand-logo-image,
+.footer-logo-image {
+  width: 124px !important;
+  max-width: 124px !important;
+  height: auto !important;
+  max-height: 42px;
+  object-fit: contain !important;
+  object-position: left center !important;
+  transform: none !important;
+  display: block !important;
+}
+
+/* Cleaner floating glass header */
+.site-header {
+  min-height: 68px;
+  padding: 10px 14px 10px 22px !important;
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.78);
+  border-color: rgba(22, 22, 22, 0.1);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+}
+
+/* Better hero layout on desktop */
+.hero-section {
+  position: relative;
+  min-height: 100svh;
+  grid-template-columns: minmax(0, 0.96fr) minmax(390px, 0.9fr);
+  gap: clamp(46px, 5.2vw, 78px);
+  padding-top: 142px;
+  padding-bottom: 72px;
+  overflow: visible;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 4;
+}
+
+.hero-content h1 {
+  max-width: 660px;
+  font-size: clamp(3.7rem, 7.45vw, 7.8rem);
+  line-height: 0.93;
+  letter-spacing: -0.07em;
+}
+
+.hero-copy {
+  max-width: 600px;
+  margin-top: 24px;
+  font-size: clamp(1rem, 1.35vw, 1.15rem);
+  line-height: 1.72;
+}
+
+/* Hero image card improvement */
+.hero-visual {
+  position: relative;
+  z-index: 3;
+}
+
+.hero-image-card {
+  min-height: clamp(540px, 68vh, 700px);
+  border-radius: 36px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(255, 241, 159, 0.5), transparent 34%),
+    linear-gradient(145deg, rgba(255, 250, 240, 0.94), rgba(255, 241, 159, 0.38));
+  box-shadow:
+    0 32px 90px rgba(22, 22, 22, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.38);
+}
+
+.hero-image-card img {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 34%;
+}
+
+/* Soft shine over image */
+.hero-image-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 246, 214, 0.04), rgba(255, 246, 214, 0.12)),
+    radial-gradient(circle at 20% 78%, rgba(255, 241, 159, 0.24), transparent 36%);
+}
+
+/* Floating tags */
+.floating-product-card {
+  z-index: 6;
+  left: -24px;
+  bottom: 58px;
+  width: auto;
+  min-width: 190px;
+  padding: 16px 18px;
+  border-radius: 24px;
+  background: rgba(255, 246, 214, 0.82);
+  border: 1px solid rgba(255, 250, 240, 0.6);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 20px 55px rgba(22, 22, 22, 0.12);
+}
+
+.floating-product-card span {
+  color: rgba(22, 22, 22, 0.5);
+  font-size: 0.88rem;
+}
+
+.floating-product-card strong {
+  color: var(--color-ink);
+  font-size: 1.25rem;
+  letter-spacing: -0.045em;
+}
+
+.hero-product-strip {
+  z-index: 6;
+  right: -22px;
+  top: 48px;
+  gap: 10px;
+}
+
+.hero-product-strip span {
+  padding: 12px 17px;
+  border-radius: 999px;
+  background: rgba(34, 25, 18, 0.88);
+  color: #fff6d6;
+  font-size: 0.84rem;
+  box-shadow: 0 14px 36px rgba(22, 22, 22, 0.16);
+}
+
+/* Better button feel */
+.hero-actions {
+  gap: 16px;
+}
+
+.btn {
+  min-height: 56px;
+  padding-inline: 28px;
+  border-radius: 999px;
+}
+
+.btn-secondary {
+  background: rgba(255, 250, 240, 0.78);
+  box-shadow: inset 0 0 0 1px rgba(22, 22, 22, 0.08);
+}
+
+/* =========================================================
+   MOBILE HERO FIX
+========================================================= */
+
+@media (max-width: 640px) {
+  :root {
+    --container: calc(100% - 24px);
+  }
+
+  body {
+    background:
+      radial-gradient(circle at 18% 10%, rgba(255, 241, 159, 0.75), transparent 34%),
+      linear-gradient(180deg, #fff7cf 0%, #fff6d6 48%, #f8f1df 100%);
+  }
+
+  .site-header {
+    top: 14px;
+    left: 12px !important;
+    right: 12px !important;
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    min-height: 64px;
+    padding: 9px 12px 9px 20px !important;
+    grid-template-columns: minmax(124px, auto) 1fr auto;
+    transform: none !important;
+  }
+
+  .brand-logo-image-link {
+    min-width: 124px !important;
+  }
+
+  .brand-logo-image {
+    width: 124px !important;
+    max-width: 124px !important;
+    max-height: 40px;
+  }
+
+  .mobile-menu-btn {
+    width: 46px;
+    height: 46px;
+    background: rgba(255, 241, 159, 0.92);
+    box-shadow: 0 10px 26px rgba(22, 22, 22, 0.08);
+  }
+
+  .hero-section {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    min-height: 100svh;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    align-content: start;
+    gap: 24px;
+    padding: 102px 0 38px;
+  }
+
+  .hero-visual {
+    order: -1;
+    width: 100%;
+    height: clamp(350px, 45svh, 430px);
+  }
+
+  .hero-image-card {
+    width: 100%;
+    height: 100%;
+    min-height: 0 !important;
+    border-radius: 30px;
+  }
+
+  .hero-image-card img {
+    object-fit: cover;
+    object-position: center 30%;
+  }
+
+  .hero-image-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, transparent 44%, rgba(22, 22, 22, 0.08) 100%),
+      radial-gradient(circle at 22% 78%, rgba(255, 241, 159, 0.2), transparent 38%);
+  }
+
+  .hero-content {
+    width: 100%;
+  }
+
+  .eyebrow {
+    margin-bottom: 12px;
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .hero-content h1 {
+    max-width: 100%;
+    font-size: clamp(3.05rem, 13vw, 4.05rem);
+    line-height: 0.94;
+    letter-spacing: -0.075em;
+  }
+
+  .hero-copy {
+    margin-top: 18px;
+    max-width: 100%;
+    color: rgba(22, 22, 22, 0.62);
+    font-size: 0.98rem;
+    line-height: 1.62;
+  }
+
+  .hero-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    margin-top: 24px;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+    min-height: 52px;
+    padding: 0 14px;
+    font-size: 0.88rem;
+    white-space: nowrap;
+  }
+
+  .hero-actions .btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .floating-product-card,
+  .hero-product-strip {
+    display: block !important;
+  }
+
+  .floating-product-card {
+    left: 16px;
+    bottom: 16px;
+    min-width: 0;
+    width: auto;
+    max-width: 190px;
+    padding: 11px 14px;
+    border-radius: 18px;
+    background: rgba(255, 246, 214, 0.82);
+  }
+
+  .floating-product-card span {
+    margin-bottom: 3px;
+    font-size: 0.72rem;
+    line-height: 1.1;
+  }
+
+  .floating-product-card strong {
+    font-size: 1rem;
+    line-height: 1.05;
+  }
+
+  .hero-product-strip {
+    top: 18px;
+    right: 16px;
+    display: grid !important;
+    justify-items: end;
+    gap: 7px;
+  }
+
+  .hero-product-strip span {
+    width: fit-content;
+    padding: 8px 12px;
+    font-size: 0.74rem;
+    line-height: 1;
+  }
+
+  .trust-strip {
+    margin-top: 0;
+  }
+}
+
+/* Extra-small phones */
+@media (max-width: 380px) {
+  .hero-section {
+    padding-top: 96px;
+    gap: 18px;
+  }
+
+  .hero-visual {
+    height: 335px;
+  }
+
+  .hero-content h1 {
+    font-size: clamp(2.75rem, 12.5vw, 3.45rem);
+  }
+
+  .hero-copy {
+    font-size: 0.92rem;
+  }
+
+  .hero-actions {
+    gap: 10px;
+  }
+
+  .hero-actions .btn {
+    min-height: 49px;
+    font-size: 0.8rem;
+    padding-inline: 10px;
+  }
+
+  .brand-logo-image {
+    width: 116px !important;
+    max-width: 116px !important;
+  }
+
+  .brand-logo-image-link {
+    min-width: 116px !important;
+  }
+}
+.hero-content h1 span {
+  display: block;
+}
+/* =========================================================
+   TRUE FINAL LUMA LOGO + NAVBAR FIX
+   Fixes desktop logo without making navbar taller
+========================================================= */
+
+/* Navbar: keep height controlled */
+.site-header {
+  min-height: 58px !important;
+  height: 58px !important;
+  padding: 8px 16px 8px 22px !important;
+  align-items: center !important;
+  overflow: visible !important;
+}
+
+/* Desktop logo wrapper */
+.site-header .brand-logo-image-link {
+  width: 170px !important;
+  min-width: 170px !important;
+  flex: 0 0 170px !important;
+}
+/* Desktop logo image */
+.site-header .brand-logo-image {
+  width: 170px !important;
+  max-width: none !important;
+  height: auto !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  object-position: left center !important;
+  transform: scale(0.9) !important;
+  transform-origin: left center !important;
+  display: block !important;
+}
+
+/* Keep desktop nav buttons from stretching navbar */
+.site-header .header-icon-link,
+.site-header .mobile-menu-btn {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+}
+
+.site-header .header-cta {
+  min-height: 40px !important;
+  height: 40px !important;
+}
+
+/* Footer logo separate from navbar */
+.footer-logo-image-link {
+  width: auto !important;
+  min-width: 150px !important;
+  height: auto !important;
+  min-height: 46px !important;
+  overflow: visible !important;
+}
+
+.footer-logo-image {
+  width: 100px !important;
+  max-width: none !important;
+  height: auto !important;
+  max-height: none !important;
+  transform: none !important;
+  object-fit: contain !important;
+}
+
+/* Mobile: keep the logo full and balanced */
+@media (max-width: 640px) {
+  .site-header {
+    top: 14px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    height: 64px !important;
+    min-height: 64px !important;
+    padding: 9px 12px 9px 20px !important;
+    grid-template-columns: minmax(145px, auto) 1fr auto !important;
+    transform: none !important;
+  }
+
+  .site-header .brand-logo-image-link {
+    width: 145px !important;
+    min-width: 145px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    flex-basis: 145px !important;
+  }
+
+  .site-header .brand-logo-image {
+    width: 145px !important;
+    transform: none !important;
+  }
+
+  .site-header .mobile-menu-btn {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    min-height: 46px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .site-header {
+    grid-template-columns: minmax(132px, auto) 1fr auto !important;
+  }
+
+  .site-header .brand-logo-image-link {
+    width: 132px !important;
+    min-width: 132px !important;
+    flex-basis: 132px !important;
+  }
+
+  .site-header .brand-logo-image {
+    width: 132px !important;
+  }
+}
