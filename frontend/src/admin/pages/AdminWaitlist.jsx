@@ -105,7 +105,7 @@ export function AdminWaitlist() {
           <div className="admin-table-header">
             <h2>Waitlist users</h2>
 
-            <div style={{ display: "flex", gap: 10 }}>
+            <div className="admin-toolbar-group">
               <input
                 className="admin-search"
                 type="search"

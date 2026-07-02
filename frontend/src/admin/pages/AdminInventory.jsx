@@ -483,7 +483,7 @@ export function AdminInventory() {
           <div className="admin-table-header">
             <h2>Inventory products</h2>
 
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div className="admin-toolbar-group">
               <input
                 className="admin-search"
                 type="search"

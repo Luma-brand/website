@@ -387,7 +387,7 @@ export function AdminOrders() {
               </div>
             </div>
 
-            <div className="admin-table-wrap" style={{ marginTop: 20 }}>
+            <div className="admin-table-wrap admin-table-spaced">
               <table className="admin-table">
                 <thead>
                   <tr>

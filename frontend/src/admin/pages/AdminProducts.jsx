@@ -462,7 +462,7 @@ export function AdminProducts() {
           <div className="admin-table-header">
             <h2>All products</h2>
 
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div className="admin-toolbar-group">
               <input
                 className="admin-search"
                 type="search"
@@ -549,7 +549,7 @@ export function AdminProducts() {
                       </td>
 
                       <td>
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <div className="admin-row-actions">
                           <button
                             type="button"
                             className="admin-button secondary"
