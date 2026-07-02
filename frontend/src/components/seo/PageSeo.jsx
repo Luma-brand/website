@@ -25,7 +25,7 @@ function upsertCanonical(href) {
   element.setAttribute("href", href);
 }
 
-export function PageSeo({ title, description, canonical, jsonLd }) {
+export function PageSeo({ title, description, canonical, jsonLd, robots = "index, follow, max-image-preview:large" }) {
   useEffect(() => {
     const nextTitle = title || "LUMA Skincare";
     const nextDescription =
@@ -45,6 +45,14 @@ export function PageSeo({ title, description, canonical, jsonLd }) {
     upsertMeta('meta[property="og:description"]', {
       property: "og:description",
       content: nextDescription,
+    });
+    upsertMeta('meta[name="robots"]', {
+      name: "robots",
+      content: robots,
+    });
+    upsertMeta('meta[name="googlebot"]', {
+      name: "googlebot",
+      content: robots,
     });
 
     if (canonical) {
@@ -69,7 +77,7 @@ export function PageSeo({ title, description, canonical, jsonLd }) {
         script.remove();
       }
     };
-  }, [canonical, description, jsonLd, title]);
+  }, [canonical, description, jsonLd, robots, title]);
 
   return null;
 }

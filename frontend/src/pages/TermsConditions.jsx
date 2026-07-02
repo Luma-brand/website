@@ -2,10 +2,20 @@ import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
+import { PageSeo } from "../components/seo/PageSeo";
+
+function getSiteOrigin() {
+  return import.meta.env.VITE_SITE_URL || "https://shopwithluma.com";
+}
 
 export function TermsConditions() {
   return (
     <main className="page-shell inner-page">
+      <PageSeo
+        title="Terms and Conditions | LUMA"
+        description="Read the terms and conditions for using the LUMA website, customer accounts, products, orders, and services."
+        canonical={`${getSiteOrigin()}/terms-and-conditions`}
+      />
       <Header />
 
       <section className="legal-page section-padding">

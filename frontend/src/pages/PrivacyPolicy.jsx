@@ -2,10 +2,20 @@ import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
+import { PageSeo } from "../components/seo/PageSeo";
+
+function getSiteOrigin() {
+  return import.meta.env.VITE_SITE_URL || "https://shopwithluma.com";
+}
 
 export function PrivacyPolicy() {
   return (
     <main className="page-shell inner-page">
+      <PageSeo
+        title="Privacy Policy | LUMA"
+        description="Read the LUMA privacy policy covering customer, account, waitlist, order, and website information."
+        canonical={`${getSiteOrigin()}/privacy-policy`}
+      />
       <Header />
 
       <section className="legal-page section-padding">

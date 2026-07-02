@@ -43,11 +43,13 @@ import { AdminBackInStock } from "../admin/pages/AdminBackInStock";
 import { AdminDiscounts } from "../admin/pages/AdminDiscounts";
 import { AdminCurrencyRates } from "../admin/pages/AdminCurrencyRates";
 import { GrowthTracker } from "../components/marketing/GrowthTracker";
+import { RouteIndexingGuard } from "../components/seo/RouteIndexingGuard";
 
 export function AppRoutes() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <RouteIndexingGuard />
       <RouteSkeleton />
       <GrowthTracker />
 

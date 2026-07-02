@@ -1,7 +1,8 @@
 const pool = require("../config/db");
 
-const FRONTEND_URL =
-  process.env.FRONTEND_URL || "https://shopwithluma.com";
+const FRONTEND_URL = String(
+  process.env.FRONTEND_URL || "https://shopwithluma.com"
+).replace(/\/+$/, "");
 
 function escapeXml(value = "") {
   return String(value)
@@ -13,7 +14,14 @@ function escapeXml(value = "") {
 }
 
 function productPath(product) {
-  return `/products/${product.slug || product.id}`;
+  return `/products/${encodeURIComponent(product.slug || product.id)}`;
+}
+
+function sitemapDate(value, fallback) {
+  const date = value ? new Date(value) : null;
+  return date && !Number.isNaN(date.getTime())
+    ? date.toISOString().slice(0, 10)
+    : fallback;
 }
 
 async function getPublicProductsForSeo() {
@@ -67,26 +75,36 @@ async function getPublicProductsForSeo() {
 }
 
 async function buildSitemapXml() {
-  const staticPaths = ["/", "/products", "/about", "/contact"];
+  const buildDate = new Date().toISOString().slice(0, 10);
+  const staticPaths = [
+    { path: "/", lastmod: buildDate, changefreq: "weekly", priority: "1.0" },
+    { path: "/products", lastmod: buildDate, changefreq: "daily", priority: "0.9" },
+    { path: "/about", lastmod: buildDate, changefreq: "monthly", priority: "0.7" },
+    { path: "/contact", lastmod: buildDate, changefreq: "monthly", priority: "0.6" },
+    { path: "/privacy-policy", lastmod: "2026-06-01", changefreq: "yearly", priority: "0.4" },
+    { path: "/terms-and-conditions", lastmod: "2026-06-01", changefreq: "yearly", priority: "0.4" },
+  ];
   const products = await getPublicProductsForSeo();
   const urls = [
-    ...staticPaths.map((path) => ({
-      loc: `${FRONTEND_URL}${path}`,
-      lastmod: null,
+    ...staticPaths.map((item) => ({
+      loc: `${FRONTEND_URL}${item.path}`,
+      lastmod: item.lastmod,
+      changefreq: item.changefreq,
+      priority: item.priority,
     })),
     ...products.map((product) => ({
       loc: `${FRONTEND_URL}${productPath(product)}`,
       lastmod: product.updated_at,
+      changefreq: "weekly",
+      priority: "0.8",
     })),
   ];
 
   const entries = urls
     .map((item) => {
-      const lastmod = item.lastmod
-        ? `\n    <lastmod>${new Date(item.lastmod).toISOString()}</lastmod>`
-        : "";
+      const lastmod = sitemapDate(item.lastmod, buildDate);
 
-      return `  <url>\n    <loc>${escapeXml(item.loc)}</loc>${lastmod}\n  </url>`;
+      return `  <url>\n    <loc>${escapeXml(item.loc)}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${item.changefreq}</changefreq>\n    <priority>${item.priority}</priority>\n  </url>`;
     })
     .join("\n");
 
@@ -97,8 +115,26 @@ function buildRobotsTxt() {
   return [
     "User-agent: *",
     "Allow: /",
-    "Disallow: /luma-control-room/",
+    "",
+    "Disallow: /api/",
+    "Disallow: /admin",
     "Disallow: /admin/",
+    "Disallow: /luma-control-room",
+    "Disallow: /luma-control-room/",
+    "Disallow: /cart",
+    "Disallow: /checkout",
+    "Disallow: /order-success",
+    "Disallow: /payment/",
+    "Disallow: /account",
+    "Disallow: /complete-profile",
+    "Disallow: /settings",
+    "Disallow: /wishlist",
+    "Disallow: /login",
+    "Disallow: /register",
+    "Disallow: /signup",
+    "Disallow: /forgot-password",
+    "Disallow: /reset-password",
+    "",
     `Sitemap: ${FRONTEND_URL}/sitemap.xml`,
     "",
   ].join("\n");

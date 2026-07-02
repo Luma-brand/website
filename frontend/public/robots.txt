@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+Disallow: /api/
+Disallow: /admin
+Disallow: /admin/
+Disallow: /luma-control-room
+Disallow: /luma-control-room/
+Disallow: /cart
+Disallow: /checkout
+Disallow: /order-success
+Disallow: /payment/
+Disallow: /account
+Disallow: /complete-profile
+Disallow: /settings
+Disallow: /wishlist
+Disallow: /login
+Disallow: /register
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+
+Sitemap: https://shopwithluma.com/sitemap.xml

@@ -1,14 +1,6 @@
 {
   "rewrites": [
     {
-      "source": "/sitemap.xml",
-      "destination": "https://website-ikv5.onrender.com/sitemap.xml"
-    },
-    {
-      "source": "/robots.txt",
-      "destination": "https://website-ikv5.onrender.com/robots.txt"
-    },
-    {
       "source": "/product-feed.xml",
       "destination": "https://website-ikv5.onrender.com/product-feed.xml"
     },

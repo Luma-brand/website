@@ -139,6 +139,11 @@ export function ProductDetails() {
   if (isLoading) {
     return (
       <main className="page-shell inner-page">
+        <PageSeo
+          title="Loading product | LUMA"
+          description="Loading LUMA product information."
+          robots="noindex, nofollow"
+        />
         <Header />
 
         <section className="commerce-page">
@@ -156,6 +161,11 @@ export function ProductDetails() {
   if (error || !product) {
     return (
       <main className="page-shell inner-page">
+        <PageSeo
+          title="Product not found | LUMA"
+          description="This LUMA product is unavailable or may have moved."
+          robots="noindex, nofollow, noarchive"
+        />
         <Header />
 
         <section className="commerce-page">
