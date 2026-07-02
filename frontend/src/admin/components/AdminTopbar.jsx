@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Menu, Settings, UserRound } from "lucide-react";
 
-export function AdminTopbar({ title, subtitle }) {
+export function AdminTopbar({ title, subtitle, description, actions }) {
   const adminUser = JSON.parse(localStorage.getItem("luma_admin_user") || "{}");
 
   function openMobileMenu() {
@@ -22,11 +22,12 @@ export function AdminTopbar({ title, subtitle }) {
 
         <div>
           <h1>{title}</h1>
-          {subtitle && <p>{subtitle}</p>}
+          {(subtitle || description) && <p>{subtitle || description}</p>}
         </div>
       </div>
 
       <div className="admin-topbar-actions">
+        {actions && <div className="admin-page-actions">{actions}</div>}
         <Link
           to="/luma-control-room/settings"
           className="admin-icon-button"

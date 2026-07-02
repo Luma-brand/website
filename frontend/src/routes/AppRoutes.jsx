@@ -7,6 +7,7 @@ import { Wishlist } from "../pages/Wishlist";
 import { Cart } from "../pages/Cart";
 import { Checkout } from "../pages/Checkout";
 import { OrderSuccess } from "../pages/OrderSuccess";
+import { FlutterwaveCallback } from "../pages/FlutterwaveCallback";
 import { Account } from "../pages/Account";
 import { CompleteProfile } from "../pages/CompleteProfile";
 import { Settings } from "../pages/Settings";
@@ -60,6 +61,7 @@ export function AppRoutes() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/order-success" element={<OrderSuccess />} />
         <Route path="/order-success/:orderId" element={<OrderSuccess />} />
+        <Route path="/payment/flutterwave/callback" element={<FlutterwaveCallback />} />
         <Route path="/account" element={<Account />} />
         <Route path="/login" element={<Account initialMode="signin" />} />
         <Route path="/register" element={<Account initialMode="signup" />} />

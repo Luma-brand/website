@@ -6043,6 +6043,53 @@ textarea::placeholder {
     min-height: 365px !important;
   }
 }
+
+/* =========================================================
+   LUMA MOBILE HERO MEDIA HEIGHT
+   Lets the image use the mobile hero's vertical space instead
+   of reserving a large yellow area below the actions.
+========================================================= */
+
+@media (max-width: 768px) {
+  .hero-section {
+    min-height: auto !important;
+    grid-template-rows: auto auto !important;
+    padding-bottom: 24px !important;
+  }
+
+  .hero-visual {
+    height: clamp(455px, 56svh, 575px) !important;
+    min-height: clamp(455px, 56svh, 575px) !important;
+  }
+
+  .hero-image-card {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+  }
+
+  .hero-image-card img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center top !important;
+  }
+
+  .hero-content {
+    margin-top: 22px !important;
+  }
+
+  .hero-actions {
+    margin-top: 24px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .hero-visual {
+    height: clamp(430px, 53svh, 540px) !important;
+    min-height: clamp(430px, 53svh, 540px) !important;
+  }
+}
 /* =========================================================
    LUMA PRODUCT CARD HEIGHT FIX
    Makes product cards shorter without removing anything
@@ -6433,4 +6480,31 @@ textarea::placeholder {
     margin-top: 14px !important;
     font-size: 0.86rem !important;
   }
+}
+
+.payment-callback-page {
+  min-height: 80vh;
+  display: grid;
+  place-items: center;
+}
+
+.payment-callback-card {
+  width: min(680px, 100%);
+  text-align: center;
+}
+
+.payment-callback-card.failed svg {
+  color: #8f3f35;
+}
+
+.spin {
+  animation: luma-spin 900ms linear infinite;
+}
+
+@keyframes luma-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation: none; }
 }

@@ -566,7 +566,7 @@ async function hasOrderAlreadyReducedStock({
               AND order_id IN (
                 SELECT id
                 FROM orders
-                WHERE paystack_reference = $2
+                WHERE COALESCE(payment_reference, paystack_reference) = $2
               )
             )
           )
@@ -597,7 +597,7 @@ async function reduceStockAfterPaidOrder({
   client = pool,
   orderId,
   paymentReference,
-  createdBy = "paystack",
+  createdBy = "payment_verification",
 } = {}) {
   if (!orderId && !paymentReference) {
     throw new Error("Order ID or payment reference is required.");
@@ -613,7 +613,7 @@ async function reduceStockAfterPaidOrder({
 
   if (paymentReference) {
     values.push(paymentReference);
-    conditions.push(`paystack_reference = $${values.length}`);
+    conditions.push(`COALESCE(payment_reference, paystack_reference) = $${values.length}`);
   }
 
   const orderResult = await client.query(
@@ -658,7 +658,7 @@ async function reduceStockAfterPaidOrder({
   const alreadyReduced = await hasOrderAlreadyReducedStock({
     client,
     orderId: order.id,
-    paymentReference: paymentReference || order.paystack_reference,
+    paymentReference: paymentReference || order.payment_reference || order.paystack_reference,
     allowOptionalSchema: !inventoryMovementsTableExists,
   });
 
@@ -801,7 +801,7 @@ async function reduceStockAfterPaidOrder({
       quantityChanged: -requestedQuantity,
       previousStock,
       newStock,
-      reason: "Stock reduced after successful Paystack payment",
+      reason: "Stock reduced after successful verified payment",
       createdBy,
       allowOptionalSchema: !inventoryMovementsTableExists,
     });

@@ -33,6 +33,7 @@ const emailCompatibilityRoutes = require("./routes/emailCompatibilityRoutes");
 const emailAutomationRoutes = require("./routes/emailAutomationRoutes");
 const mailRoutes = require("./routes/mailRoutes");
 const resendWebhookRoutes = require("./routes/resendWebhookRoutes");
+const flutterwaveWebhookRoutes = require("./routes/flutterwaveWebhookRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const adminAbandonedCartRoutes = require("./routes/adminAbandonedCartRoutes");
 const cronRoutes = require("./routes/cronRoutes");
@@ -47,6 +48,7 @@ const allowedOrigins = [
   "https://shopwithluma.com",
   "https://website-umber-xi-40.vercel.app",
   "http://localhost:5173",
+  "http://localhost:5174",
   "http://localhost:3000",
 ].filter(Boolean);
 
@@ -96,7 +98,10 @@ app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(express.json({
   limit: "10mb",
   verify: (req, res, buffer) => {
-    if (req.originalUrl && req.originalUrl.startsWith("/api/webhooks/resend")) {
+    if (req.originalUrl && (
+      req.originalUrl.startsWith("/api/webhooks/resend") ||
+      req.originalUrl.startsWith("/api/webhooks/flutterwave")
+    )) {
       req.rawBody = buffer.toString("utf8");
     }
   },
@@ -124,7 +129,7 @@ app.get("/api/health", (req, res) => {
     environment: process.env.NODE_ENV || "development",
     frontendUrl: process.env.FRONTEND_URL || null,
     allowedOrigins,
-    paystackConfigured: Boolean(process.env.PAYSTACK_SECRET_KEY),
+    flutterwaveConfigured: Boolean(process.env.FLUTTERWAVE_SECRET_KEY),
     resendConfigured: Boolean(
       process.env.RESEND_API_KEY &&
         (process.env.EMAIL_FROM || process.env.RESEND_FROM_EMAIL)
@@ -177,6 +182,7 @@ app.use("/api/admin/email", emailCompatibilityRoutes);
 app.use("/api/admin/email-automation", emailAutomationRoutes);
 app.use("/api/admin/mail", mailRoutes);
 app.use("/api/webhooks/resend", resendWebhookRoutes);
+app.use("/api/webhooks/flutterwave", flutterwaveWebhookRoutes);
 app.use("/api/cron", cronRoutes);
 app.use("/api/integrations", integrationRoutes);
 app.use("/", seoRoutes);

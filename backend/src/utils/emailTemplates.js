@@ -144,7 +144,7 @@ function welcomeEmailTemplate(user = {}) {
 
 function orderConfirmationTemplate(order = {}) {
   const name = order.customer_name || order.customerName || "there";
-  const reference = order.paystack_reference || order.payment_reference || order.reference || String(order.id || "").slice(0, 8).toUpperCase();
+  const reference = order.payment_reference || order.paystack_reference || order.reference || String(order.id || "").slice(0, 8).toUpperCase();
   const total = order.final_amount || order.total_amount || order.total || 0;
   const delivery = [order.delivery_address, order.city, order.state, order.country].filter(Boolean).join(", ");
   const html = baseEmailTemplate({
@@ -166,7 +166,7 @@ function orderConfirmationTemplate(order = {}) {
 }
 
 function adminOrderNotificationTemplate(order = {}) {
-  const reference = order.paystack_reference || order.payment_reference || order.reference || String(order.id || "").slice(0, 8).toUpperCase();
+  const reference = order.payment_reference || order.paystack_reference || order.reference || String(order.id || "").slice(0, 8).toUpperCase();
   const total = order.final_amount || order.total_amount || order.total || 0;
   const delivery = [order.delivery_address, order.city, order.state, order.country].filter(Boolean).join(", ");
   const html = baseEmailTemplate({

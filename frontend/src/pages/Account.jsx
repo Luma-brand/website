@@ -679,7 +679,7 @@ export function Account({ initialMode = "signup" }) {
                     <label htmlFor="signup-password">Password</label>
                     <div className="auth-input-wrap">
                       <LockKeyhole className="auth-field-icon" size={18} />
-                      <input id="signup-password" name="password" type={showSignUpPassword ? "text" : "password"} value={signUpData.password} onChange={updateSignUp} placeholder="Minimum 6 characters" disabled={isSubmitting} />
+                      <input id="signup-password" name="password" type={showSignUpPassword ? "text" : "password"} value={signUpData.password} onChange={updateSignUp} placeholder="6+ characters" disabled={isSubmitting} />
                       <PasswordToggle visible={showSignUpPassword} onClick={() => setShowSignUpPassword((current) => !current)} disabled={isSubmitting} />
                     </div>
                     {errors.password && <small>{errors.password}</small>}
@@ -689,7 +689,7 @@ export function Account({ initialMode = "signup" }) {
                     <label htmlFor="signup-confirm">Confirm password</label>
                     <div className="auth-input-wrap">
                       <LockKeyhole className="auth-field-icon" size={18} />
-                      <input id="signup-confirm" name="confirmPassword" type={showSignUpPassword ? "text" : "password"} value={signUpData.confirmPassword} onChange={updateSignUp} placeholder="Repeat password" disabled={isSubmitting} />
+                      <input id="signup-confirm" name="confirmPassword" type={showSignUpPassword ? "text" : "password"} value={signUpData.confirmPassword} onChange={updateSignUp} placeholder="Repeat it" disabled={isSubmitting} />
                       <PasswordToggle visible={showSignUpPassword} onClick={() => setShowSignUpPassword((current) => !current)} disabled={isSubmitting} />
                     </div>
                     {errors.confirmPassword && <small>{errors.confirmPassword}</small>}

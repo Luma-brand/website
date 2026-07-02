@@ -1,20 +1,13 @@
 const express = require("express");
+const { protectCustomer } = require("../middleware/authMiddleware");
 const {
-  initializePaystackPayment,
-  verifyPaystackPayment,
-  handlePaystackWebhook,
-} = require("../controllers/paymentController");
+  initializeFlutterwavePayment,
+  verifyFlutterwavePayment,
+} = require("../controllers/flutterwaveController");
 
 const router = express.Router();
 
-router.post("/initialize", initializePaystackPayment);
-router.get("/verify/:reference", verifyPaystackPayment);
-router.post("/verify", (req, res, next) => {
-  req.params.reference = req.body?.reference || req.query?.reference;
-  return verifyPaystackPayment(req, res, next);
-});
-router.post("/paystack/initialize", initializePaystackPayment);
-router.get("/paystack/verify/:reference", verifyPaystackPayment);
-router.post("/paystack/webhook", handlePaystackWebhook);
+router.post("/flutterwave/initialize", protectCustomer, initializeFlutterwavePayment);
+router.post("/flutterwave/verify", protectCustomer, verifyFlutterwavePayment);
 
 module.exports = router;

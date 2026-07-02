@@ -1,19 +1,15 @@
 import { useEffect, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
 import { formatNaira } from "../utils/currency";
-import { getPublicOrderById, verifyPaystackPayment } from "../services/api";
+import { getPublicOrderById } from "../services/api";
 import { useCart } from "../context/CartContext";
 import { markAbandonedCartRecovered } from "../services/growthApi";
 
 export function OrderSuccess() {
   const { orderId } = useParams();
-  const [searchParams] = useSearchParams();
-
-  const reference = searchParams.get("reference");
-
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -24,10 +20,6 @@ export function OrderSuccess() {
       try {
         setIsLoading(true);
         setError("");
-
-        if (reference) {
-          await verifyPaystackPayment(reference);
-        }
 
         const response = await getPublicOrderById(orderId);
         setOrder(response.data);
@@ -53,7 +45,7 @@ export function OrderSuccess() {
     }
 
     loadOrder();
-  }, [clearCart, orderId, reference]);
+  }, [clearCart, orderId]);
 
   if (isLoading) {
     return (
@@ -132,10 +124,22 @@ export function OrderSuccess() {
               <strong>{order.payment_status || "unpaid"}</strong>
             </div>
 
-            {reference && (
+            <div className="summary-row">
+              <span>Gateway</span>
+              <strong>{order.payment_gateway || order.payment_provider || "Online payment"}</strong>
+            </div>
+
+            {(order.payment_reference || order.paystack_reference) && (
               <div className="summary-row">
                 <span>Reference</span>
-                <strong>{reference}</strong>
+                <strong>{order.payment_reference || order.paystack_reference}</strong>
+              </div>
+            )}
+
+            {order.payment_currency && (
+              <div className="summary-row">
+                <span>Payment currency</span>
+                <strong>{order.payment_currency}</strong>
               </div>
             )}
 

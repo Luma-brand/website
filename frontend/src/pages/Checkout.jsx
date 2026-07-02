@@ -6,7 +6,7 @@ import { Footer } from "../components/layout/Footer";
 import { LocationAutocomplete } from "../components/delivery/LocationAutocomplete";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
-import { initializePaystackPayment, validateDiscountCode } from "../services/api";
+import { initializeFlutterwavePayment, validateDiscountCode } from "../services/api";
 import { calculateDeliveryFee } from "../services/deliveryApi";
 import { getGrowthSessionId, saveCheckoutStart } from "../services/growthApi";
 import { formatNaira, getStoredCurrency } from "../utils/currency";
@@ -340,10 +340,6 @@ export function Checkout() {
 
     const selectedCurrency = getStoredCurrency();
 
-    if (selectedCurrency !== "NGN") {
-      setServerError("International payments are not configured yet. Please switch currency to NGN to complete checkout.");
-      return;
-    }
     const stockValidation = validateCartStock();
 
     if (!stockValidation.isValid) {
@@ -369,11 +365,12 @@ export function Checkout() {
         discountCode: discountPreview?.discountCode || null,
         growthSessionId: getGrowthSessionId(),
         totalAmount: total,
+        currency: selectedCurrency,
         items: getOrderItemsPayload(),
       };
 
-      const response = await initializePaystackPayment(orderPayload);
-      const authorizationUrl = response.data?.authorizationUrl;
+      const response = await initializeFlutterwavePayment(orderPayload);
+      const authorizationUrl = response.checkoutUrl || response.data?.checkoutUrl || response.data?.authorizationUrl;
 
       if (!authorizationUrl) {
         throw new Error("The payment provider did not return an authorization URL.");
@@ -566,11 +563,12 @@ export function Checkout() {
                 <select
                   id="paymentMethod"
                   name="paymentMethod"
-                  value="Paystack"
+                  value="Flutterwave"
                   disabled
                 >
-                  <option>Secure online payment</option>
+                  <option>Flutterwave secure checkout</option>
                 </select>
+                <small>Payment is processed securely by Flutterwave in {getStoredCurrency()}.</small>
               </div>
 
               <div className="checkout-discount-panel">
@@ -629,7 +627,7 @@ export function Checkout() {
                 className="waitlist-button"
                 disabled={isSubmitting || isDeliveryLoading || Boolean(deliveryError)}
               >
-                {isSubmitting ? "Redirecting to secure payment..." : "Pay securely now"}
+                {isSubmitting ? "Opening Flutterwave..." : "Continue to secure payment"}
               </button>
             </form>
 

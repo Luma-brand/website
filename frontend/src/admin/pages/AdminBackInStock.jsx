@@ -11,6 +11,7 @@ import { AdminTopbar } from "../components/AdminTopbar";
 import { useToast } from "../../context/ToastContext";
 import {
   cancelProductWaitlist,
+  getAdminProducts,
   getProductWaitlists,
   sendProductWaitlistEmail,
   sendProductWaitlistEmailsForProduct,
@@ -46,6 +47,7 @@ function getContactLabel(entry) {
 export function AdminBackInStock() {
   const { showToast } = useToast();
   const [entries, setEntries] = useState([]);
+  const [products, setProducts] = useState([]);
   const [stats, setStats] = useState(null);
   const [status, setStatus] = useState("all");
   const [notified, setNotified] = useState("all");
@@ -80,6 +82,22 @@ export function AdminBackInStock() {
       loadWaitlists();
     });
   }, [loadWaitlists]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getAdminProducts()
+      .then((response) => {
+        if (isMounted) setProducts(response.data || []);
+      })
+      .catch(() => {
+        if (isMounted) setProducts([]);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const totals = useMemo(
     () => ({
@@ -191,12 +209,19 @@ export function AdminBackInStock() {
               ))}
             </select>
 
-            <input
-              className="admin-mini-input"
+            <select
+              className="admin-mini-select"
               value={productFilter}
               onChange={(event) => setProductFilter(event.target.value)}
-              placeholder="Product ID"
-            />
+              aria-label="Filter by product"
+            >
+              <option value="">All products</option>
+              {products.map((product) => (
+                <option key={product.id} value={product.id}>
+                  {product.name}
+                </option>
+              ))}
+            </select>
 
             <button
               type="button"

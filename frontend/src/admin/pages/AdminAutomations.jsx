@@ -252,7 +252,7 @@ export function AdminAutomations() {
     <>
       <AdminTopbar
         title="Automations"
-        subtitle="Internal customer journey flows powered by LUMA data and Resend."
+        subtitle="Manage welcome, abandoned cart, back-in-stock, browse abandonment, review request, and win-back customer journeys."
       />
 
       <section className="admin-content">

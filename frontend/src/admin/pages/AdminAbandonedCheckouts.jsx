@@ -130,7 +130,7 @@ export function AdminAbandonedCheckouts() {
     <>
       <AdminTopbar
         title="Abandoned checkouts"
-        subtitle="Recover started checkouts that did not complete Paystack payment."
+        subtitle="Recover started checkouts that did not complete secure payment."
       />
 
       <section className="admin-content">

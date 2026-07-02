@@ -54,13 +54,13 @@ function getIntegrationStatus() {
       enabledFeatures: ["test_email", "customer_broadcasts", "recipient_logs"],
     },
     {
-      key: "paystack_verification",
-      label: "Paystack payment verification",
-      status: isConfigured(process.env.PAYSTACK_SECRET_KEY)
+      key: "flutterwave_verification",
+      label: "Flutterwave payment verification",
+      status: isConfigured(process.env.FLUTTERWAVE_SECRET_KEY)
         ? "configured"
         : "not_configured",
-      requirements: ["PAYSTACK_SECRET_KEY", "PAYSTACK_CALLBACK_URL"],
-      enabledFeatures: ["ngn_checkout", "payment_verify", "paid_order_events"],
+      requirements: ["FLUTTERWAVE_SECRET_KEY", "FLUTTERWAVE_REDIRECT_URL", "FLUTTERWAVE_WEBHOOK_SECRET_HASH"],
+      enabledFeatures: ["multi_currency_checkout", "payment_verify", "paid_order_events"],
     },
     {
       key: "currency_rates",

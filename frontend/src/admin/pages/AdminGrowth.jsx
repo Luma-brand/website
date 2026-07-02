@@ -9,6 +9,35 @@ import {
 } from "../../services/api";
 import { formatNaira } from "../../utils/currency";
 
+function getReadinessStatus(item) {
+  const status = String(item?.status || "").toLowerCase();
+  const requirements = Array.isArray(item?.requirements) ? item.requirements : [];
+
+  if (["configured", "ready", "enabled", "active"].includes(status)) {
+    return { label: status === "configured" ? "Configured" : "Ready", tone: "success" };
+  }
+
+  if (["partial", "partially_configured"].includes(status)) {
+    return { label: "Partially configured", tone: "warning" };
+  }
+
+  const requirementText = requirements.join(" ").toLowerCase();
+  if (requirementText.includes("api") || requirementText.includes("key")) {
+    return { label: "Missing API key", tone: "warning" };
+  }
+  if (requirementText.includes("template")) {
+    return { label: "Missing template", tone: "warning" };
+  }
+  if (requirementText.includes("cron")) {
+    return { label: "Missing cron", tone: "warning" };
+  }
+  if (["disabled", "inactive"].includes(status)) {
+    return { label: "Disabled", tone: "warning" };
+  }
+
+  return { label: "Needs verification", tone: "warning" };
+}
+
 export function AdminGrowth() {
   const [growth, setGrowth] = useState(null);
   const [automation, setAutomation] = useState(null);
@@ -157,19 +186,16 @@ export function AdminGrowth() {
                     </thead>
 
                     <tbody>
-                      {integrationRows.map((item) => (
-                        <tr key={item.key}>
-                          <td>{item.label}</td>
-                          <td>
-                            <span className="admin-badge">
-                              {item.status === "configured"
-                                ? "Configured"
-                                : "Not configured"}
-                            </span>
-                          </td>
-                          <td>{item.requirements.join(", ")}</td>
-                        </tr>
-                      ))}
+                      {integrationRows.map((item) => {
+                        const readiness = getReadinessStatus(item);
+                        return (
+                          <tr key={item.key}>
+                            <td><strong>{item.label}</strong></td>
+                            <td><span className={`admin-badge ${readiness.tone}`}>{readiness.label}</span></td>
+                            <td>{item.requirements?.length ? item.requirements.join(", ") : "No missing requirements reported"}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -202,7 +228,7 @@ export function AdminGrowth() {
                           </td>
                           <td>
                             <span className="admin-badge">
-                              {item.status?.replaceAll("_", " ") || "Not configured"}
+                              {item.status?.replaceAll("_", " ") || "Needs verification"}
                             </span>
                           </td>
                           <td>{item.pending}</td>

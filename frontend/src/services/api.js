@@ -139,6 +139,14 @@ export const getAdminMe = async () => {
   return handleResponse(response);
 };
 
+const getCustomerHeaders = (extraHeaders = {}) => {
+  const token = localStorage.getItem("luma_customer_token");
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extraHeaders,
+  };
+};
+
 export const getAdminDashboardStats = async () => {
   const response = await fetch(`${API_BASE_URL}/dashboard`, {
     headers: getAdminHeaders(),
@@ -1448,22 +1456,24 @@ export const getPublicOrderById = async (id) => {
   return handleResponse(response);
 };
 
-export const initializePaystackPayment = async (paymentData) => {
-  const response = await fetch(`${API_BASE_URL}/payments/paystack/initialize`, {
+export const initializeFlutterwavePayment = async (paymentData) => {
+  const response = await fetch(`${API_BASE_URL}/payments/flutterwave/initialize`, {
     method: "POST",
-    headers: {
+    headers: getCustomerHeaders({
       "Content-Type": "application/json",
-    },
+    }),
     body: JSON.stringify(paymentData),
   });
 
   return handleResponse(response);
 };
 
-export const verifyPaystackPayment = async (reference) => {
-  const response = await fetch(
-    `${API_BASE_URL}/payments/paystack/verify/${reference}`
-  );
+export const verifyFlutterwavePayment = async (payload) => {
+  const response = await fetch(`${API_BASE_URL}/payments/flutterwave/verify`, {
+    method: "POST",
+    headers: getCustomerHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify(payload),
+  });
 
   return handleResponse(response);
 };

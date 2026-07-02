@@ -49,7 +49,7 @@ export function TermsConditions() {
 
           <h2>5. Payments</h2>
           <p>
-            Payments are processed through Paystack. Orders are processed after
+            Payments are processed through Flutterwave. Orders are processed after
             payment confirmation. LUMA does not store card details or sensitive
             payment credentials.
           </p>

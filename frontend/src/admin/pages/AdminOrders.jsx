@@ -12,6 +12,10 @@ import {
 const orderStatuses = ["pending", "processing", "delivered", "cancelled"];
 const paymentStatuses = ["unpaid", "paid", "refunded"];
 
+function formatDate(value) {
+  return value ? new Date(value).toLocaleString() : "—";
+}
+
 export function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -50,7 +54,7 @@ export function AdminOrders() {
         order.customer_phone?.toLowerCase().includes(value) ||
         order.status?.toLowerCase().includes(value) ||
         order.payment_status?.toLowerCase().includes(value) ||
-        order.paystack_reference?.toLowerCase().includes(value)
+        (order.payment_reference || order.paystack_reference)?.toLowerCase().includes(value)
       );
     });
   }, [orders, search]);
@@ -152,7 +156,6 @@ export function AdminOrders() {
                 <thead>
                   <tr>
                     <th>Customer</th>
-                    <th>Email</th>
                     <th>Total</th>
                     <th>Order status</th>
                     <th>Payment</th>
@@ -165,8 +168,12 @@ export function AdminOrders() {
                 <tbody>
                   {filteredOrders.map((order) => (
                     <tr key={order.id}>
-                      <td>{order.customer_name}</td>
-                      <td>{order.customer_email}</td>
+                      <td>
+                        <div className="admin-customer-identity">
+                          <strong>{order.customer_name || "Customer"}</strong>
+                          <small title={order.customer_email}>{order.customer_email || "No email"}</small>
+                        </div>
+                      </td>
                       <td>{formatNaira(order.total_amount)}</td>
 
                       <td>
@@ -212,9 +219,9 @@ export function AdminOrders() {
                       </td>
 
                       <td>
-                        <small>
-                          {order.paystack_reference
-                            ? `${order.paystack_reference.slice(0, 18)}...`
+                        <small title={order.payment_reference || order.paystack_reference || ""}>
+                          {(order.payment_reference || order.paystack_reference)
+                            ? `${(order.payment_reference || order.paystack_reference).slice(0, 18)}...`
                             : "—"}
                         </small>
                       </td>
@@ -226,13 +233,7 @@ export function AdminOrders() {
                       </td>
 
                       <td>
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: 8,
-                            flexWrap: "wrap",
-                          }}
-                        >
+                        <div className="admin-row-actions">
                           <button
                             type="button"
                             className="admin-button secondary"
@@ -339,12 +340,27 @@ export function AdminOrders() {
 
                 <p>
                   <strong>Provider:</strong>{" "}
-                  {selectedOrder.payment_provider || "paystack"}
+                  {selectedOrder.payment_gateway || selectedOrder.payment_provider || "—"}
                 </p>
 
                 <p>
                   <strong>Reference:</strong>{" "}
-                  {selectedOrder.paystack_reference || "—"}
+                  {selectedOrder.payment_reference || selectedOrder.paystack_reference || "—"}
+                </p>
+
+                <p>
+                  <strong>Transaction ID:</strong>{" "}
+                  {selectedOrder.payment_transaction_id || "—"}
+                </p>
+
+                <p>
+                  <strong>Currency:</strong>{" "}
+                  {selectedOrder.payment_currency || "NGN"}
+                </p>
+
+                <p>
+                  <strong>Paid at:</strong>{" "}
+                  {selectedOrder.paid_at ? formatDate(selectedOrder.paid_at) : "—"}
                 </p>
 
                 <p>

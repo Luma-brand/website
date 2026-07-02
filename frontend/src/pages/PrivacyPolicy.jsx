@@ -45,8 +45,8 @@ export function PrivacyPolicy() {
 
           <h2>4. Payments</h2>
           <p>
-            Payments are processed securely through Paystack. LUMA does not
-            store your card details. Paystack may collect and process payment
+            Payments are processed securely through Flutterwave. LUMA does not
+            store your card details. Flutterwave may collect and process payment
             information according to its own privacy and security policies.
           </p>
 

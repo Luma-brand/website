@@ -10,6 +10,8 @@ import {
   LogOut,
   Mail,
   Package,
+  PanelLeftClose,
+  PanelLeftOpen,
   Settings,
   ShoppingBag,
   ShoppingCart,
@@ -162,7 +164,7 @@ const navGroups = [
   },
 ];
 
-export function AdminSidebar({ onClose }) {
+export function AdminSidebar({ isCollapsed, onCollapse, onClose }) {
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -175,19 +177,30 @@ export function AdminSidebar({ onClose }) {
   return (
     <aside className="admin-sidebar" aria-label="Admin navigation">
       <div className="admin-sidebar-top">
-        <div className="admin-logo">
+        <div className="admin-logo" aria-label="LUMA Control Room">
           <span>Control Room</span>
           <h2>LUMA</h2>
         </div>
 
-        <button
-          type="button"
-          className="admin-sidebar-close"
-          onClick={onClose}
-          aria-label="Close admin navigation"
-        >
-          <X size={18} />
-        </button>
+        <div className="admin-sidebar-controls">
+          <button
+            type="button"
+            className="admin-sidebar-collapse"
+            onClick={onCollapse}
+            aria-label={isCollapsed ? "Expand admin navigation" : "Collapse admin navigation"}
+            title={isCollapsed ? "Expand navigation" : "Collapse navigation"}
+          >
+            {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          </button>
+          <button
+            type="button"
+            className="admin-sidebar-close"
+            onClick={onClose}
+            aria-label="Close admin navigation"
+          >
+            <X size={18} />
+          </button>
+        </div>
       </div>
 
       <nav className="admin-nav">
@@ -199,7 +212,13 @@ export function AdminSidebar({ onClose }) {
               const Icon = item.icon;
 
               return (
-                <NavLink key={item.path} to={item.path} onClick={onClose}>
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={onClose}
+                  title={isCollapsed ? item.label : undefined}
+                  aria-label={item.label}
+                >
                   <Icon size={18} />
                   <span>{item.label}</span>
                 </NavLink>
@@ -210,9 +229,9 @@ export function AdminSidebar({ onClose }) {
       </nav>
 
       <div className="admin-sidebar-footer">
-        <button type="button" className="admin-logout" onClick={handleLogout}>
+        <button type="button" className="admin-logout" onClick={handleLogout} title={isCollapsed ? "Logout" : undefined}>
           <LogOut size={18} />
-          Logout
+          <span>Logout</span>
         </button>
       </div>
     </aside>

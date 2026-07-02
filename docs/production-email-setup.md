@@ -32,7 +32,7 @@ CRON_SECRET=long_random_secret
 RESEND_WEBHOOK_SECRET=optional_webhook_secret
 ```
 
-Also keep existing production values for `DATABASE_URL`, `JWT_SECRET`, Paystack, Cloudinary, and any other active backend integrations.
+Also keep existing production values for `DATABASE_URL`, `JWT_SECRET`, Flutterwave, Cloudinary, and any other active backend integrations.
 
 ## Frontend environment variables
 
