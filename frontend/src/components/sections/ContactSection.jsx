@@ -21,12 +21,12 @@ export function ContactSection() {
         </div>
 
         <div className="contact-actions">
-          <a href="mailto:hello@luma.com" className="contact-email">
+          <a href="mailto:hello@shopwithluma.com" className="contact-email">
             <Mail size={18} />
-            hello@luma.com
+            hello@shopwithluma.com
           </a>
 
-          <a  href="mailto:hello@luma.com?subject=LUMA Enquiry&body=Hello LUMA, I would like to make an enquiry." className="btn btn-primary">
+          <a  href="mailto:hello@shopwithluma.com?subject=LUMA Enquiry&body=Hello LUMA, I would like to make an enquiry." className="btn btn-primary">
             Send enquiry
             <ArrowUpRight size={18} />
           </a>
