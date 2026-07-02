@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { DEFAULT_SEO, NOINDEX_ROBOTS } from "../../seo/siteSeo";
 
 const INDEXABLE_STATIC_PATHS = new Set([
   "/",
@@ -11,8 +12,9 @@ const INDEXABLE_STATIC_PATHS = new Set([
 ]);
 
 function isIndexablePath(pathname) {
-  if (INDEXABLE_STATIC_PATHS.has(pathname)) return true;
-  return /^\/products\/[^/]+\/?$/.test(pathname);
+  const normalized = pathname.replace(/\/+$/, "") || "/";
+  if (INDEXABLE_STATIC_PATHS.has(normalized)) return true;
+  return /^\/products\/[^/]+$/.test(normalized);
 }
 
 function upsertRobotsMeta(name, content) {
@@ -33,8 +35,8 @@ export function RouteIndexingGuard() {
   useEffect(() => {
     const indexable = isIndexablePath(pathname);
     const directive = indexable
-      ? "index, follow, max-image-preview:large"
-      : "noindex, nofollow, noarchive";
+      ? DEFAULT_SEO.robots
+      : NOINDEX_ROBOTS;
 
     upsertRobotsMeta("robots", directive);
     upsertRobotsMeta("googlebot", directive);

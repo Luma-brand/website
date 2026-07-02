@@ -1,16 +1,18 @@
 export const siteMeta = {
-  name: "LUMA",
-  title: "LUMA — Professional Brow Essentials",
-  description: "LUMA is a functional brow system that makes polished, professional-level results effortless at home.",
-  url: "https://website-umber-xi-40.vercel.app/",
+  name: "LUMA Skincare",
+  shortName: "LUMA",
+  title: "LUMA Skincare | Brow Products for Effortless Beauty",
+  description:
+    "Shop LUMA Skincare for premium brow products designed for soft, natural, polished, everyday beauty.",
+  url: "https://shopwithluma.com/",
   email: "hello@luma.com",
   keywords: [
-    "LUMA beauty",
-    "brow lamination",
-    "brow tint",
+    "LUMA Skincare",
+    "brow products",
+    "premium brow products",
+    "natural brow beauty",
     "brow care",
     "brow grooming",
-    "at-home beauty",
-    "professional brow results",
+    "everyday brow styling",
   ],
 };

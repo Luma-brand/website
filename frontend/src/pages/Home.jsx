@@ -8,6 +8,12 @@ import { ContactSection } from "../components/sections/ContactSection";
 import { HomeProductSlider } from "../components/product/HomeProductSlider";
 import { PageSeo } from "../components/seo/PageSeo";
 import { benefits, faqs, ritualSteps } from "../data/siteContent";
+import { createCanonical } from "../seo/siteSeo";
+import {
+  faqJsonLd,
+  organizationJsonLd,
+  websiteJsonLd,
+} from "../seo/structuredData";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 26 },
@@ -28,16 +34,13 @@ const stagger = {
 };
 
 export function Home() {
-  const siteOrigin =
-    import.meta.env.VITE_SITE_URL ||
-    (typeof window !== "undefined" ? window.location.origin : "");
-
   return (
     <main id="main-content" className="page-shell">
       <PageSeo
-        title="LUMA Skincare | Soft Luxury Beauty Rituals"
-        description="Shop LUMA Skincare beauty essentials for refined everyday rituals, clean product routines, and secure checkout."
-        canonical={siteOrigin}
+        title="LUMA Skincare | Brow Products for Effortless Beauty"
+        description="Shop LUMA Skincare for premium brow products designed for soft, natural, polished, everyday beauty."
+        canonical={createCanonical("/")}
+        structuredData={[organizationJsonLd(), websiteJsonLd(), faqJsonLd(faqs)]}
       />
       <Header />
 
@@ -86,7 +89,7 @@ export function Home() {
           <div className="hero-image-card">
             <img
               src="/assets/images/hero-closeup.jpg"
-              alt="Close-up beauty image highlighting polished brows"
+              alt="LUMA Skincare brow beauty close-up with polished natural brows"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
               }}
@@ -150,10 +153,10 @@ export function Home() {
       <section id="products" className="products-section section-padding">
         <div className="section-heading">
           <p className="eyebrow">The system</p>
-          <h2>Essentials for controlled, polished beauty.</h2>
+            <h2>Brow essentials for controlled, polished beauty.</h2>
           <p>
-            A curated preview of the LUMA product system. Visit the shop to
-            explore prices, stock, and checkout.
+            A curated preview of the LUMA brow product system. Visit the shop to
+            explore prices, stock, and everyday styling essentials.
           </p>
         </div>
 
@@ -171,7 +174,7 @@ export function Home() {
         <div className="benefits-image-panel">
           <img
             src="/assets/images/brand-in-action.jpg"
-            alt="LUMA beauty product in use"
+            alt="LUMA brow product in use for a clean polished finish"
             onError={(event) => {
               event.currentTarget.style.display = "none";
             }}

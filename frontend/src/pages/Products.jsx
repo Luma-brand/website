@@ -15,6 +15,11 @@ import {
   isLowStock,
   isProductUnavailable,
 } from "../utils/stock";
+import { createCanonical } from "../seo/siteSeo";
+import {
+  breadcrumbJsonLd,
+  productsCollectionJsonLd,
+} from "../seo/structuredData";
 
 function formatProduct(product) {
   return {
@@ -103,22 +108,26 @@ export function Products() {
   return (
     <main className="page-shell inner-page">
       <PageSeo
-        title="Shop LUMA Skincare | Beauty Essentials"
-        description="Shop LUMA Skincare products, stock, prices, and refined everyday beauty essentials."
-        canonical={`${
-          import.meta.env.VITE_SITE_URL ||
-          (typeof window !== "undefined" ? window.location.origin : "")
-        }/products`}
+        title="Shop Brow Products | LUMA Skincare"
+        description="Explore LUMA brow products made for clean, polished, natural-looking brows. Shop premium brow essentials for everyday beauty."
+        canonical={createCanonical("/products")}
+        structuredData={[
+          breadcrumbJsonLd([
+            { name: "Home", url: createCanonical("/") },
+            { name: "Products", url: createCanonical("/products") },
+          ]),
+          productsCollectionJsonLd(products),
+        ]}
       />
       <Header />
 
       <section className="commerce-page">
         <div className="commerce-heading">
           <p className="eyebrow">Shop LUMA</p>
-          <h1>The full beauty system.</h1>
+          <h1>Shop LUMA brow products.</h1>
           <p>
-            Explore clean, functional beauty essentials created for refined
-            everyday rituals.
+            Explore clean, functional brow essentials created for polished
+            everyday styling, natural-looking definition, and soft beauty rituals.
           </p>
         </div>
 
@@ -127,7 +136,7 @@ export function Products() {
             <Search size={18} />
             <input
               type="search"
-              placeholder="Search products..."
+              placeholder="Search brow products..."
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
             />
