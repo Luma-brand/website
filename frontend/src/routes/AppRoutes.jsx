@@ -36,7 +36,6 @@ import { AdminAnalytics } from "../admin/pages/AdminAnalytics";
 import { AdminGrowth } from "../admin/pages/AdminGrowth";
 import { AdminEmailBroadcasts } from "../admin/pages/AdminEmailBroadcasts";
 import { AdminAutomations } from "../admin/pages/AdminAutomations";
-import { AdminMail } from "../admin/pages/AdminMail";
 import { AdminAbandonedCarts } from "../admin/pages/AdminAbandonedCarts";
 import { AdminAbandonedCheckouts } from "../admin/pages/AdminAbandonedCheckouts";
 import { AdminBackInStock } from "../admin/pages/AdminBackInStock";
@@ -95,7 +94,6 @@ export function AppRoutes() {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="waitlist" element={<AdminWaitlist />} />
           <Route path="enquiries" element={<AdminEnquiries />} />
-          <Route path="mail" element={<AdminMail />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="product-sales" element={<AdminProductSales />} />
           <Route path="orders" element={<AdminOrders />} />
@@ -128,10 +126,3 @@ export function AppRoutes() {
     </BrowserRouter>
   );
 }
-
-
-
-
-
-
-
