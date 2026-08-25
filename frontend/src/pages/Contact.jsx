@@ -15,22 +15,23 @@ export function Contact() {
     <main className="page-shell inner-page">
       <PageSeo
         title="Contact LUMA Skincare"
-        description="Contact LUMA Skincare for product, order, delivery, and customer support questions."
+        description="Contact LUMA Skincare for product, order, delivery, retail, partnership, and customer support enquiries."
         canonical={`${getSiteOrigin()}/contact`}
       />
       <Header />
 
       <section className="commerce-page">
         <div className="commerce-heading">
-          <p className="eyebrow">Contact</p>
-          <h1>Talk to LUMA.</h1>
+          <p className="eyebrow">Contact LUMA</p>
+          <h1>We’re here when you need us.</h1>
           <p>
-            Send a message about products, delivery, orders, or customer care.
+            Product questions, order support, retail interest, partnerships and
+            general enquiries can all be sent from one place.
           </p>
         </div>
       </section>
 
-      <ContactSection />
+      <ContactSection detailed />
 
       <Footer />
     </main>
