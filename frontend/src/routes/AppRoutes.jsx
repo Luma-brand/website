@@ -27,7 +27,6 @@ import { AdminEnquiries } from "../admin/pages/AdminEnquiries";
 import { AdminProducts } from "../admin/pages/AdminProducts";
 import { AdminProductSales } from "../admin/pages/AdminProductSales";
 import { AdminOrders } from "../admin/pages/AdminOrders";
-import { AdminContent } from "../admin/pages/AdminContent";
 import { AdminSettings } from "../admin/pages/AdminSettings";
 import { AdminInventory } from "../admin/pages/AdminInventory";
 import { AdminDelivery } from "../admin/pages/AdminDelivery";
@@ -72,20 +71,15 @@ export function AppRoutes() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
-
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-and-conditions" element={<TermsConditions />} />
 
         <Route path="/admin" element={<Forbidden />} />
         <Route path="/admin/*" element={<Forbidden />} />
-
         <Route path="/luma-control-room/login" element={<AdminLogin />} />
 
         <Route path="/luma-control-room" element={<AdminLayout />}>
-          <Route
-            index
-            element={<Navigate to="/luma-control-room/dashboard" replace />}
-          />
+          <Route index element={<Navigate to="/luma-control-room/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="waitlist" element={<AdminWaitlist />} />
           <Route path="enquiries" element={<AdminEnquiries />} />
@@ -107,8 +101,6 @@ export function AppRoutes() {
           <Route path="back-in-stock" element={<AdminBackInStock />} />
           <Route path="discounts" element={<AdminDiscounts />} />
           <Route path="currency-rates" element={<AdminCurrencyRates />} />
-          <Route path="content" element={<AdminContent />} />
-          <Route path="website-content" element={<AdminContent />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
 
