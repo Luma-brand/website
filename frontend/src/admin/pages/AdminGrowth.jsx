@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { AdminTopbar } from "../components/AdminTopbar";
 import { StatCard } from "../components/StatCard";
 import {
@@ -8,6 +9,45 @@ import {
   triggerAutomationFlow,
 } from "../../services/api";
 import { formatNaira } from "../../utils/currency";
+
+const nativeFeatureGroups = [
+  {
+    title: "Recovery & retention",
+    features: [
+      { label: "Abandoned cart recovery", detail: "Email + tracked WhatsApp follow-up", path: "/luma-control-room/abandoned-carts", status: "Live" },
+      { label: "Checkout abandonment", detail: "Track checkout starts and recover unfinished checkouts", path: "/luma-control-room/abandoned-checkouts", status: "Live" },
+      { label: "Browse abandonment", detail: "Product views are tracked and converted when shoppers buy", path: "/luma-control-room/growth", status: "Live" },
+      { label: "Back-in-stock & waitlists", detail: "Collect demand and notify shoppers when stock returns", path: "/luma-control-room/product-waitlists", status: "Live" },
+      { label: "Welcome + exit intent", detail: "WELCOME10 and rate-limited exit recovery on the storefront", path: "/luma-control-room/discounts", status: "Live" },
+    ],
+  },
+  {
+    title: "Customer intelligence",
+    features: [
+      { label: "Customer profiles", detail: "Purchase history, LTV, AOV and repeat behaviour", path: "/luma-control-room/customers", status: "Live" },
+      { label: "Segments & tags", detail: "Filter, tag, segment and export customer lists", path: "/luma-control-room/customers", status: "Live" },
+      { label: "Sales analytics", detail: "Conversion, acquisition, returning customers and best sellers", path: "/luma-control-room/analytics", status: "Live" },
+    ],
+  },
+  {
+    title: "Merchandising & operations",
+    features: [
+      { label: "Recommendations & cross-sells", detail: "Frequently bought together, related products and upsells", path: "/luma-control-room/product-sales", status: "Live" },
+      { label: "Discounts & free shipping", detail: "Codes, usage rules, expiry and free-shipping threshold", path: "/luma-control-room/discounts", status: "Live" },
+      { label: "Inventory intelligence", detail: "Low-stock alerts, forecast, bulk updates and purchase orders", path: "/luma-control-room/inventory", status: "Live" },
+      { label: "SEO foundation", detail: "Editable product SEO, schema and generated XML sitemap", path: "/luma-control-room/products", status: "Live" },
+    ],
+  },
+  {
+    title: "Lifecycle automation",
+    features: [
+      { label: "Automated customer journeys", detail: "Welcome, post-purchase, review, reorder and win-back flows", path: "/luma-control-room/automations", status: "Live" },
+      { label: "Email broadcasts", detail: "Branded campaigns and recipient tracking", path: "/luma-control-room/email-broadcasts", status: "Live" },
+      { label: "Meta / TikTok / GA4", detail: "Ready to wire when their IDs are supplied", path: "/luma-control-room/settings", status: "External setup" },
+      { label: "Automatic WhatsApp delivery", detail: "Needs an approved WhatsApp provider/API and templates", path: "/luma-control-room/settings", status: "External setup" },
+    ],
+  },
+];
 
 function getReadinessStatus(item) {
   const status = String(item?.status || "").toLowerCase();
@@ -120,7 +160,7 @@ export function AdminGrowth() {
     <>
       <AdminTopbar
         title="Growth tools"
-        subtitle="Shopify-style marketing, automation, SEO, and recovery readiness."
+        subtitle="LUMA's native commerce growth, automation, retention, and integration hub."
       />
 
       <section className="admin-content">
@@ -128,6 +168,11 @@ export function AdminGrowth() {
         {successMessage && <div className="admin-success">{successMessage}</div>}
 
         <div className="admin-table-header">
+          <div>
+            <p className="admin-muted" style={{ margin: 0 }}>
+              Native features stay inside LUMA. External services are only required where the provider owns the channel.
+            </p>
+          </div>
           <button
             type="button"
             className="admin-button secondary"
@@ -139,34 +184,62 @@ export function AdminGrowth() {
         </div>
 
         <div className="admin-grid">
-          <StatCard
-            label="Abandoned carts"
-            value={summary.abandonedCarts || 0}
-          />
-          <StatCard
-            label="Abandoned cart value"
-            value={formatNaira(summary.abandonedCartValue || 0)}
-          />
-          <StatCard
-            label="Checkout starts"
-            value={summary.checkoutStarts || 0}
-          />
-          <StatCard
-            label="Product views"
-            value={summary.productViews || 0}
-          />
-          <StatCard
-            label="Back-in-stock requests"
-            value={summary.backInStockRequests || 0}
-          />
-          <StatCard
-            label="Ready to notify"
-            value={summary.backInStockReady || 0}
-          />
+          <StatCard label="Abandoned carts" value={summary.abandonedCarts || 0} />
+          <StatCard label="Abandoned cart value" value={formatNaira(summary.abandonedCartValue || 0)} />
+          <StatCard label="Checkout starts" value={summary.checkoutStarts || 0} />
+          <StatCard label="Product views" value={summary.productViews || 0} />
+          <StatCard label="Back-in-stock requests" value={summary.backInStockRequests || 0} />
+          <StatCard label="Ready to notify" value={summary.backInStockReady || 0} />
+        </div>
+
+        <div className="admin-card" style={{ marginTop: 24 }}>
+          <div className="admin-table-header">
+            <div>
+              <p className="eyebrow" style={{ marginBottom: 6 }}>LUMA commerce stack</p>
+              <h2 style={{ margin: 0 }}>What is built into the store now</h2>
+            </div>
+          </div>
+
+          <div className="admin-section-grid" style={{ marginTop: 18 }}>
+            {nativeFeatureGroups.map((group) => (
+              <div className="admin-card" key={group.title} style={{ boxShadow: "none" }}>
+                <div className="admin-table-header">
+                  <h3 style={{ margin: 0 }}>{group.title}</h3>
+                </div>
+                <div style={{ display: "grid", gap: 10 }}>
+                  {group.features.map((feature) => (
+                    <Link
+                      to={feature.path}
+                      key={`${group.title}-${feature.label}`}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr auto",
+                        gap: 12,
+                        alignItems: "center",
+                        padding: "13px 14px",
+                        border: "1px solid var(--admin-border, rgba(22,22,22,.1))",
+                        borderRadius: 14,
+                        color: "inherit",
+                        textDecoration: "none",
+                      }}
+                    >
+                      <span>
+                        <strong style={{ display: "block" }}>{feature.label}</strong>
+                        <small className="admin-muted">{feature.detail}</small>
+                      </span>
+                      <span className={`admin-badge ${feature.status === "Live" ? "success" : "warning"}`}>
+                        {feature.status}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {isLoading ? (
-          <div className="admin-card admin-table-card">Loading growth tools...</div>
+          <div className="admin-card admin-table-card">Loading live growth data...</div>
         ) : (
           <>
             <div className="admin-section-grid">
@@ -184,7 +257,6 @@ export function AdminGrowth() {
                         <th>Needed</th>
                       </tr>
                     </thead>
-
                     <tbody>
                       {integrationRows.map((item) => {
                         const readiness = getReadinessStatus(item);
@@ -192,7 +264,7 @@ export function AdminGrowth() {
                           <tr key={item.key}>
                             <td><strong>{item.label}</strong></td>
                             <td><span className={`admin-badge ${readiness.tone}`}>{readiness.label}</span></td>
-                            <td>{item.requirements?.length ? item.requirements.join(", ") : "No missing requirements reported"}</td>
+                            <td>{item.requirements?.length ? item.requirements.join(", ") : "Built into LUMA"}</td>
                           </tr>
                         );
                       })}
@@ -218,7 +290,6 @@ export function AdminGrowth() {
                         <th>Manual trigger</th>
                       </tr>
                     </thead>
-
                     <tbody>
                       {automationRows.map((item) => (
                         <tr key={item.eventType}>
@@ -240,14 +311,9 @@ export function AdminGrowth() {
                                 type="button"
                                 className="admin-button secondary"
                                 onClick={() => handleTriggerAutomation(item)}
-                                disabled={
-                                  triggeringFlow === item.eventType ||
-                                  !item.configured
-                                }
+                                disabled={triggeringFlow === item.eventType || !item.configured}
                               >
-                                {triggeringFlow === item.eventType
-                                  ? "Running..."
-                                  : "Run due"}
+                                {triggeringFlow === item.eventType ? "Running..." : "Run due"}
                               </button>
                             ) : (
                               <span className="admin-muted">Automatic</span>
@@ -268,10 +334,7 @@ export function AdminGrowth() {
                 </div>
 
                 {recentAbandonedCarts.length === 0 ? (
-                  <div className="admin-empty">
-                    No abandoned cart data yet. Apply the Phase 8B migration to
-                    store cart recovery records.
-                  </div>
+                  <div className="admin-empty">No abandoned carts yet.</div>
                 ) : (
                   <div className="admin-table-wrap">
                     <table className="admin-table">
@@ -282,7 +345,6 @@ export function AdminGrowth() {
                           <th>Status</th>
                         </tr>
                       </thead>
-
                       <tbody>
                         {recentAbandonedCarts.map((cart) => (
                           <tr key={cart.id}>
@@ -303,9 +365,7 @@ export function AdminGrowth() {
                 </div>
 
                 {recentBackInStockRequests.length === 0 ? (
-                  <div className="admin-empty">
-                    No back-in-stock requests yet.
-                  </div>
+                  <div className="admin-empty">No back-in-stock requests yet.</div>
                 ) : (
                   <div className="admin-table-wrap">
                     <table className="admin-table">
@@ -316,16 +376,11 @@ export function AdminGrowth() {
                           <th>Status</th>
                         </tr>
                       </thead>
-
                       <tbody>
                         {recentBackInStockRequests.map((request) => (
                           <tr key={request.id}>
                             <td>{request.product_name || "Product"}</td>
-                            <td>
-                              {request.customer_email ||
-                                request.customer_phone ||
-                                "Guest"}
-                            </td>
+                            <td>{request.customer_email || request.customer_phone || "Guest"}</td>
                             <td>{request.status}</td>
                           </tr>
                         ))}
