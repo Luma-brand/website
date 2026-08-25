@@ -1,13 +1,13 @@
 const express = require("express");
 const { protectCustomer } = require("../middleware/authMiddleware");
 const {
-  initializeFlutterwavePayment,
-  verifyFlutterwavePayment,
-} = require("../controllers/flutterwaveController");
+  initializePaystackPayment,
+  verifyPaystackPayment,
+} = require("../controllers/paystackController");
 
 const router = express.Router();
 
-router.post("/flutterwave/initialize", protectCustomer, initializeFlutterwavePayment);
-router.post("/flutterwave/verify", protectCustomer, verifyFlutterwavePayment);
+router.post("/paystack/initialize", protectCustomer, initializePaystackPayment);
+router.post("/paystack/verify", protectCustomer, verifyPaystackPayment);
 
 module.exports = router;
