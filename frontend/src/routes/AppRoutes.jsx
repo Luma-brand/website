@@ -5,9 +5,9 @@ import { Products } from "../pages/Products";
 import { ProductDetails } from "../pages/ProductDetails";
 import { Wishlist } from "../pages/Wishlist";
 import { Cart } from "../pages/Cart";
-import { Checkout } from "../pages/Checkout";
+import { Checkout } from "../pages/CheckoutPaystack";
 import { OrderSuccess } from "../pages/OrderSuccess";
-import { FlutterwaveCallback } from "../pages/FlutterwaveCallback";
+import { PaystackCallback } from "../pages/PaystackCallback";
 import { Account } from "../pages/Account";
 import { CompleteProfile } from "../pages/CompleteProfile";
 import { Settings } from "../pages/Settings";
@@ -53,7 +53,6 @@ export function AppRoutes() {
       <GrowthTracker />
 
       <Routes>
-        {/* Public website routes */}
         <Route path="/" element={<Home />} />
         <Route path="/products" element={<Products />} />
         <Route path="/products/:slug" element={<ProductDetails />} />
@@ -62,8 +61,8 @@ export function AppRoutes() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/order-success" element={<OrderSuccess />} />
         <Route path="/order-success/:orderId" element={<OrderSuccess />} />
-        <Route path="/payment/flutterwave/callback" element={<FlutterwaveCallback />} />
-        <Route path="/account" element={<Account />} />
+        <Route path="/payment/paystack/callback" element={<PaystackCallback />} />
+        <Route path="/account" element={<Account initialMode="signin" />} />
         <Route path="/login" element={<Account initialMode="signin" />} />
         <Route path="/register" element={<Account initialMode="signup" />} />
         <Route path="/signup" element={<Account initialMode="signup" />} />
@@ -74,18 +73,14 @@ export function AppRoutes() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
 
-        {/* Legal pages */}
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-and-conditions" element={<TermsConditions />} />
 
-        {/* Public admin route is blocked */}
         <Route path="/admin" element={<Forbidden />} />
         <Route path="/admin/*" element={<Forbidden />} />
 
-        {/* Hidden admin login route */}
         <Route path="/luma-control-room/login" element={<AdminLogin />} />
 
-        {/* Hidden admin dashboard routes */}
         <Route path="/luma-control-room" element={<AdminLayout />}>
           <Route
             index
@@ -107,10 +102,7 @@ export function AppRoutes() {
           <Route path="automations" element={<AdminAutomations />} />
           <Route path="email-automation" element={<Navigate to="/luma-control-room/abandoned-carts" replace />} />
           <Route path="abandoned-carts" element={<AdminAbandonedCarts />} />
-          <Route
-            path="abandoned-checkouts"
-            element={<AdminAbandonedCheckouts />}
-          />
+          <Route path="abandoned-checkouts" element={<AdminAbandonedCheckouts />} />
           <Route path="product-waitlists" element={<AdminBackInStock />} />
           <Route path="back-in-stock" element={<AdminBackInStock />} />
           <Route path="discounts" element={<AdminDiscounts />} />
@@ -120,7 +112,6 @@ export function AppRoutes() {
           <Route path="settings" element={<AdminSettings />} />
         </Route>
 
-        {/* 404 */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
