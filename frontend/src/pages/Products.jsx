@@ -7,7 +7,7 @@ import { PageSeo } from "../components/seo/PageSeo";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { useToast } from "../context/ToastContext";
-import { getProducts } from "../services/api";
+import { getCachedProducts, refreshProducts } from "../services/productCache";
 import { formatNaira } from "../utils/currency";
 import { getProductImage } from "../utils/images";
 import {
@@ -36,37 +36,57 @@ function formatProduct(product) {
   };
 }
 
+function activeProductsFrom(data = []) {
+  return data
+    .filter((product) => product.status === "active")
+    .map(formatProduct);
+}
+
 export function Products() {
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { showToast } = useToast();
 
-  const [products, setProducts] = useState([]);
+  const cached = getCachedProducts({ allowStale: true });
+  const [products, setProducts] = useState(() => activeProductsFrom(cached?.data || []));
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !cached?.data?.length);
+  const [isRefreshing, setIsRefreshing] = useState(() => Boolean(cached?.data?.length));
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let mounted = true;
+
     async function loadProducts() {
       try {
-        setIsLoading(true);
+        if (!products.length) setIsLoading(true);
+        setIsRefreshing(Boolean(products.length));
         setError("");
 
-        const response = await getProducts();
+        const response = await refreshProducts();
+        if (!mounted) return;
 
-        const activeProducts = (response.data || [])
-          .filter((product) => product.status === "active")
-          .map(formatProduct);
-
-        setProducts(activeProducts);
+        setProducts(activeProductsFrom(response.data || []));
       } catch (error) {
-        setError(error.message || "Failed to load products.");
+        if (!mounted) return;
+
+        if (!products.length) {
+          setError(error.message || "Failed to load products.");
+        }
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+          setIsRefreshing(false);
+        }
       }
     }
 
     loadProducts();
+    return () => {
+      mounted = false;
+    };
+    // The initial product snapshot is intentional: refresh once per page mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function handleAddToCart(product) {
@@ -80,9 +100,9 @@ export function Products() {
       result.success ? "success" : "error"
     );
   }
+
   function handleToggleWishlist(product) {
     const alreadySaved = isInWishlist(product.slug);
-
     toggleWishlist(product);
 
     showToast(
@@ -129,6 +149,11 @@ export function Products() {
             Explore clean, functional brow essentials created for polished
             everyday styling, natural-looking definition, and soft beauty rituals.
           </p>
+          {isRefreshing && products.length > 0 && (
+            <small style={{ color: "var(--color-muted)" }}>
+              Refreshing availability quietly in the background…
+            </small>
+          )}
         </div>
 
         <div className="product-tools">
@@ -143,14 +168,14 @@ export function Products() {
           </label>
         </div>
 
-        {error && (
+        {error && products.length === 0 && (
           <div className="empty-state">
             <h2>Unable to load products.</h2>
             <p>{error}</p>
           </div>
         )}
 
-        {isLoading ? (
+        {isLoading && products.length === 0 ? (
           <div className="empty-state">
             <h2>Loading products...</h2>
             <p>Please wait while we prepare the LUMA collection.</p>
@@ -158,7 +183,7 @@ export function Products() {
         ) : filteredProducts.length === 0 ? (
           <div className="empty-state">
             <h2>No products found.</h2>
-            <p>Add active products from the admin dashboard or try another search.</p>
+            <p>Try another search.</p>
           </div>
         ) : (
           <div className="shop-grid">
@@ -173,10 +198,12 @@ export function Products() {
                     className="shop-product-image"
                   >
                     {product.image ? (
-                     <img
-  src={product.image || product.image_url}
-  alt={product.name}
-/>
+                      <img
+                        src={product.image || product.image_url}
+                        alt={product.name}
+                        loading="lazy"
+                        decoding="async"
+                      />
                     ) : (
                       <div className="empty-state">
                         <p>No image</p>
@@ -221,17 +248,16 @@ export function Products() {
                           Add to cart
                         </button>
                       )}
-<Link to="/cart" className="product-learn-link mobile-cart-link">
-  Go to cart
-  <ArrowRight size={16} />
-</Link>
+
+                      <Link to="/cart" className="product-learn-link mobile-cart-link">
+                        Go to cart <ArrowRight size={16} />
+                      </Link>
+
                       <button
                         type="button"
                         className={`wishlist-toggle ${saved ? "saved" : ""}`}
                         onClick={() => handleToggleWishlist(product)}
-                        aria-label={
-                          saved ? "Remove from wishlist" : "Add to wishlist"
-                        }
+                        aria-label={saved ? "Remove from wishlist" : "Add to wishlist"}
                       >
                         <Heart size={18} />
                         {saved ? "Saved" : "Save"}
@@ -241,8 +267,7 @@ export function Products() {
                         to={`/products/${product.slug}`}
                         className="product-learn-link"
                       >
-                        View details
-                        <ArrowRight size={16} />
+                        View details <ArrowRight size={16} />
                       </Link>
                     </div>
                   </div>
