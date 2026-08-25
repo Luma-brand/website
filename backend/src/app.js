@@ -33,7 +33,7 @@ const emailCompatibilityRoutes = require("./routes/emailCompatibilityRoutes");
 const emailAutomationRoutes = require("./routes/emailAutomationRoutes");
 const mailRoutes = require("./routes/mailRoutes");
 const resendWebhookRoutes = require("./routes/resendWebhookRoutes");
-const flutterwaveWebhookRoutes = require("./routes/flutterwaveWebhookRoutes");
+const paystackWebhookRoutes = require("./routes/paystackWebhookRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const adminAbandonedCartRoutes = require("./routes/adminAbandonedCartRoutes");
 const cronRoutes = require("./routes/cronRoutes");
@@ -56,7 +56,6 @@ const vercelPreviewRegex = /^https:\/\/.*\.vercel\.app$/;
 
 const corsOptions = {
   origin(origin, callback) {
-    // Allows Postman, curl, server health checks, and direct browser visits
     if (!origin) {
       return callback(null, true);
     }
@@ -65,21 +64,17 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    // Allows Vercel preview deployments while testing
     if (vercelPreviewRegex.test(origin)) {
       return callback(null, true);
     }
 
     console.log("Blocked by CORS:", origin);
-
     return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
-
-
 
 app.use(cors(corsOptions));
 app.options(/.*/, cors(corsOptions));
@@ -95,17 +90,20 @@ app.use(
 
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
-app.use(express.json({
-  limit: "10mb",
-  verify: (req, res, buffer) => {
-    if (req.originalUrl && (
-      req.originalUrl.startsWith("/api/webhooks/resend") ||
-      req.originalUrl.startsWith("/api/webhooks/flutterwave")
-    )) {
-      req.rawBody = buffer.toString("utf8");
-    }
-  },
-}));
+app.use(
+  express.json({
+    limit: "10mb",
+    verify: (req, res, buffer) => {
+      if (
+        req.originalUrl &&
+        (req.originalUrl.startsWith("/api/webhooks/resend") ||
+          req.originalUrl.startsWith("/api/webhooks/paystack"))
+      ) {
+        req.rawBody = buffer.toString("utf8");
+      }
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
@@ -129,12 +127,11 @@ app.get("/api/health", (req, res) => {
     environment: process.env.NODE_ENV || "development",
     frontendUrl: process.env.FRONTEND_URL || null,
     allowedOrigins,
-    flutterwaveConfigured: Boolean(process.env.FLUTTERWAVE_SECRET_KEY),
+    paystackConfigured: Boolean(process.env.PAYSTACK_SECRET_KEY),
     resendConfigured: Boolean(
       process.env.RESEND_API_KEY &&
         (process.env.EMAIL_FROM || process.env.RESEND_FROM_EMAIL)
     ),
-    googleClientConfigured: Boolean(process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID),
     googleMapsConfigured: Boolean(process.env.GOOGLE_MAPS_API_KEY),
     cloudinaryConfigured: Boolean(
       process.env.CLOUDINARY_CLOUD_NAME &&
@@ -182,7 +179,7 @@ app.use("/api/admin/email", emailCompatibilityRoutes);
 app.use("/api/admin/email-automation", emailAutomationRoutes);
 app.use("/api/admin/mail", mailRoutes);
 app.use("/api/webhooks/resend", resendWebhookRoutes);
-app.use("/api/webhooks/flutterwave", flutterwaveWebhookRoutes);
+app.use("/api/webhooks/paystack", paystackWebhookRoutes);
 app.use("/api/cron", cronRoutes);
 app.use("/api/integrations", integrationRoutes);
 app.use("/", seoRoutes);
@@ -218,14 +215,3 @@ app.use((error, req, res, next) => {
 });
 
 module.exports = app;
-
-
-
-
-
-
-
-
-
-
-
