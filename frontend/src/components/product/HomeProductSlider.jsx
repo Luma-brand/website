@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { getCachedProducts, refreshProducts } from "../../services/productCache";
 import { formatNaira } from "../../utils/currency";
 import { getProductImage } from "../../utils/images";
+import "../../styles/homeProductSkeleton.css";
 
 function asList(value) {
   if (Array.isArray(value)) return value.filter(Boolean);
@@ -41,13 +42,32 @@ function normalizeList(data = []) {
     .map(normalizeProduct);
 }
 
+function ProductSkeletons() {
+  return (
+    <div className="luma-product-skeletons" aria-label="Loading LUMA products" aria-live="polite">
+      {[0, 1, 2, 3].map((item) => (
+        <article className="luma-product-skeleton" key={item} aria-hidden="true">
+          <div className="luma-product-skeleton-media" />
+          <div className="luma-product-skeleton-body">
+            <div className="luma-product-skeleton-line short" />
+            <div className="luma-product-skeleton-line title" />
+            <div className="luma-product-skeleton-line long" />
+            <div className="luma-product-skeleton-line medium" />
+            <div className="luma-product-skeleton-line price" />
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 const ProductSlide = memo(function ProductSlide({ product }) {
   const roundedRating = Math.round(product.rating);
   return (
     <article className="product-card home-product-slide">
       <Link to={`/products/${product.slug}`} className="product-image" tabIndex={-1} aria-hidden="true">
         {product.image ? (
-          <img src={product.image} alt={product.name} loading="lazy" decoding="async" sizes="(max-width: 640px) 82vw, (max-width: 1024px) 42vw, 24vw" />
+          <img src={product.image} alt={product.name} loading="lazy" decoding="async" fetchPriority="low" sizes="(max-width: 640px) 82vw, (max-width: 1024px) 42vw, 24vw" />
         ) : (
           <div className="product-image-fallback"><small>Image coming soon</small></div>
         )}
@@ -139,7 +159,7 @@ export function HomeProductSlider() {
     trackRef.current.scrollLeft += event.deltaY;
   }
 
-  if (status === "loading") return <div className="home-product-state" aria-live="polite">Preparing the brow collection…</div>;
+  if (status === "loading") return <ProductSkeletons />;
   if (status === "error") return (
     <div className="home-product-state" role="alert">
       <strong>We couldn’t load the collection.</strong>
