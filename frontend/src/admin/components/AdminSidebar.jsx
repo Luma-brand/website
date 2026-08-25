@@ -89,11 +89,6 @@ const navGroups = [
         path: "/luma-control-room/enquiries",
         icon: Mail,
       },
-      {
-        label: "Mail",
-        path: "/luma-control-room/mail",
-        icon: Mail,
-      },
     ],
   },
   {
@@ -129,7 +124,6 @@ const navGroups = [
         path: "/luma-control-room/automations",
         icon: Workflow,
       },
-
       {
         label: "Abandoned carts",
         path: "/luma-control-room/abandoned-carts",
@@ -237,10 +231,3 @@ export function AdminSidebar({ isCollapsed, onCollapse, onClose }) {
     </aside>
   );
 }
-
-
-
-
-
-
-
