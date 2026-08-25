@@ -1,0 +1,219 @@
+.luma-contact-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto 88px;
+}
+
+.luma-contact-grid {
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.luma-contact-panel,
+.luma-enquiry-panel {
+  border: 1px solid rgba(28, 27, 24, .09);
+  border-radius: 30px;
+  background: #fffdf7;
+  box-shadow: 0 20px 60px rgba(29, 27, 22, .055);
+}
+
+.luma-contact-panel {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(28px, 5vw, 54px);
+  background:
+    radial-gradient(circle at 80% 0%, rgba(255, 213, 53, .24), transparent 38%),
+    linear-gradient(145deg, #fffaf0 0%, #f4f1e9 100%);
+}
+
+.luma-contact-panel::after {
+  content: "LUMA";
+  position: absolute;
+  right: -12px;
+  bottom: -30px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(76px, 12vw, 148px);
+  letter-spacing: -.06em;
+  color: rgba(25, 24, 21, .035);
+  pointer-events: none;
+}
+
+.luma-contact-panel h2,
+.luma-enquiry-panel h2 {
+  margin: 8px 0 16px;
+  color: #1d1c19;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 500;
+  letter-spacing: -.035em;
+  line-height: 1.03;
+}
+
+.luma-contact-panel h2 { font-size: clamp(38px, 5vw, 64px); }
+.luma-enquiry-panel h2 { font-size: clamp(32px, 4vw, 48px); }
+
+.luma-contact-panel > p,
+.luma-enquiry-panel > p {
+  color: #69665f;
+  line-height: 1.75;
+  max-width: 58ch;
+}
+
+.luma-contact-topics {
+  display: grid;
+  gap: 12px;
+  margin-top: 34px;
+}
+
+.luma-contact-topic {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 13px;
+  align-items: center;
+  padding: 14px 0;
+  border-top: 1px solid rgba(29, 28, 25, .09);
+}
+
+.luma-contact-topic-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: #ffd535;
+  color: #1c1b18;
+}
+
+.luma-contact-topic strong {
+  display: block;
+  color: #24221e;
+  font-size: .95rem;
+}
+
+.luma-contact-topic span {
+  color: #77736b;
+  font-size: .86rem;
+}
+
+.luma-enquiry-panel {
+  padding: clamp(26px, 4.5vw, 48px);
+}
+
+.luma-enquiry-form {
+  display: grid;
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.luma-enquiry-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.luma-enquiry-field {
+  display: grid;
+  gap: 8px;
+}
+
+.luma-enquiry-field label {
+  color: #3c3933;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+
+.luma-enquiry-field input,
+.luma-enquiry-field select,
+.luma-enquiry-field textarea {
+  width: 100%;
+  border: 1px solid rgba(28, 27, 24, .14);
+  border-radius: 15px;
+  background: #fbfaf6;
+  color: #1f1e1b;
+  font: inherit;
+  outline: none;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.luma-enquiry-field input,
+.luma-enquiry-field select { min-height: 50px; padding: 0 15px; }
+.luma-enquiry-field textarea { min-height: 148px; padding: 14px 15px; resize: vertical; }
+
+.luma-enquiry-field input:focus,
+.luma-enquiry-field select:focus,
+.luma-enquiry-field textarea:focus {
+  border-color: rgba(28, 27, 24, .45);
+  background: #fffefa;
+  box-shadow: 0 0 0 4px rgba(255, 213, 53, .18);
+}
+
+.luma-enquiry-submit {
+  min-height: 52px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 24px;
+  background: #ffd535;
+  color: #1b1a17;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+}
+
+.luma-enquiry-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(115, 92, 0, .16);
+}
+
+.luma-enquiry-submit:disabled { opacity: .55; cursor: wait; }
+
+.luma-enquiry-status {
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: .9rem;
+}
+
+.luma-enquiry-status.success { background: #eef6e9; color: #355227; }
+.luma-enquiry-status.error { background: #fff0ed; color: #83352a; }
+
+.luma-contact-compact {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto 72px;
+}
+
+.luma-contact-compact-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 28px;
+  align-items: center;
+  padding: clamp(26px, 4vw, 46px);
+  border: 1px solid rgba(28, 27, 24, .09);
+  border-radius: 28px;
+  background: linear-gradient(120deg, #fffaf0, #f4f1e9);
+}
+
+.luma-contact-compact-card h2 {
+  margin: 8px 0 0;
+  max-width: 700px;
+  color: #1d1c19;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(30px, 4vw, 50px);
+  font-weight: 500;
+  letter-spacing: -.035em;
+  line-height: 1.05;
+}
+
+@media (max-width: 840px) {
+  .luma-contact-grid { grid-template-columns: 1fr; }
+  .luma-contact-panel { min-height: 420px; }
+  .luma-contact-compact-card { align-items: flex-start; flex-direction: column; }
+}
+
+@media (max-width: 620px) {
+  .luma-contact-shell,
+  .luma-contact-compact { width: min(100% - 20px, 1180px); }
+  .luma-contact-panel,
+  .luma-enquiry-panel { border-radius: 22px; }
+  .luma-enquiry-row { grid-template-columns: 1fr; }
+}
