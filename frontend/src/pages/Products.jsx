@@ -20,6 +20,7 @@ import {
   breadcrumbJsonLd,
   productsCollectionJsonLd,
 } from "../seo/structuredData";
+import "../styles/homeProductSkeleton.css";
 
 function formatProduct(product) {
   return {
@@ -40,6 +41,25 @@ function activeProductsFrom(data = []) {
   return data
     .filter((product) => product.status === "active")
     .map(formatProduct);
+}
+
+function ShopSkeletonGrid() {
+  return (
+    <div className="luma-shop-skeleton-grid" aria-label="Loading LUMA products" aria-live="polite">
+      {[0, 1, 2, 3, 4, 5].map((item) => (
+        <article className="luma-product-skeleton" key={item} aria-hidden="true">
+          <div className="luma-product-skeleton-media" />
+          <div className="luma-product-skeleton-body">
+            <div className="luma-product-skeleton-line short" />
+            <div className="luma-product-skeleton-line title" />
+            <div className="luma-product-skeleton-line long" />
+            <div className="luma-product-skeleton-line medium" />
+            <div className="luma-product-skeleton-line price" />
+          </div>
+        </article>
+      ))}
+    </div>
+  );
 }
 
 export function Products() {
@@ -176,10 +196,7 @@ export function Products() {
         )}
 
         {isLoading && products.length === 0 ? (
-          <div className="empty-state">
-            <h2>Loading products...</h2>
-            <p>Please wait while we prepare the LUMA collection.</p>
-          </div>
+          <ShopSkeletonGrid />
         ) : filteredProducts.length === 0 ? (
           <div className="empty-state">
             <h2>No products found.</h2>
@@ -193,10 +210,7 @@ export function Products() {
 
               return (
                 <article className="shop-product-card" key={product.id}>
-                  <Link
-                    to={`/products/${product.slug}`}
-                    className="shop-product-image"
-                  >
+                  <Link to={`/products/${product.slug}`} className="shop-product-image">
                     {product.image ? (
                       <img
                         src={product.image || product.image_url}
@@ -205,9 +219,7 @@ export function Products() {
                         decoding="async"
                       />
                     ) : (
-                      <div className="empty-state">
-                        <p>No image</p>
-                      </div>
+                      <div className="empty-state"><p>No image</p></div>
                     )}
                   </Link>
 
@@ -221,30 +233,19 @@ export function Products() {
                     <p>{product.description}</p>
 
                     <div className="product-details">
-                      {product.details.map((detail) => (
-                        <small key={detail}>{detail}</small>
-                      ))}
+                      {product.details.map((detail) => <small key={detail}>{detail}</small>)}
                       {isLowStock(product) && (
-                        <small className="stock-warning">
-                          {getStockMessage(product)}
-                        </small>
+                        <small className="stock-warning">{getStockMessage(product)}</small>
                       )}
                     </div>
 
                     <div className="shop-product-actions">
                       {unavailable ? (
-                        <Link
-                          to={`/products/${product.slug}`}
-                          className="product-button product-button-link"
-                        >
+                        <Link to={`/products/${product.slug}`} className="product-button product-button-link">
                           Notify me
                         </Link>
                       ) : (
-                        <button
-                          type="button"
-                          className="product-button"
-                          onClick={() => handleAddToCart(product)}
-                        >
+                        <button type="button" className="product-button" onClick={() => handleAddToCart(product)}>
                           Add to cart
                         </button>
                       )}
@@ -263,10 +264,7 @@ export function Products() {
                         {saved ? "Saved" : "Save"}
                       </button>
 
-                      <Link
-                        to={`/products/${product.slug}`}
-                        className="product-learn-link"
-                      >
+                      <Link to={`/products/${product.slug}`} className="product-learn-link">
                         View details <ArrowRight size={16} />
                       </Link>
                     </div>
