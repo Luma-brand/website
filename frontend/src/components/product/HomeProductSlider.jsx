@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, ArrowUpRight, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
-import { getProducts } from "../../services/api";
+import { getCachedProducts, refreshProducts } from "../../services/productCache";
 import { formatNaira } from "../../utils/currency";
 import { getProductImage } from "../../utils/images";
 
@@ -33,6 +33,12 @@ function normalizeProduct(product) {
     reviewCount: Number.isFinite(reviewCount) ? reviewCount : 0,
     tags: asList(product.features || product.tags || product.details || product.highlights).slice(0, 3),
   };
+}
+
+function normalizeList(data = []) {
+  return data
+    .filter((product) => product.status === "active")
+    .map(normalizeProduct);
 }
 
 const ProductSlide = memo(function ProductSlide({ product }) {
@@ -77,21 +83,25 @@ const ProductSlide = memo(function ProductSlide({ product }) {
 export function HomeProductSlider() {
   const trackRef = useRef(null);
   const dragRef = useRef({ active: false, moved: false, startX: 0, scrollLeft: 0 });
-  const [products, setProducts] = useState([]);
-  const [status, setStatus] = useState("loading");
+  const cached = getCachedProducts({ allowStale: true });
+  const [products, setProducts] = useState(() => normalizeList(cached?.data || []));
+  const [status, setStatus] = useState(() => cached?.data?.length ? "ready" : "loading");
 
   const loadProducts = useCallback((showLoading = true) => {
-    if (showLoading) setStatus("loading");
-    return getProducts()
+    if (showLoading && products.length === 0) setStatus("loading");
+    return refreshProducts()
       .then((response) => {
-        setProducts((response.data || []).map(normalizeProduct));
+        setProducts(normalizeList(response.data || []));
         setStatus("ready");
       })
-      .catch(() => setStatus("error"));
-  }, []);
+      .catch(() => {
+        if (products.length === 0) setStatus("error");
+      });
+  }, [products.length]);
 
   useEffect(() => {
-    queueMicrotask(() => { void loadProducts(false); });
+    const timer = window.setTimeout(() => { void loadProducts(false); }, 0);
+    return () => window.clearTimeout(timer);
   }, [loadProducts]);
 
   function scroll(direction) {
@@ -134,7 +144,7 @@ export function HomeProductSlider() {
     <div className="home-product-state" role="alert">
       <strong>We couldn’t load the collection.</strong>
       <span>Please check your connection or try again.</span>
-      <button type="button" className="btn btn-secondary" onClick={loadProducts}><RefreshCw size={16} /> Try again</button>
+      <button type="button" className="btn btn-secondary" onClick={() => loadProducts(true)}><RefreshCw size={16} /> Try again</button>
     </div>
   );
   if (products.length === 0) return (
