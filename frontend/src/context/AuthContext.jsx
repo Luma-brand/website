@@ -12,7 +12,6 @@ import {
   getCustomerMe,
   getStoredCustomerToken,
   loginCustomer,
-  loginCustomerWithGoogle,
   logoutCustomer,
   registerCustomer,
   requestPasswordReset,
@@ -24,6 +23,13 @@ import {
 
 const AuthContext = createContext(null);
 
+function getNameFromEmail(email) {
+  const localPart = String(email || "").split("@")[0] || "LUMA customer";
+  return localPart
+    .replace(/[._-]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 function normalizeCustomer(customer) {
   if (!customer) return null;
 
@@ -32,27 +38,8 @@ function normalizeCustomer(customer) {
     customer.fullName ||
     customer.name ||
     customer.user_metadata?.name ||
-    "";
-  const customerType = customer.customer_type || customer.customerType || "";
-  const lumaUseCase = customer.luma_use_case || customer.lumaUseCase || "";
-  const referralSource = customer.referral_source || customer.referralSource || "";
+    getNameFromEmail(customer.email);
   const phone = customer.phone || customer.user_metadata?.phone || "";
-  const onboardingCompleted = Boolean(
-    customer.onboarding_completed ||
-      customer.onboardingCompleted ||
-      customer.profile_completed
-  );
-  const profileCompleted = Boolean(
-    customer.profile_completed ||
-      (fullName &&
-        customer.email &&
-        phone &&
-        onboardingCompleted &&
-        customer.why_luma &&
-        customer.first_time_luma &&
-        customer.brow_goal &&
-        referralSource)
-  );
 
   return {
     ...customer,
@@ -69,18 +56,12 @@ function normalizeCustomer(customer) {
     whatsapp_country_iso2: customer.whatsapp_country_iso2 || "",
     whatsapp_country_code: customer.whatsapp_country_code || "",
     whatsapp_is_account_phone: customer.whatsapp_is_account_phone === true,
-    onboarding_completed: onboardingCompleted,
-    why_luma: customer.why_luma || "",
-    first_time_luma: customer.first_time_luma || "",
-    brow_goal: customer.brow_goal || "",
-    referral_source_other: customer.referral_source_other || "",
-    customer_type: customerType,
-    customerType,
-    luma_use_case: lumaUseCase,
-    lumaUseCase,
-    referral_source: referralSource,
-    referralSource,
-    profile_completed: profileCompleted,
+    customer_type: customer.customer_type || customer.customerType || "regular_customer",
+    luma_use_case: customer.luma_use_case || customer.lumaUseCase || "",
+    referral_source: customer.referral_source || customer.referralSource || "",
+    marketing_opt_in: customer.marketing_opt_in !== false,
+    profile_completed: true,
+    onboarding_completed: true,
     user_metadata: {
       ...(customer.user_metadata || {}),
       name: fullName,
@@ -106,9 +87,7 @@ export function AuthProvider({ children }) {
       const token = getStoredCustomerToken();
 
       if (!token) {
-        if (mounted) {
-          setIsAuthLoading(false);
-        }
+        if (mounted) setIsAuthLoading(false);
         return;
       }
 
@@ -116,9 +95,7 @@ export function AuthProvider({ children }) {
         const response = await getCustomerMe(token);
         const customer = getCustomerFromResponse(response);
 
-        if (!customer) {
-          throw new Error("Customer session could not be loaded.");
-        }
+        if (!customer) throw new Error("Customer session could not be loaded.");
 
         if (mounted) {
           setUser(customer);
@@ -126,20 +103,16 @@ export function AuthProvider({ children }) {
         }
       } catch {
         clearStoredCustomerToken();
-
         if (mounted) {
           setUser(null);
           setSession(null);
         }
       } finally {
-        if (mounted) {
-          setIsAuthLoading(false);
-        }
+        if (mounted) setIsAuthLoading(false);
       }
     }
 
     loadCustomerSession();
-
     return () => {
       mounted = false;
     };
@@ -162,16 +135,14 @@ export function AuthProvider({ children }) {
 
   const signUp = useCallback(
     async (payload) => {
+      const email = String(payload.email || "").trim();
+      const password = payload.password;
       const response = await registerCustomer({
-        fullName: payload.name || payload.fullName,
-        email: payload.email,
-        phone: payload.phone,
-        phoneCountryName: payload.phoneCountryName,
-        phoneCountryIso2: payload.phoneCountryIso2,
-        phoneCountryCode: payload.phoneCountryCode,
-        phoneE164: payload.phoneE164,
-        password: payload.password,
-        confirmPassword: payload.confirmPassword,
+        fullName: payload.name || payload.fullName || getNameFromEmail(email),
+        email,
+        password,
+        confirmPassword: payload.confirmPassword || password,
+        marketingOptIn: payload.marketingOptIn !== false,
       });
 
       return applyCustomerSession(response);
@@ -182,16 +153,6 @@ export function AuthProvider({ children }) {
   const signIn = useCallback(
     async ({ email, password }) => {
       const response = await loginCustomer({ email, password });
-
-      return applyCustomerSession(response);
-    },
-    [applyCustomerSession]
-  );
-
-  const signInWithGoogle = useCallback(
-    async (credential) => {
-      const response = await loginCustomerWithGoogle({ credential });
-
       return applyCustomerSession(response);
     },
     [applyCustomerSession]
@@ -204,88 +165,50 @@ export function AuthProvider({ children }) {
     setSession(null);
   }, [session?.token]);
 
-  const completeProfile = useCallback(async (profile) => {
-    const token = session?.token;
+  const completeProfile = useCallback(
+    async (profile) => {
+      const token = session?.token;
+      if (!token) throw new Error("You need to sign in before updating your profile.");
 
-    if (!token) {
-      throw new Error("You need to sign in before updating your profile.");
-    }
+      const response = await completeCustomerProfile(profile, token);
+      const customer = getCustomerFromResponse(response);
+      setUser(customer);
+      setSession({ token, user: customer });
+      return customer;
+    },
+    [session?.token]
+  );
 
-    const response = await completeCustomerProfile(
-      {
-        fullName: profile.name || profile.fullName,
-        phone: profile.phone,
-        phoneCountryName: profile.phoneCountryName,
-        phoneCountryIso2: profile.phoneCountryIso2,
-        phoneCountryCode: profile.phoneCountryCode,
-        phoneE164: profile.phoneE164,
-        whatsappNumber: profile.whatsappNumber,
-        whatsappE164: profile.whatsappE164,
-        whatsappCountryName: profile.whatsappCountryName,
-        whatsappCountryIso2: profile.whatsappCountryIso2,
-        whatsappCountryCode: profile.whatsappCountryCode,
-        whatsappIsAccountPhone: profile.whatsappIsAccountPhone,
-        customerType: profile.customerType,
-        whyLuma: profile.whyLuma,
-        firstTimeLuma: profile.firstTimeLuma,
-        browGoal: profile.browGoal,
-        referralSource: profile.referralSource,
-        referralSourceOther: profile.referralSourceOther,
-        marketingOptIn: profile.marketing,
-      },
-      token
-    );
-    const customer = getCustomerFromResponse(response);
+  const updateUser = useCallback(
+    async (profile) => {
+      const token = session?.token;
+      if (!token) throw new Error("You need to sign in before updating your profile.");
 
-    setUser(customer);
-    setSession({ token, user: customer });
-
-    return customer;
-  }, [session]);
-
-  const updateUser = useCallback(async (profile) => {
-    const token = session?.token;
-
-    if (!token) {
-      throw new Error("You need to sign in before updating your profile.");
-    }
-
-    const response = await updateCustomerProfile(
-      {
-        fullName: profile.name || profile.fullName,
-        phone: profile.phone,
-        customerType: profile.customerType,
-        lumaUseCase: profile.lumaUseCase,
-        referralSource: profile.referralSource,
-        marketingOptIn: profile.marketing,
-      },
-      token
-    );
-    const customer = getCustomerFromResponse(response);
-
-    setUser(customer);
-    setSession({ token, user: customer });
-
-    return customer;
-  }, [session]);
+      const response = await updateCustomerProfile(
+        {
+          fullName: profile.name || profile.fullName,
+          phone: profile.phone,
+          customerType: profile.customerType,
+          lumaUseCase: profile.lumaUseCase,
+          referralSource: profile.referralSource,
+          marketingOptIn: profile.marketing,
+        },
+        token
+      );
+      const customer = getCustomerFromResponse(response);
+      setUser(customer);
+      setSession({ token, user: customer });
+      return customer;
+    },
+    [session?.token]
+  );
 
   const forgotPassword = useCallback((payload) => requestPasswordReset(payload), []);
-  const verifyPasswordResetCode = useCallback(
-    (payload) => verifyResetCode(payload),
-    []
-  );
-  const resetPassword = useCallback(
-    (payload) => resetCustomerPassword(payload),
-    []
-  );
+  const verifyPasswordResetCode = useCallback((payload) => verifyResetCode(payload), []);
+  const resetPassword = useCallback((payload) => resetCustomerPassword(payload), []);
 
   const displayName =
-    user?.user_metadata?.name ||
-    user?.user_metadata?.full_name ||
-    user?.full_name ||
-    user?.name ||
-    user?.email?.split("@")[0] ||
-    "LUMA customer";
+    user?.full_name || user?.name || user?.email?.split("@")[0] || "LUMA customer";
 
   const value = useMemo(
     () => ({
@@ -295,11 +218,10 @@ export function AuthProvider({ children }) {
       isAuthConfigured: true,
       authConfigError: "",
       isAuthenticated: Boolean(session?.token && user),
-      needsProfileCompletion: Boolean(session?.token && user && !user.profile_completed),
+      needsProfileCompletion: false,
       displayName,
       signUp,
       signIn,
-      signInWithGoogle,
       signOut,
       updateUser,
       completeProfile,
@@ -314,7 +236,6 @@ export function AuthProvider({ children }) {
       displayName,
       signUp,
       signIn,
-      signInWithGoogle,
       signOut,
       updateUser,
       completeProfile,
