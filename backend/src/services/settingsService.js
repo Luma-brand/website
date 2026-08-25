@@ -45,7 +45,7 @@ function getConfigStatus() {
     },
     {
       key: "auth",
-      label: "Authentication",
+      label: "Customer authentication",
       items: [
         {
           key: "jwtSecret",
@@ -54,37 +54,40 @@ function getConfigStatus() {
         },
         {
           key: "jwtExpiresIn",
-          label: "JWT expiry",
+          label: "Session expiry",
           configured: isConfigured(process.env.JWT_EXPIRES_IN),
           value: process.env.JWT_EXPIRES_IN || "7d",
+        },
+        {
+          key: "authMode",
+          label: "Customer sign-in",
+          configured: true,
+          value: "Email + password",
         },
       ],
     },
     {
       key: "payments",
-      label: "Flutterwave",
+      label: "Paystack",
       items: [
         {
-          key: "flutterwaveSecretKey",
+          key: "paystackSecretKey",
           label: "Secret key",
-          configured: isConfigured(process.env.FLUTTERWAVE_SECRET_KEY),
+          configured: isConfigured(process.env.PAYSTACK_SECRET_KEY),
         },
         {
-          key: "flutterwavePublicKey",
-          label: "Public key",
-          configured: isConfigured(process.env.FLUTTERWAVE_PUBLIC_KEY),
+          key: "paystackCallbackUrl",
+          label: "Callback URL",
+          configured: true,
+          value:
+            getSafeUrl(process.env.PAYSTACK_CALLBACK_URL) ||
+            `${String(process.env.FRONTEND_URL || "https://shopwithluma.com").replace(/\/$/, "")}/payment/paystack/callback`,
         },
         {
-          key: "flutterwaveRedirectUrl",
-          label: "Redirect URL",
-          configured: isConfigured(process.env.FLUTTERWAVE_REDIRECT_URL),
-          value: getSafeUrl(process.env.FLUTTERWAVE_REDIRECT_URL),
-        },
-        {
-          key: "flutterwaveCurrencies",
-          label: "Currencies",
-          configured: isConfigured(process.env.FLUTTERWAVE_ALLOWED_CURRENCIES),
-          value: process.env.FLUTTERWAVE_ALLOWED_CURRENCIES || "NGN,USD,GBP,EUR",
+          key: "paystackWebhook",
+          label: "Webhook endpoint",
+          configured: true,
+          value: `${String(process.env.BACKEND_URL || "https://website-ikv5.onrender.com").replace(/\/$/, "")}/api/webhooks/paystack`,
         },
       ],
     },
@@ -117,7 +120,7 @@ function getConfigStatus() {
     },
     {
       key: "email",
-      label: "Email",
+      label: "Email automation & broadcasts",
       items: [
         {
           key: "resendApiKey",
@@ -134,7 +137,7 @@ function getConfigStatus() {
         },
         {
           key: "adminEmail",
-          label: "Admin email",
+          label: "Admin notification email",
           configured: isConfigured(
             process.env.LUMA_ADMIN_EMAIL || process.env.ADMIN_EMAIL
           ),
@@ -144,7 +147,7 @@ function getConfigStatus() {
     },
     {
       key: "marketingAutomation",
-      label: "Manual automation",
+      label: "Growth automation",
       items: [
         {
           key: "abandonedCartDelayMinutes",
@@ -154,24 +157,13 @@ function getConfigStatus() {
         },
         {
           key: "whatsappNumber",
-          label: "Manual WhatsApp number",
+          label: "WhatsApp recovery number",
           configured: isConfigured(process.env.WHATSAPP_NUMBER),
         },
-      ],
-    },
-    {
-      key: "internalAutomation",
-      label: "Internal automation",
-      items: [
         {
           key: "backendEventTracking",
-          label: "Backend event tracking",
+          label: "Behaviour / conversion tracking",
           configured: true,
-        },
-        {
-          key: "abandonedCartDelay",
-          label: "Abandoned cart delay",
-          configured: isConfigured(process.env.ABANDONED_CART_DELAY_MINUTES),
         },
         {
           key: "emailBroadcasts",
@@ -203,4 +195,3 @@ function getConfigStatus() {
 module.exports = {
   getConfigStatus,
 };
-
