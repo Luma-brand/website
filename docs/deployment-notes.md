@@ -12,7 +12,7 @@ Required production environment values:
 
 - Frontend `VITE_API_URL=https://website-ikv5.onrender.com/api`
 - Backend `FRONTEND_URL=https://website-umber-xi-40.vercel.app`
-- Backend `FLUTTERWAVE_REDIRECT_URL=https://shopwithluma.com/payment/flutterwave/callback`
+- Backend `PAYSTACK_CALLBACK_URL=https://shopwithluma.com/payment/paystack/callback`
 
 Admin routing contract:
 

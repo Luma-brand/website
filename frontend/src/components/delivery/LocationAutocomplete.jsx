@@ -38,14 +38,18 @@ function parsePlace(place) {
   const components = place?.address_components || [];
   const region =
     getAddressPart(components, "locality") ||
-    getAddressPart(components, "sublocality") ||
     getAddressPart(components, "administrative_area_level_2");
+  const area =
+    getAddressPart(components, "sublocality_level_1") ||
+    getAddressPart(components, "sublocality") ||
+    getAddressPart(components, "neighborhood");
 
   return {
     address: place?.formatted_address || place?.name || "",
     country: getAddressPart(components, "country"),
     state: getAddressPart(components, "administrative_area_level_1"),
     region,
+    area,
   };
 }
 
@@ -136,8 +140,8 @@ export function LocationAutocomplete({
 
       <p className="location-autocomplete-hint">
         {placesReady
-          ? "Google Places is active for location suggestions."
-          : "Enter the location manually or choose a configured delivery zone."}
+          ? "Choose a suggested address or keep typing."
+          : "Enter your delivery location manually."}
       </p>
 
       {error && <small>{error}</small>}

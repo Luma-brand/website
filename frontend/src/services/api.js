@@ -408,12 +408,17 @@ export const updateProductWaitlistStatus = async (waitlistId, status) => {
 export const validateDiscountCode = async (payload) => {
   const response = await fetch(`${API_BASE_URL}/discounts/validate`, {
     method: "POST",
-    headers: {
+    headers: getCustomerHeaders({
       "Content-Type": "application/json",
-    },
+    }),
     body: JSON.stringify(payload),
   });
 
+  return handleResponse(response);
+};
+
+export const getActivePromotion = async () => {
+  const response = await fetch(`${API_BASE_URL}/discounts/promotion`);
   return handleResponse(response);
 };
 
@@ -575,72 +580,6 @@ export const getEmailAutomationLogs = async ({ limit = 50 } = {}) => {
   params.set("limit", String(limit));
   const response = await fetch(`${API_BASE_URL}/admin/email-automation/email-logs?${params.toString()}`, {
     headers: getAdminHeaders(),
-  });
-
-  return handleResponse(response);
-};
-export const getMailInboxes = async () => {
-  const response = await fetch(`${API_BASE_URL}/admin/mail/inboxes`, {
-    headers: getAdminHeaders(),
-  });
-
-  return handleResponse(response);
-};
-
-export const getMailTickets = async ({ status = "open", search = "", page = 1, limit = 50, inbox } = {}) => {
-  const params = new URLSearchParams();
-  if (status && status !== "all") params.set("status", status);
-  if (search) params.set("search", search);
-  if (inbox) params.set("inbox", inbox);
-  params.set("page", String(page));
-  params.set("limit", String(limit));
-
-  const response = await fetch(`${API_BASE_URL}/admin/mail/tickets?${params.toString()}`, {
-    headers: getAdminHeaders(),
-  });
-
-  return handleResponse(response);
-};
-
-export const getMailTicket = async (ticketId) => {
-  const response = await fetch(`${API_BASE_URL}/admin/mail/tickets/${ticketId}`, {
-    headers: getAdminHeaders(),
-  });
-
-  return handleResponse(response);
-};
-
-export const replyToMailTicket = async (ticketId, payload) => {
-  const response = await fetch(`${API_BASE_URL}/admin/mail/tickets/${ticketId}/reply`, {
-    method: "POST",
-    headers: getAdminHeaders({
-      "Content-Type": "application/json",
-    }),
-    body: JSON.stringify(payload),
-  });
-
-  return handleResponse(response);
-};
-
-export const updateMailTicketStatus = async (ticketId, payload) => {
-  const response = await fetch(`${API_BASE_URL}/admin/mail/tickets/${ticketId}/status`, {
-    method: "PATCH",
-    headers: getAdminHeaders({
-      "Content-Type": "application/json",
-    }),
-    body: JSON.stringify(payload),
-  });
-
-  return handleResponse(response);
-};
-
-export const updateMailTicketPriority = async (ticketId, payload) => {
-  const response = await fetch(`${API_BASE_URL}/admin/mail/tickets/${ticketId}/priority`, {
-    method: "PATCH",
-    headers: getAdminHeaders({
-      "Content-Type": "application/json",
-    }),
-    body: JSON.stringify(payload),
   });
 
   return handleResponse(response);
@@ -1456,28 +1395,6 @@ export const getPublicOrderById = async (id) => {
   return handleResponse(response);
 };
 
-export const initializeFlutterwavePayment = async (paymentData) => {
-  const response = await fetch(`${API_BASE_URL}/payments/flutterwave/initialize`, {
-    method: "POST",
-    headers: getCustomerHeaders({
-      "Content-Type": "application/json",
-    }),
-    body: JSON.stringify(paymentData),
-  });
-
-  return handleResponse(response);
-};
-
-export const verifyFlutterwavePayment = async (payload) => {
-  const response = await fetch(`${API_BASE_URL}/payments/flutterwave/verify`, {
-    method: "POST",
-    headers: getCustomerHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify(payload),
-  });
-
-  return handleResponse(response);
-};
-
 export const getPublicCurrencyRates = async () => {
   const response = await fetch(`${API_BASE_URL}/currency/rates`);
   return handleResponse(response);
@@ -1649,4 +1566,3 @@ export const addAdminAutomationSuppression = async (payload) => {
   });
   return handleResponse(response);
 };
-

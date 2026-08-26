@@ -30,10 +30,7 @@ function formatProduct(product) {
     priceValue: Number(product.price),
     price: formatNaira(product.price),
     description: product.description || "A soft luxury LUMA beauty product.",
-    details: [
-      product.size ? `Size: ${product.size}` : null,
-      `Stock: ${product.stock_quantity ?? 0}`,
-    ].filter(Boolean),
+    details: [`Stock: ${product.stock_quantity ?? 0}`],
   };
 }
 
@@ -71,7 +68,6 @@ export function Products() {
   const [products, setProducts] = useState(() => activeProductsFrom(cached?.data || []));
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(() => !cached?.data?.length);
-  const [isRefreshing, setIsRefreshing] = useState(() => Boolean(cached?.data?.length));
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -80,7 +76,6 @@ export function Products() {
     async function loadProducts() {
       try {
         if (!products.length) setIsLoading(true);
-        setIsRefreshing(Boolean(products.length));
         setError("");
 
         const response = await refreshProducts();
@@ -96,7 +91,6 @@ export function Products() {
       } finally {
         if (mounted) {
           setIsLoading(false);
-          setIsRefreshing(false);
         }
       }
     }
@@ -169,11 +163,6 @@ export function Products() {
             Explore clean, functional brow essentials created for polished
             everyday styling, natural-looking definition, and soft beauty rituals.
           </p>
-          {isRefreshing && products.length > 0 && (
-            <small style={{ color: "var(--color-muted)" }}>
-              Refreshing availability quietly in the background…
-            </small>
-          )}
         </div>
 
         <div className="product-tools">
@@ -226,10 +215,10 @@ export function Products() {
                   <div className="shop-product-content">
                     <div className="product-meta">
                       <p>{product.size || "LUMA Beauty"}</p>
-                      <strong>{product.price}</strong>
                     </div>
 
                     <h2>{product.name}</h2>
+                    <strong className="shop-product-price">{product.price}</strong>
                     <p>{product.description}</p>
 
                     <div className="product-details">
@@ -250,23 +239,21 @@ export function Products() {
                         </button>
                       )}
 
-                      <Link to="/cart" className="product-learn-link mobile-cart-link">
-                        Go to cart <ArrowRight size={16} />
-                      </Link>
+                      <div className="shop-product-secondary-actions">
+                        <button
+                          type="button"
+                          className={`wishlist-toggle ${saved ? "saved" : ""}`}
+                          onClick={() => handleToggleWishlist(product)}
+                          aria-label={saved ? "Remove from wishlist" : "Add to wishlist"}
+                        >
+                          <Heart size={18} />
+                          {saved ? "Saved" : "Save"}
+                        </button>
 
-                      <button
-                        type="button"
-                        className={`wishlist-toggle ${saved ? "saved" : ""}`}
-                        onClick={() => handleToggleWishlist(product)}
-                        aria-label={saved ? "Remove from wishlist" : "Add to wishlist"}
-                      >
-                        <Heart size={18} />
-                        {saved ? "Saved" : "Save"}
-                      </button>
-
-                      <Link to={`/products/${product.slug}`} className="product-learn-link">
-                        View details <ArrowRight size={16} />
-                      </Link>
+                        <Link to={`/products/${product.slug}`} className="product-learn-link">
+                          View details <ArrowRight size={16} />
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </article>

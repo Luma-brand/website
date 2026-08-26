@@ -8,6 +8,10 @@ const DISCOUNT_ORDER_COLUMNS = [
   "subtotal_amount",
   "final_amount",
 ];
+const ORDER_DISCOUNT_COLUMN_CACHE_MS = 5 * 60 * 1000;
+
+let cachedOrderDiscountColumns = null;
+let cachedOrderDiscountColumnsAt = 0;
 
 function normalizeDiscountCode(code) {
   return String(code || "").trim().toUpperCase();
@@ -36,6 +40,26 @@ function buildServiceError(message, statusCode = 400) {
   const error = new Error(message);
   error.statusCode = statusCode;
   return error;
+}
+
+async function withManagedTransaction(client, operation) {
+  if (client !== pool) {
+    return operation(client);
+  }
+
+  const transactionClient = await pool.connect();
+
+  try {
+    await transactionClient.query("BEGIN");
+    const result = await operation(transactionClient);
+    await transactionClient.query("COMMIT");
+    return result;
+  } catch (error) {
+    await transactionClient.query("ROLLBACK");
+    throw error;
+  } finally {
+    transactionClient.release();
+  }
 }
 
 async function getExistingOrderDiscountColumns({ refresh = false } = {}) {
@@ -130,6 +154,13 @@ function formatDiscountCode(row) {
     startsAt: row.starts_at,
     expiresAt: row.expires_at,
     isActive: row.is_active,
+    firstTimeCustomerOnly: row.first_time_customer_only === true,
+    showInPopup: row.show_in_popup === true,
+    popupHeadline: row.popup_headline || "",
+    popupMessage: row.popup_message || "",
+    popupCtaLabel: row.popup_cta_label || "",
+    popupCtaPath: row.popup_cta_path || "/products",
+    popupFrequencyHours: Number(row.popup_frequency_hours || 168),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -177,6 +208,39 @@ function validateDiscountPayload(payload = {}, { isUpdate = false } = {}) {
   const rawStartsAt = payload.startsAt ?? payload.starts_at;
   const startsAt = rawStartsAt ? new Date(rawStartsAt) : null;
   const expiresAt = rawExpiresAt ? new Date(rawExpiresAt) : null;
+  const firstTimeCustomerOnly =
+    payload.firstTimeCustomerOnly === undefined &&
+    payload.first_time_customer_only === undefined
+      ? undefined
+      : Boolean(
+          payload.firstTimeCustomerOnly ?? payload.first_time_customer_only
+        );
+  const showInPopup =
+    payload.showInPopup === undefined && payload.show_in_popup === undefined
+      ? undefined
+      : Boolean(payload.showInPopup ?? payload.show_in_popup);
+  const popupHeadline =
+    payload.popupHeadline === undefined && payload.popup_headline === undefined
+      ? undefined
+      : String(payload.popupHeadline ?? payload.popup_headline ?? "").trim();
+  const popupMessage =
+    payload.popupMessage === undefined && payload.popup_message === undefined
+      ? undefined
+      : String(payload.popupMessage ?? payload.popup_message ?? "").trim();
+  const popupCtaLabel =
+    payload.popupCtaLabel === undefined && payload.popup_cta_label === undefined
+      ? undefined
+      : String(payload.popupCtaLabel ?? payload.popup_cta_label ?? "").trim();
+  const popupCtaPath =
+    payload.popupCtaPath === undefined && payload.popup_cta_path === undefined
+      ? undefined
+      : String(payload.popupCtaPath ?? payload.popup_cta_path ?? "").trim();
+  const rawFrequencyHours =
+    payload.popupFrequencyHours ?? payload.popup_frequency_hours;
+  const popupFrequencyHours =
+    rawFrequencyHours === undefined || rawFrequencyHours === ""
+      ? undefined
+      : Number(rawFrequencyHours);
 
   if (!isUpdate && !code) {
     throw buildServiceError("Discount code is required.");
@@ -212,6 +276,29 @@ function validateDiscountPayload(payload = {}, { isUpdate = false } = {}) {
     throw buildServiceError("Expiry date is invalid.");
   }
 
+  if (startsAt && expiresAt && startsAt >= expiresAt) {
+    throw buildServiceError("Expiry date must be after the start date.");
+  }
+
+  if (
+    popupFrequencyHours !== undefined &&
+    (!Number.isInteger(popupFrequencyHours) ||
+      popupFrequencyHours < 1 ||
+      popupFrequencyHours > 8760)
+  ) {
+    throw buildServiceError("Popup frequency must be between 1 and 8760 hours.");
+  }
+
+  if (popupCtaPath !== undefined && !popupCtaPath.startsWith("/")) {
+    throw buildServiceError("Popup CTA path must be an internal path beginning with /.");
+  }
+
+  if (showInPopup && (!popupHeadline || !popupMessage || !popupCtaLabel)) {
+    throw buildServiceError(
+      "Popup headline, message, and CTA label are required when the promotion popup is enabled."
+    );
+  }
+
   return {
     code,
     description:
@@ -226,6 +313,13 @@ function validateDiscountPayload(payload = {}, { isUpdate = false } = {}) {
       payload.isActive === undefined && payload.is_active === undefined
         ? undefined
         : Boolean(payload.isActive ?? payload.is_active),
+    firstTimeCustomerOnly,
+    showInPopup,
+    popupHeadline,
+    popupMessage,
+    popupCtaLabel,
+    popupCtaPath,
+    popupFrequencyHours,
   };
 }
 
@@ -233,9 +327,20 @@ async function createDiscountCode(payload, { client = pool } = {}) {
   const data = validateDiscountPayload(payload);
 
   try {
-    const result = await client.query(
-      `
-        INSERT INTO discount_codes (
+    return await withManagedTransaction(client, async (databaseClient) => {
+      if (data.showInPopup) {
+        await databaseClient.query(
+          "SELECT pg_advisory_xact_lock(hashtext('luma_discount_popup_selection'))"
+        );
+        await databaseClient.query(
+          `UPDATE discount_codes
+           SET show_in_popup = FALSE, updated_at = CURRENT_TIMESTAMP
+           WHERE show_in_popup = TRUE`
+        );
+      }
+
+      const result = await databaseClient.query(
+        `INSERT INTO discount_codes (
           code,
           description,
           discount_type,
@@ -244,25 +349,39 @@ async function createDiscountCode(payload, { client = pool } = {}) {
           usage_limit,
           starts_at,
           expires_at,
-          is_active
+          is_active,
+          first_time_customer_only,
+          show_in_popup,
+          popup_headline,
+          popup_message,
+          popup_cta_label,
+          popup_cta_path,
+          popup_frequency_hours
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING *
-      `,
-      [
-        data.code,
-        data.description || null,
-        data.discountType,
-        data.discountValue,
-        data.minimumOrderAmount,
-        data.usageLimit,
-        data.startsAt,
-        data.expiresAt,
-        data.isActive !== false,
-      ]
-    );
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+          RETURNING *`,
+        [
+          data.code,
+          data.description || null,
+          data.discountType,
+          data.discountValue,
+          data.minimumOrderAmount,
+          data.usageLimit,
+          data.startsAt,
+          data.expiresAt,
+          data.isActive !== false,
+          data.firstTimeCustomerOnly === true,
+          data.showInPopup === true,
+          data.popupHeadline || null,
+          data.popupMessage || null,
+          data.popupCtaLabel || null,
+          data.popupCtaPath || "/products",
+          data.popupFrequencyHours || 168,
+        ]
+      );
 
-    return formatDiscountCode(result.rows[0]);
+      return formatDiscountCode(result.rows[0]);
+    });
   } catch (error) {
     if (error?.code === "23505") {
       throw buildServiceError("A discount code with this code already exists.");
@@ -308,6 +427,25 @@ async function updateDiscountCode(discountId, payload, { client = pool } = {}) {
     addUpdate("expires_at", data.expiresAt);
   }
   if (data.isActive !== undefined) addUpdate("is_active", data.isActive);
+  if (data.firstTimeCustomerOnly !== undefined) {
+    addUpdate("first_time_customer_only", data.firstTimeCustomerOnly);
+  }
+  if (data.showInPopup !== undefined) addUpdate("show_in_popup", data.showInPopup);
+  if (data.popupHeadline !== undefined) {
+    addUpdate("popup_headline", data.popupHeadline || null);
+  }
+  if (data.popupMessage !== undefined) {
+    addUpdate("popup_message", data.popupMessage || null);
+  }
+  if (data.popupCtaLabel !== undefined) {
+    addUpdate("popup_cta_label", data.popupCtaLabel || null);
+  }
+  if (data.popupCtaPath !== undefined) {
+    addUpdate("popup_cta_path", data.popupCtaPath || "/products");
+  }
+  if (data.popupFrequencyHours !== undefined) {
+    addUpdate("popup_frequency_hours", data.popupFrequencyHours);
+  }
 
   if (updates.length === 0) {
     throw buildServiceError("No discount fields were provided.");
@@ -316,21 +454,33 @@ async function updateDiscountCode(discountId, payload, { client = pool } = {}) {
   values.push(discountId);
 
   try {
-    const result = await client.query(
-      `
-        UPDATE discount_codes
-        SET ${updates.join(", ")}, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $${values.length}
-        RETURNING *
-      `,
-      values
-    );
+    return await withManagedTransaction(client, async (databaseClient) => {
+      if (data.showInPopup) {
+        await databaseClient.query(
+          "SELECT pg_advisory_xact_lock(hashtext('luma_discount_popup_selection'))"
+        );
+        await databaseClient.query(
+          `UPDATE discount_codes
+           SET show_in_popup = FALSE, updated_at = CURRENT_TIMESTAMP
+           WHERE id <> $1 AND show_in_popup = TRUE`,
+          [discountId]
+        );
+      }
 
-    if (result.rows.length === 0) {
-      throw buildServiceError("Discount code not found.", 404);
-    }
+      const result = await databaseClient.query(
+        `UPDATE discount_codes
+         SET ${updates.join(", ")}, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $${values.length}
+         RETURNING *`,
+        values
+      );
 
-    return formatDiscountCode(result.rows[0]);
+      if (result.rows.length === 0) {
+        throw buildServiceError("Discount code not found.", 404);
+      }
+
+      return formatDiscountCode(result.rows[0]);
+    });
   } catch (error) {
     if (error?.code === "23505") {
       throw buildServiceError("A discount code with this code already exists.");
@@ -468,6 +618,33 @@ async function validateDiscountCode({
     throw buildServiceError("This discount code has reached its usage limit.");
   }
 
+  if (discount.first_time_customer_only) {
+    if (!customerId) {
+      throw buildServiceError(
+        "Please sign in before using this first-order discount.",
+        401
+      );
+    }
+
+    const paidOrderResult = await client.query(
+      `
+        SELECT EXISTS (
+          SELECT 1
+          FROM orders
+          WHERE customer_id = $1
+            AND payment_status = 'paid'
+        ) AS has_paid_order
+      `,
+      [customerId]
+    );
+
+    if (paidOrderResult.rows[0]?.has_paid_order) {
+      throw buildServiceError(
+        "This discount is available only on a customer's first paid order."
+      );
+    }
+  }
+
   const minimumOrderAmount = Number(discount.minimum_order_amount || 0);
   const productSubtotal = Number(subtotal ?? subtotalAmount ?? 0);
 
@@ -489,6 +666,7 @@ async function calculateOrderPricing({
   items = [],
   deliveryFee = 0,
   discountCode = "",
+  customerId = null,
   client = pool,
 } = {}) {
   const initialSnapshot = await buildCartPricingSnapshot(items, {
@@ -518,6 +696,7 @@ async function calculateOrderPricing({
     ? await validateDiscountCode({
         code: normalizedDiscountCode,
         subtotalAmount: initialSnapshot.subtotalAmount,
+        customerId,
         client,
       })
     : {
@@ -540,6 +719,40 @@ async function calculateOrderPricing({
     freeShipping,
     freeShippingThreshold,
   };
+}
+
+async function getActivePromotion({ client = pool } = {}) {
+  try {
+    const result = await client.query(
+      `
+        SELECT *
+        FROM discount_codes
+        WHERE show_in_popup = TRUE
+          AND is_active = TRUE
+          AND (starts_at IS NULL OR starts_at <= CURRENT_TIMESTAMP)
+          AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+          AND (usage_limit IS NULL OR used_count < usage_limit)
+        LIMIT 1
+      `
+    );
+    const promotion = formatDiscountCode(result.rows[0]);
+
+    if (!promotion) return null;
+
+    return {
+      id: promotion.id,
+      code: promotion.code,
+      headline: promotion.popupHeadline,
+      message: promotion.popupMessage,
+      ctaLabel: promotion.popupCtaLabel,
+      ctaPath: promotion.popupCtaPath,
+      frequencyHours: promotion.popupFrequencyHours,
+      firstTimeCustomerOnly: promotion.firstTimeCustomerOnly,
+    };
+  } catch (error) {
+    if (isMissingSchemaError(error)) return null;
+    throw error;
+  }
 }
 
 async function buildOrderDiscountFields({ pricing, existingColumns } = {}) {
@@ -631,6 +844,7 @@ module.exports = {
   enableDiscountCode,
   getDiscountCodeById,
   getDiscountCodes,
+  getActivePromotion,
   getExistingOrderDiscountColumns,
   getFreeShippingThreshold,
   incrementDiscountUsage,

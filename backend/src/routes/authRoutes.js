@@ -4,7 +4,6 @@ const {
   loginAdmin,
   registerCustomer,
   loginCustomer,
-  loginCustomerWithGoogle,
   getCustomerMe,
   updateCustomerMe,
   forgotCustomerPassword,
@@ -32,7 +31,6 @@ const router = express.Router();
 
 router.post("/customer/register", registerCustomer);
 router.post("/customer/login", loginCustomer);
-router.post("/customer/google", loginCustomerWithGoogle);
 router.get("/customer/me", protectCustomer, getCustomerMe);
 router.patch("/customer/me", protectCustomer, updateCustomerMe);
 router.post("/customer/complete-profile", protectCustomer, updateCustomerMe);

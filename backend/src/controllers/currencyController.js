@@ -1,6 +1,5 @@
 const {
   getCurrencyRates,
-  getFlutterwaveConfigStatus,
   updateCurrencyRate,
 } = require("../services/currencyService");
 
@@ -14,7 +13,8 @@ async function getPublicCurrencyRatesHandler(req, res) {
         baseCurrency: "NGN",
         rateDirection: "rateToBase/rateToNgn means 1 selected currency equals this many NGN.",
         rates,
-        flutterwave: getFlutterwaveConfigStatus(),
+        checkoutCurrency: "NGN",
+        paymentProvider: "paystack",
       },
     });
   } catch (error) {
@@ -33,7 +33,8 @@ async function getAdminCurrencyRatesHandler(req, res) {
         baseCurrency: "NGN",
         rateDirection: "Example: USD rate 1500 means 1 USD = NGN 1500.",
         rates,
-        flutterwave: getFlutterwaveConfigStatus(),
+        checkoutCurrency: "NGN",
+        paymentProvider: "paystack",
       },
     });
   } catch (error) {

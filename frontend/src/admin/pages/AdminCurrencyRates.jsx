@@ -104,9 +104,7 @@ export function AdminCurrencyRates() {
               <h2>Exchange rates</h2>
               <p>{meta?.rateDirection || "Example: USD rate 1500 means 1 USD = ?1500."}</p>
             </div>
-            <span className={meta?.flutterwave?.configured ? "admin-badge success" : "admin-badge warning"}>
-              {meta?.flutterwave?.configured ? "International payments configured" : "International payments not configured"}
-            </span>
+            <span className="admin-badge success">Display rates · Paystack settles in NGN</span>
           </div>
 
           {isLoading ? (

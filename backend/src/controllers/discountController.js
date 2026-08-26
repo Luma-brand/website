@@ -5,6 +5,7 @@ const {
   disableDiscountCode,
   enableDiscountCode,
   getFreeShippingThreshold,
+  getActivePromotion,
   getDiscountCodeById,
   getDiscountCodes,
   setFreeShippingThreshold,
@@ -22,7 +23,7 @@ function sendError(res, error, fallbackMessage) {
 
 async function validateDiscountHandler(req, res) {
   try {
-    const { items, code, discountCode, subtotal, country, state, city } = req.body;
+    const { items, code, discountCode, subtotal, country, state, city, area } = req.body;
     const requestedCode = discountCode || code;
 
     if ((!Array.isArray(items) || items.length === 0) && subtotal === undefined) {
@@ -36,6 +37,7 @@ async function validateDiscountHandler(req, res) {
       const validation = await validateDiscountCode({
         code: requestedCode,
         subtotal,
+        customerId: req.customer?.id,
       });
       const finalSubtotal = Math.max(
         0,
@@ -60,11 +62,13 @@ async function validateDiscountHandler(req, res) {
       country,
       state: deliveryState,
       region: city,
+      area,
     });
     const pricing = await calculateOrderPricing({
       items,
       deliveryFee: deliveryQuote.deliveryFee,
       discountCode: requestedCode,
+      customerId: req.customer?.id,
     });
 
     if (!pricing.isValid) {
@@ -92,6 +96,20 @@ async function validateDiscountHandler(req, res) {
     });
   } catch (error) {
     return sendError(res, error, "Failed to validate discount code.");
+  }
+}
+
+async function getActivePromotionHandler(req, res) {
+  try {
+    const promotion = await getActivePromotion();
+
+    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    return res.status(200).json({
+      success: true,
+      data: promotion,
+    });
+  } catch (error) {
+    return sendError(res, error, "Failed to load the active promotion.");
   }
 }
 
@@ -240,6 +258,7 @@ module.exports = {
   disableDiscountHandler,
   enableDiscountHandler,
   getDiscountHandler,
+  getActivePromotionHandler,
   getDiscountSettingsHandler,
   listDiscountsHandler,
   updateDiscountHandler,

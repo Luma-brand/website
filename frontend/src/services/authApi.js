@@ -110,18 +110,6 @@ export async function loginCustomer(payload) {
   return handleResponse(response);
 }
 
-export async function loginCustomerWithGoogle(payload) {
-  const response = await fetch(`${API_BASE_URL}/auth/customer/google`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  return handleResponse(response);
-}
-
 export async function getCustomerMe(token) {
   const response = await fetch(`${API_BASE_URL}/auth/customer/me`, {
     headers: getAuthHeaders(token),

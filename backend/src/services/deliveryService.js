@@ -6,10 +6,22 @@ const ORDER_DELIVERY_COLUMNS = [
   "delivery_notes",
   "delivery_zone_id",
   "state",
+  "delivery_area",
+  "delivery_eta_min_days",
+  "delivery_eta_max_days",
+  "delivery_is_pickup",
 ];
+const ORDER_COLUMN_CACHE_MS = 5 * 60 * 1000;
+
+let cachedOrderDeliveryColumns = null;
+let cachedOrderDeliveryColumnsAt = 0;
 
 function isMissingDeliveryTableError(error) {
-  return error?.code === "42P01" || error?.message?.includes("delivery_zones");
+  return (
+    error?.code === "42P01" ||
+    error?.code === "42703" ||
+    error?.message?.includes("delivery_zones")
+  );
 }
 
 function normalizeLocation(value, fallback = "Default") {
@@ -30,6 +42,16 @@ function parseDeliveryFee(value) {
   }
 
   return deliveryFee;
+}
+
+function parseOptionalDays(value, label) {
+  if (value === undefined || value === null || value === "") return null;
+
+  const days = Number(value);
+  if (!Number.isInteger(days) || days < 0) {
+    throw new Error(`${label} must be a non-negative whole number.`);
+  }
+  return days;
 }
 
 function parseBoolean(value, fallback) {
@@ -53,6 +75,15 @@ function formatZone(zone) {
   return {
     ...zone,
     delivery_fee: Number(zone.delivery_fee),
+    remote_surcharge: Number(zone.remote_surcharge || 0),
+    eta_min_days:
+      zone.eta_min_days === null || zone.eta_min_days === undefined
+        ? null
+        : Number(zone.eta_min_days),
+    eta_max_days:
+      zone.eta_max_days === null || zone.eta_max_days === undefined
+        ? null
+        : Number(zone.eta_max_days),
   };
 }
 
@@ -83,15 +114,7 @@ async function getDeliveryOverview() {
   try {
     const zonesResult = await pool.query(`
       SELECT
-        id,
-        country,
-        state,
-        region,
-        delivery_fee,
-        is_default,
-        is_active,
-        created_at,
-        updated_at
+        *
       FROM delivery_zones
       ORDER BY is_default DESC, country ASC, state ASC, region ASC
     `);
@@ -116,24 +139,19 @@ async function getDeliveryOverview() {
 }
 
 async function getDeliveryQuote(
-  { country, state, region } = {},
+  { country, state, region, area } = {},
   { client = pool } = {}
 ) {
   const normalizedCountry = normalizeLocation(country);
   const normalizedState = normalizeLocation(state);
   const normalizedRegion = normalizeLocation(region);
+  const normalizedArea = normalizeLocation(area);
 
   try {
     const result = await client.query(
       `
         SELECT
-          id,
-          country,
-          state,
-          region,
-          delivery_fee,
-          is_default,
-          is_active
+          *
         FROM delivery_zones
         WHERE is_active = TRUE
           AND (
@@ -141,16 +159,25 @@ async function getDeliveryQuote(
               LOWER(country) = LOWER($1)
               AND LOWER(state) = LOWER($2)
               AND LOWER(region) = LOWER($3)
+              AND LOWER(area) = LOWER($4)
+            )
+            OR (
+              LOWER(country) = LOWER($1)
+              AND LOWER(state) = LOWER($2)
+              AND LOWER(region) = LOWER($3)
+              AND LOWER(area) = 'default'
             )
             OR (
               LOWER(country) = LOWER($1)
               AND LOWER(state) = LOWER($2)
               AND LOWER(region) = 'default'
+              AND LOWER(area) = 'default'
             )
             OR (
               LOWER(country) = LOWER($1)
               AND LOWER(state) = 'default'
               AND LOWER(region) = 'default'
+              AND LOWER(area) = 'default'
             )
             OR is_default = TRUE
           )
@@ -159,23 +186,31 @@ async function getDeliveryQuote(
             WHEN LOWER(country) = LOWER($1)
               AND LOWER(state) = LOWER($2)
               AND LOWER(region) = LOWER($3)
+              AND LOWER(area) = LOWER($4)
               THEN 1
             WHEN LOWER(country) = LOWER($1)
               AND LOWER(state) = LOWER($2)
-              AND LOWER(region) = 'default'
+              AND LOWER(region) = LOWER($3)
+              AND LOWER(area) = 'default'
               THEN 2
+            WHEN LOWER(country) = LOWER($1)
+              AND LOWER(state) = LOWER($2)
+              AND LOWER(region) = 'default'
+              AND LOWER(area) = 'default'
+              THEN 3
             WHEN LOWER(country) = LOWER($1)
               AND LOWER(state) = 'default'
               AND LOWER(region) = 'default'
-              THEN 3
-            WHEN is_default = TRUE THEN 4
-            ELSE 5
+              AND LOWER(area) = 'default'
+              THEN 4
+            WHEN is_default = TRUE THEN 5
+            ELSE 6
           END ASC,
           updated_at DESC NULLS LAST,
           created_at DESC NULLS LAST
         LIMIT 1
       `,
-      [normalizedCountry, normalizedState, normalizedRegion]
+      [normalizedCountry, normalizedState, normalizedRegion, normalizedArea]
     );
 
     const zone = result.rows[0];
@@ -186,7 +221,14 @@ async function getDeliveryQuote(
 
     return {
       defaultDeliveryFee: DEFAULT_DELIVERY_FEE,
-      deliveryFee: Number(zone.delivery_fee),
+      baseDeliveryFee: Number(zone.delivery_fee),
+      remoteSurcharge: Number(zone.remote_surcharge || 0),
+      deliveryFee:
+        Number(zone.delivery_fee) + Number(zone.remote_surcharge || 0),
+      etaMinDays: zone.eta_min_days,
+      etaMaxDays: zone.eta_max_days,
+      isPickup: zone.is_pickup === true,
+      pickupLabel: zone.pickup_label || null,
       matchedZone: formatZone(zone),
       migrationApplied: true,
     };
@@ -206,14 +248,30 @@ async function createDeliveryZone(payload = {}) {
     const country = normalizeLocation(payload.country);
     const state = normalizeLocation(payload.state);
     const region = normalizeLocation(payload.region);
+    const area = normalizeLocation(payload.area);
     const deliveryFee = parseDeliveryFee(
       payload.deliveryFee ?? payload.delivery_fee
     );
+    const remoteSurcharge = parseDeliveryFee(
+      payload.remoteSurcharge ?? payload.remote_surcharge ?? 0
+    );
+    const etaMinDays = parseOptionalDays(
+      payload.etaMinDays ?? payload.eta_min_days,
+      "Minimum ETA"
+    );
+    const etaMaxDays = parseOptionalDays(
+      payload.etaMaxDays ?? payload.eta_max_days,
+      "Maximum ETA"
+    );
+    if (etaMinDays !== null && etaMaxDays !== null && etaMaxDays < etaMinDays) {
+      throw new Error("Maximum ETA cannot be shorter than minimum ETA.");
+    }
     const isDefault = parseBoolean(
       payload.isDefault ?? payload.is_default,
       false
     );
     const isActive = parseBoolean(payload.isActive ?? payload.is_active, true);
+    const isPickup = parseBoolean(payload.isPickup ?? payload.is_pickup, false);
 
     await client.query("BEGIN");
 
@@ -227,23 +285,37 @@ async function createDeliveryZone(payload = {}) {
           country,
           state,
           region,
+          area,
           delivery_fee,
+          remote_surcharge,
+          eta_min_days,
+          eta_max_days,
+          is_pickup,
+          pickup_label,
+          international_region,
           is_default,
           is_active
         )
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING
-          id,
-          country,
-          state,
-          region,
-          delivery_fee,
-          is_default,
-          is_active,
-          created_at,
-          updated_at
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        RETURNING *
       `,
-      [country, state, region, deliveryFee, isDefault, isActive]
+      [
+        country,
+        state,
+        region,
+        area,
+        deliveryFee,
+        remoteSurcharge,
+        etaMinDays,
+        etaMaxDays,
+        isPickup,
+        normalizeOptionalText(payload.pickupLabel ?? payload.pickup_label),
+        normalizeOptionalText(
+          payload.internationalRegion ?? payload.international_region
+        ),
+        isDefault,
+        isActive,
+      ]
     );
 
     await client.query("COMMIT");
@@ -298,9 +370,49 @@ async function updateDeliveryZone(zoneId, payload = {}) {
         payload.region === undefined
           ? existingZone.region
           : normalizeLocation(payload.region),
+      area:
+        payload.area === undefined
+          ? existingZone.area
+          : normalizeLocation(payload.area),
       deliveryFee: hasDeliveryFee
         ? parseDeliveryFee(payload.deliveryFee ?? payload.delivery_fee)
         : Number(existingZone.delivery_fee),
+      remoteSurcharge:
+        payload.remoteSurcharge === undefined &&
+        payload.remote_surcharge === undefined
+          ? Number(existingZone.remote_surcharge || 0)
+          : parseDeliveryFee(
+              payload.remoteSurcharge ?? payload.remote_surcharge
+            ),
+      etaMinDays:
+        payload.etaMinDays === undefined && payload.eta_min_days === undefined
+          ? existingZone.eta_min_days
+          : parseOptionalDays(
+              payload.etaMinDays ?? payload.eta_min_days,
+              "Minimum ETA"
+            ),
+      etaMaxDays:
+        payload.etaMaxDays === undefined && payload.eta_max_days === undefined
+          ? existingZone.eta_max_days
+          : parseOptionalDays(
+              payload.etaMaxDays ?? payload.eta_max_days,
+              "Maximum ETA"
+            ),
+      isPickup: parseBoolean(
+        payload.isPickup ?? payload.is_pickup,
+        existingZone.is_pickup
+      ),
+      pickupLabel:
+        payload.pickupLabel === undefined && payload.pickup_label === undefined
+          ? existingZone.pickup_label
+          : normalizeOptionalText(payload.pickupLabel ?? payload.pickup_label),
+      internationalRegion:
+        payload.internationalRegion === undefined &&
+        payload.international_region === undefined
+          ? existingZone.international_region
+          : normalizeOptionalText(
+              payload.internationalRegion ?? payload.international_region
+            ),
       isDefault: parseBoolean(
         payload.isDefault ?? payload.is_default,
         existingZone.is_default
@@ -310,6 +422,14 @@ async function updateDeliveryZone(zoneId, payload = {}) {
         existingZone.is_active
       ),
     };
+
+    if (
+      nextZone.etaMinDays !== null &&
+      nextZone.etaMaxDays !== null &&
+      nextZone.etaMaxDays < nextZone.etaMinDays
+    ) {
+      throw new Error("Maximum ETA cannot be shorter than minimum ETA.");
+    }
 
     if (nextZone.isDefault) {
       await client.query(
@@ -325,27 +445,32 @@ async function updateDeliveryZone(zoneId, payload = {}) {
           country = $1,
           state = $2,
           region = $3,
-          delivery_fee = $4,
-          is_default = $5,
-          is_active = $6,
+          area = $4,
+          delivery_fee = $5,
+          remote_surcharge = $6,
+          eta_min_days = $7,
+          eta_max_days = $8,
+          is_pickup = $9,
+          pickup_label = $10,
+          international_region = $11,
+          is_default = $12,
+          is_active = $13,
           updated_at = CURRENT_TIMESTAMP
-        WHERE id = $7
-        RETURNING
-          id,
-          country,
-          state,
-          region,
-          delivery_fee,
-          is_default,
-          is_active,
-          created_at,
-          updated_at
+        WHERE id = $14
+        RETURNING *
       `,
       [
         nextZone.country,
         nextZone.state,
         nextZone.region,
+        nextZone.area,
         nextZone.deliveryFee,
+        nextZone.remoteSurcharge,
+        nextZone.etaMinDays,
+        nextZone.etaMaxDays,
+        nextZone.isPickup,
+        nextZone.pickupLabel,
+        nextZone.internationalRegion,
         nextZone.isDefault,
         nextZone.isActive,
         zoneId,
@@ -400,6 +525,7 @@ async function buildOrderDeliveryFields({
   deliveryQuote,
   deliveryNotes,
   state,
+  area,
   existingColumns,
 } = {}) {
   const columns = existingColumns instanceof Set
@@ -432,6 +558,34 @@ async function buildOrderDeliveryFields({
     fields.push({
       column: "state",
       value: normalizeOptionalText(state),
+    });
+  }
+
+  if (columns.has("delivery_area")) {
+    fields.push({
+      column: "delivery_area",
+      value: normalizeOptionalText(area),
+    });
+  }
+
+  if (columns.has("delivery_eta_min_days")) {
+    fields.push({
+      column: "delivery_eta_min_days",
+      value: deliveryQuote?.etaMinDays ?? null,
+    });
+  }
+
+  if (columns.has("delivery_eta_max_days")) {
+    fields.push({
+      column: "delivery_eta_max_days",
+      value: deliveryQuote?.etaMaxDays ?? null,
+    });
+  }
+
+  if (columns.has("delivery_is_pickup")) {
+    fields.push({
+      column: "delivery_is_pickup",
+      value: deliveryQuote?.isPickup === true,
     });
   }
 

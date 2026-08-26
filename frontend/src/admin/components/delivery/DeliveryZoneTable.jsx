@@ -44,7 +44,9 @@ export function DeliveryZoneTable({
                 <th>Country</th>
                 <th>State</th>
                 <th>Region</th>
+                <th>Area</th>
                 <th>Fee</th>
+                <th>ETA</th>
                 <th>Default</th>
                 <th>Status</th>
                 <th>Updated</th>
@@ -58,7 +60,17 @@ export function DeliveryZoneTable({
                   <td>{zone.country}</td>
                   <td>{zone.state}</td>
                   <td>{zone.region}</td>
-                  <td>{formatNaira(zone.delivery_fee)}</td>
+                  <td>{zone.area || "Default"}</td>
+                  <td>
+                    {formatNaira(Number(zone.delivery_fee || 0) + Number(zone.remote_surcharge || 0))}
+                    {Number(zone.remote_surcharge || 0) > 0 && <small>Includes remote surcharge</small>}
+                  </td>
+                  <td>
+                    {zone.eta_min_days === null || zone.eta_min_days === undefined
+                      ? "—"
+                      : `${zone.eta_min_days}${zone.eta_max_days && zone.eta_max_days !== zone.eta_min_days ? `–${zone.eta_max_days}` : ""} days`}
+                    {zone.is_pickup && <small>{zone.pickup_label || "Pickup"}</small>}
+                  </td>
                   <td>{zone.is_default ? "Yes" : "No"}</td>
                   <td>
                     <span className="admin-badge">

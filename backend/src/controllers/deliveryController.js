@@ -26,8 +26,8 @@ async function getDeliveryOverviewHandler(req, res) {
 
 async function getDeliveryQuoteHandler(req, res) {
   try {
-    const { country, state, region } = req.query;
-    const data = await getDeliveryQuote({ country, state, region });
+    const { country, state, region, area } = req.query;
+    const data = await getDeliveryQuote({ country, state, region, area });
 
     return res.status(200).json({
       success: true,
@@ -46,8 +46,8 @@ async function getDeliveryQuoteHandler(req, res) {
 
 async function calculateDeliveryHandler(req, res) {
   try {
-    const { address, country, state, region } = req.body || {};
-    const data = await getDeliveryQuote({ country, state, region, address });
+    const { address, country, state, region, area } = req.body || {};
+    const data = await getDeliveryQuote({ country, state, region, area, address });
 
     return res.status(200).json({
       success: true,
@@ -56,6 +56,10 @@ async function calculateDeliveryHandler(req, res) {
         deliveryFee: data.deliveryFee,
         zone: data.matchedZone,
         matchedZone: data.matchedZone,
+        etaMinDays: data.etaMinDays,
+        etaMaxDays: data.etaMaxDays,
+        isPickup: data.isPickup,
+        pickupLabel: data.pickupLabel,
         migrationApplied: data.migrationApplied,
       },
     });
