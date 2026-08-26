@@ -54,6 +54,7 @@ export function ProductDetails() {
   });
   const [recentlyViewedProducts, setRecentlyViewedProducts] = useState([]);
   const [showUpsell, setShowUpsell] = useState(false);
+  const [activeInfoTab, setActiveInfoTab] = useState("details");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [backInStockForm, setBackInStockForm] = useState({
@@ -99,6 +100,7 @@ export function ProductDetails() {
         }));
         setRecentlyViewedProducts(previousRecentlyViewed);
         setShowUpsell(false);
+        setActiveInfoTab("details");
         setIsLoading(false);
         saveRecentlyViewedProduct(selectedProduct);
 
@@ -302,33 +304,62 @@ export function ProductDetails() {
       <Header />
 
       <section className="product-detail-page">
-        <Link to="/products" className="back-link">
+        <Link to="/products" className="product-breadcrumb">
           <ArrowLeft size={17} />
-          Back to products
+          Products
+          <span>/</span>
+          <strong>{product.name}</strong>
         </Link>
 
         <div className="product-detail-layout">
-          <div className="product-detail-image">
-            {product.image ? (
-             <img
-  src={product.image || product.image_url}
-  alt={product.name}
-/>
-            ) : (
-              <div className="empty-state">
-                <p>No product image</p>
-              </div>
-            )}
+          <div className="product-detail-media">
+            <div className="product-detail-image">
+              {product.image ? (
+                <img
+                  src={product.image || product.image_url}
+                  alt={product.name}
+                />
+              ) : (
+                <div className="empty-state">
+                  <p>No product image</p>
+                </div>
+              )}
+            </div>
+
+            <div className="product-image-caption">
+              <span>LUMA.</span>
+              <p>Functional beauty, designed for brows.</p>
+            </div>
           </div>
 
           <div className="product-detail-content">
-            <p className="eyebrow">{product.size || "LUMA Beauty"}</p>
-            <h1>{product.name}</h1>
-            <p>{product.description}</p>
+            <div className="product-detail-heading-row">
+              <div>
+                <p className="eyebrow">LUMA brow essential</p>
+                <h1>{product.name}</h1>
+              </div>
+
+              <span className={`product-stock-pill ${unavailable ? "unavailable" : ""}`}>
+                {unavailable ? "Unavailable" : "In stock"}
+              </span>
+            </div>
+
+            <div className="product-meta-row">
+              <span>{product.size || "LUMA Beauty"}</span>
+              <i aria-hidden="true" />
+              <span>{getStockMessage(product)}</span>
+            </div>
 
             <div className="product-price-row">
               <strong>{product.price}</strong>
-              <span>{getStockMessage(product)}</span>
+              <span>One-time purchase</span>
+            </div>
+
+            <p className="product-detail-summary">{product.description}</p>
+
+            <div className="product-purchase-note">
+              <Check size={15} />
+              <span>Made for an easy, everyday LUMA brow routine.</span>
             </div>
 
             {unavailable && (
@@ -382,15 +413,26 @@ export function ProductDetails() {
               </form>
             )}
 
-            <button
-              type="button"
-              className="btn btn-primary product-detail-button"
-              onClick={handleAddToCart}
-              disabled={unavailable}
-            >
-              {unavailable ? "Unavailable" : "Add to cart"}
-              <ArrowRight size={18} />
-            </button>
+            <div className="product-purchase-actions">
+              <button
+                type="button"
+                className="btn btn-primary product-detail-button"
+                onClick={handleAddToCart}
+                disabled={unavailable}
+              >
+                {unavailable ? "Unavailable" : "Add to cart"}
+                <ArrowRight size={18} />
+              </button>
+
+              <button
+                type="button"
+                className={`wishlist-detail-button ${saved ? "saved" : ""}`}
+                onClick={() => toggleWishlist(product)}
+              >
+                <Heart size={18} />
+                {saved ? "Saved" : "Save"}
+              </button>
+            </div>
 
             {showUpsell && recommendations.upsells.length > 0 && (
               <div className="one-click-upsell">
@@ -408,57 +450,62 @@ export function ProductDetails() {
               </div>
             )}
 
-            <button
-              type="button"
-              className={`wishlist-detail-button ${saved ? "saved" : ""}`}
-              onClick={() => toggleWishlist(product)}
-            >
-              <Heart size={18} />
-              {saved ? "Saved to wishlist" : "Save to wishlist"}
-            </button>
-
-            <div className="product-info-grid">
-              <div>
-                <h2>Product details</h2>
-
-                <span>
-                  <Check size={15} />
-                  Size: {product.size || "Not specified"}
-                </span>
-
-                <span>
-                  <Check size={15} />
-                  Stock: {product.stock_quantity ?? 0}
-                </span>
-
+            <div className="product-info-tabs">
+              <div className="product-info-tablist" role="tablist" aria-label="Product information">
+                {[
+                  ["details", "Product details"],
+                  ["use", "How to use"],
+                  ["luma", "Why LUMA"],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeInfoTab === value}
+                    className={activeInfoTab === value ? "active" : ""}
+                    onClick={() => setActiveInfoTab(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
 
-              <div>
-                <h2>About LUMA</h2>
+              <div className="product-info-panel" role="tabpanel">
+                {activeInfoTab === "details" && (
+                  <>
+                    <p>{product.description}</p>
+                    <dl>
+                      <div>
+                        <dt>Size</dt>
+                        <dd>{product.size || "Not specified"}</dd>
+                      </div>
+                      <div>
+                        <dt>Availability</dt>
+                        <dd>{getStockMessage(product)}</dd>
+                      </div>
+                      <div>
+                        <dt>Brand</dt>
+                        <dd>LUMA</dd>
+                      </div>
+                    </dl>
+                  </>
+                )}
 
-                <span>
-                  <Check size={15} />
-                  Soft luxury beauty ritual
-                </span>
+                {activeInfoTab === "use" && (
+                  <p>
+                    Apply gently as part of your daily brow routine. Use a small
+                    amount, shape with precision, and allow the product to settle
+                    before layering more.
+                  </p>
+                )}
 
-                <span>
-                  <Check size={15} />
-                  Designed for everyday use
-                </span>
-
-                <span>
-                  <Check size={15} />
-                  Curated beauty essentials
-                </span>
+                {activeInfoTab === "luma" && (
+                  <p>
+                    LUMA creates focused brow essentials that make professional,
+                    polished results feel simple enough for every day.
+                  </p>
+                )}
               </div>
-            </div>
-
-            <div className="product-how-to">
-              <h2>How to use</h2>
-              <p>
-                Use as part of your daily LUMA beauty ritual. Apply gently and
-                consistently for the best experience.
-              </p>
             </div>
           </div>
         </div>
@@ -490,6 +537,5 @@ export function ProductDetails() {
     </main>
   );
 }
-
 
 
