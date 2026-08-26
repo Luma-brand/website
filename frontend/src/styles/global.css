@@ -2616,25 +2616,32 @@ img {
 
 .product-detail-layout {
   display: grid;
-  grid-template-columns: 0.9fr 1fr;
-  gap: 46px;
+  grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1fr);
+  gap: clamp(32px, 4vw, 58px);
   align-items: start;
 }
 
 .product-detail-image {
   position: sticky;
   top: 120px;
+  display: grid;
+  place-items: center;
   overflow: hidden;
-  min-height: 680px;
+  width: 100%;
+  height: clamp(500px, calc(100vh - 210px), 680px);
+  min-height: 0;
+  max-height: 680px;
   border-radius: var(--radius-xl);
   background: var(--color-cream);
   box-shadow: var(--shadow-soft);
 }
 
 .product-detail-image img {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
 }
 
 .product-detail-content {
@@ -2643,9 +2650,9 @@ img {
 
 .product-detail-content h1 {
   margin: 0;
-  font-size: clamp(4rem, 8vw, 8rem);
-  line-height: 0.9;
-  letter-spacing: -0.08em;
+  font-size: clamp(3.5rem, 5.8vw, 6.25rem);
+  line-height: 0.92;
+  letter-spacing: -0.07em;
 }
 
 .product-detail-content > p:not(.eyebrow) {
@@ -2779,13 +2786,23 @@ img {
     padding: 8px;
   }
 
-  .shop-product-image,
-  .product-detail-image {
+  .shop-product-image {
     min-height: 520px;
   }
 
   .product-detail-image {
     position: static;
+    height: clamp(420px, 68vw, 560px);
+    min-height: 0;
+    max-height: 560px;
+  }
+
+  .product-detail-content {
+    padding-top: 0;
+  }
+
+  .product-detail-content h1 {
+    font-size: clamp(3.2rem, 10vw, 5.25rem);
   }
 
   .related-grid {
@@ -2794,9 +2811,15 @@ img {
 }
 
 @media (max-width: 640px) {
-  .shop-product-image,
-  .product-detail-image {
+  .shop-product-image {
     min-height: 390px;
+  }
+
+  .product-detail-image {
+    height: clamp(300px, 76vw, 420px);
+    min-height: 0;
+    max-height: 420px;
+    border-radius: 24px;
   }
 
   .shop-product-actions {
@@ -2816,7 +2839,28 @@ img {
   }
 
   .product-detail-page {
-    padding-top: 135px;
+    padding-top: 118px;
+    padding-bottom: 72px;
+  }
+
+  .product-detail-layout {
+    gap: 22px;
+  }
+
+  .product-detail-content h1 {
+    font-size: clamp(2.75rem, 14vw, 4rem);
+  }
+
+  .product-detail-content > p:not(.eyebrow) {
+    margin-top: 16px;
+    font-size: 0.98rem;
+    line-height: 1.65;
+  }
+
+  .product-price-row,
+  .product-detail-button,
+  .product-info-grid {
+    margin-top: 20px;
   }
 }
 .order-history-card {
