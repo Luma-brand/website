@@ -52,7 +52,7 @@ export function ContactSection({ detailed = false }) {
       setForm(initialForm);
       setStatus({
         type: "success",
-        message: "Your enquiry has been received. The LUMA team can now review it from the Control Room.",
+        message: "Your enquiry has been received. We’ll get back to you as soon as possible.",
       });
     } catch (error) {
       setStatus({
@@ -123,7 +123,7 @@ export function ContactSection({ detailed = false }) {
         >
           <p className="eyebrow">Send an enquiry</p>
           <h2>Tell us what you need.</h2>
-          <p>Give us enough context to help you properly. Your message goes directly into the LUMA Control Room.</p>
+          <p>Share a few details so the right person on our team can help.</p>
 
           <form className="luma-enquiry-form" onSubmit={handleSubmit} noValidate>
             <div className="luma-enquiry-row">
@@ -146,11 +146,12 @@ export function ContactSection({ detailed = false }) {
                 <label htmlFor="contact-subject">Enquiry type</label>
                 <select id="contact-subject" name="subject" value={form.subject} onChange={handleChange} disabled={submitting}>
                   <option>Product enquiry</option>
-                  <option>Order or delivery</option>
-                  <option>Retail or stockist interest</option>
-                  <option>Partnership or collaboration</option>
+                  <option>Order support</option>
+                  <option>Delivery support</option>
+                  <option>Retail / stockist</option>
+                  <option>Partnership / collaboration</option>
                   <option>Customer care</option>
-                  <option>Other enquiry</option>
+                  <option>Other</option>
                 </select>
               </div>
             </div>

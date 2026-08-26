@@ -36,6 +36,7 @@ const createOrder = async (req, res) => {
       city,
       state,
       country,
+      area,
       deliveryNotes,
       items,
     } = req.body;
@@ -69,6 +70,7 @@ const createOrder = async (req, res) => {
       country,
       state: deliveryState,
       region: city,
+      area,
     });
 
     await client.query("BEGIN");
@@ -93,6 +95,7 @@ const createOrder = async (req, res) => {
       deliveryQuote,
       deliveryNotes,
       state: deliveryState,
+      area,
     });
 
     const orderColumns = [

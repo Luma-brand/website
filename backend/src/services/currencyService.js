@@ -398,21 +398,11 @@ function convertFromNgn(amount, rateToNgn) {
   return Number(amount || 0) / rate;
 }
 
-function getFlutterwaveConfigStatus() {
-  return {
-    configured: Boolean(process.env.FLUTTERWAVE_PUBLIC_KEY && process.env.FLUTTERWAVE_SECRET_KEY),
-    publicKeyConfigured: Boolean(process.env.FLUTTERWAVE_PUBLIC_KEY),
-    secretKeyConfigured: Boolean(process.env.FLUTTERWAVE_SECRET_KEY),
-  };
-}
-
 module.exports = {
   convertFromNgn,
   ensureCurrencyTable,
   getCurrencyRates,
-  getFlutterwaveConfigStatus,
   updateCurrencyRate,
 };
-
 
 

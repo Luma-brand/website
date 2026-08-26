@@ -213,14 +213,11 @@ function welcomeEmailTemplate(user = {}) {
     previewText: "Welcome to LUMA — your first ritual is closer.",
     eyebrow: "Welcome to LUMA",
     title: "Your brows just found their place.",
-    body: `
-      <p style="margin:0 0 16px;">Hi ${escapeHtml(name)}, welcome in. Your LUMA account is ready — simple, lightweight, and made to keep shopping easy.</p>
-      <p style="margin:0 0 18px;">As a little welcome, use <strong style="color:${BRAND.ink};">WELCOME10</strong> for 10% off your first order.</p>
-      <div style="display:inline-block;padding:12px 16px;border:1px dashed ${BRAND.silver};border-radius:16px;background:${BRAND.soft};color:${BRAND.ink};font-weight:900;letter-spacing:0.08em;">WELCOME10</div>`,
+    body: `<p style="margin:0;">Hi ${escapeHtml(name)}, welcome in. Your LUMA account is ready — simple, lightweight, and made to keep shopping easy.</p>`,
     buttonText: "Shop the collection",
     buttonUrl: `${getFrontendUrl()}/products`,
   });
-  return { subject: "Welcome to LUMA — 10% off your first ritual", html, text: stripHtml(html) };
+  return { subject: "Welcome to LUMA", html, text: stripHtml(html) };
 }
 
 function orderConfirmationTemplate(order = {}) {

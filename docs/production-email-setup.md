@@ -29,10 +29,10 @@ ABANDONED_CART_EMAIL_ENABLED=true
 ABANDONED_CART_DELAY_MINUTES=2
 ABANDONED_CART_MAX_EMAILS=3
 CRON_SECRET=long_random_secret
-RESEND_WEBHOOK_SECRET=optional_webhook_secret
+RESEND_WEBHOOK_SECRET=required_resend_signing_secret
 ```
 
-Also keep existing production values for `DATABASE_URL`, `JWT_SECRET`, Flutterwave, Cloudinary, and any other active backend integrations.
+Also keep existing production values for `DATABASE_URL`, `JWT_SECRET`, Paystack, Cloudinary, and any other active backend integrations.
 
 ## Frontend environment variables
 
@@ -111,38 +111,9 @@ Set the Resend webhook URL to:
 https://website-ikv5.onrender.com/api/webhooks/resend
 ```
 
-The backend records webhook events in `email_events`. If Resend inbound email is enabled and an `email.received` event arrives for `support@shopwithluma.com` or `hello@shopwithluma.com`, the backend prepares inbox records in `support_tickets` and `support_messages`.
+The backend verifies Resend's Standard Webhooks signature and records delivery events in `email_events`. LUMA does not run an admin mailbox or replace the existing domain mailbox provider.
 
-## Mail inbox DNS caution
-
-Both `support@shopwithluma.com` and `hello@shopwithluma.com` use Resend inbound receiving for `shopwithluma.com`. Before changing MX/DNS records, confirm the current mailbox provider so existing email delivery is not interrupted. Do not delete existing Resend/domain DNS sending records. Receiving and any required DNS/MX setup must still be configured manually.
-
-## Admin Mail inbox
-
-Admin UI route:
-
-```text
-/luma-control-room/mail
-```
-
-Protected backend endpoints:
-
-```http
-GET /api/admin/mail/inboxes
-GET /api/admin/mail/tickets?status=open&inbox=all&search=&page=1&limit=50
-GET /api/admin/mail/tickets?inbox=support@shopwithluma.com
-GET /api/admin/mail/tickets?inbox=hello@shopwithluma.com
-GET /api/admin/mail/tickets/:id
-POST /api/admin/mail/tickets/:id/reply
-PATCH /api/admin/mail/tickets/:id/status
-PATCH /api/admin/mail/tickets/:id/priority
-```
-
-Support and Hello conversations are handled together on this same page. Replies are sent through Resend using the ticket's saved sender: `SUPPORT_FROM` for Support and `HELLO_FROM` for Hello. Set all mail inbox variables in Render and keep `RESEND_API_KEY` backend-only. Older tickets without inbox metadata are treated as Support tickets.
-
-## Resend receiving setup
-
-Create or confirm a Resend Receiving domain for `shopwithluma.com`, covering both Support and Hello, then point the webhook to:
+Point the Resend event webhook to:
 
 ```text
 https://website-ikv5.onrender.com/api/webhooks/resend
@@ -157,6 +128,4 @@ https://YOUR-TUNNEL-DOMAIN/api/webhooks/resend
 ```
 
 Do not log or paste `RESEND_API_KEY` into frontend env files, Vercel variables, screenshots, or browser code.
-
-
 

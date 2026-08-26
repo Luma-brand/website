@@ -6,7 +6,6 @@ import {
   CreditCard,
   LockKeyhole,
   ShieldCheck,
-  TicketPercent,
 } from "lucide-react";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
@@ -31,6 +30,7 @@ const initialCheckout = {
   city: "",
   state: "",
   region: "",
+  area: "",
   country: "Nigeria",
   deliveryNotes: "",
 };
@@ -142,6 +142,7 @@ export function Checkout() {
           country: formData.country,
           state: formData.state,
           region: formData.region,
+          area: formData.area,
         });
 
         if (mounted) setDeliveryQuote(response.data || null);
@@ -166,15 +167,11 @@ export function Checkout() {
   }, [
     cartItems.length,
     formData.address,
+    formData.area,
     formData.country,
     formData.region,
     formData.state,
   ]);
-
-  useEffect(() => {
-    setDiscountPreview(null);
-    setDiscountError("");
-  }, [cartItems.length, formData.country, formData.region, formData.state]);
 
   if (isAuthLoading) {
     return (
@@ -183,7 +180,7 @@ export function Checkout() {
         <section className="commerce-page">
           <div className="empty-state">
             <h2>Opening secure checkout...</h2>
-            <p>Checking your LUMA session.</p>
+            <p>One moment, please.</p>
           </div>
         </section>
         <Footer />
@@ -200,6 +197,11 @@ export function Checkout() {
     setFormData((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: "" }));
     setServerError("");
+
+    if (["country", "state", "region", "city"].includes(name)) {
+      setDiscountPreview(null);
+      setDiscountError("");
+    }
   }
 
   function handleLocationSelect(location) {
@@ -210,6 +212,7 @@ export function Checkout() {
       state: location.state || current.state,
       region: location.region || current.region || current.city,
       city: location.region || current.city,
+      area: location.area || current.area,
     }));
     setErrors({});
     setServerError("");
@@ -242,6 +245,7 @@ export function Checkout() {
         country: formData.country || "Nigeria",
         state: formData.state || "Default",
         city: formData.region || formData.city || "Default",
+        area: formData.area || "Default",
         items: getOrderItemsPayload(),
       });
       setDiscountPreview(response.data || null);
@@ -309,6 +313,7 @@ export function Checkout() {
         deliveryAddress: formData.address,
         city: formData.region || formData.city,
         region: formData.region || formData.city,
+        area: formData.area || "Default",
         state: formData.state,
         country: formData.country,
         deliveryNotes: formData.deliveryNotes,
@@ -454,6 +459,18 @@ export function Checkout() {
                 </div>
               </div>
 
+              <div className="form-field">
+                <label htmlFor="area">Area / LGA <span style={{ opacity: 0.55 }}>(optional)</span></label>
+                <input
+                  id="area"
+                  name="area"
+                  value={formData.area}
+                  onChange={handleChange}
+                  placeholder="Optional area or LGA"
+                  disabled={isSubmitting}
+                />
+              </div>
+
               <div className="form-grid two">
                 <div className="form-field">
                   <label htmlFor="country">Country</label>
@@ -480,6 +497,14 @@ export function Checkout() {
                   {(deliveryError || errors.delivery) && (
                     <small>{deliveryError || errors.delivery}</small>
                   )}
+                  {!deliveryError && deliveryQuote?.etaMinDays !== null && deliveryQuote?.etaMinDays !== undefined && (
+                    <small>
+                      Estimated delivery: {deliveryQuote.etaMinDays}
+                      {deliveryQuote.etaMaxDays && deliveryQuote.etaMaxDays !== deliveryQuote.etaMinDays
+                        ? `–${deliveryQuote.etaMaxDays}`
+                        : ""} day(s)
+                    </small>
+                  )}
                 </div>
               </div>
 
@@ -496,40 +521,40 @@ export function Checkout() {
                 />
               </div>
 
-              <div className="form-section-title" style={{ marginTop: 26 }}>
-                <TicketPercent size={18} />
-                <h2>Offer code</h2>
-              </div>
-
-              <div className="discount-code-row">
-                <input
-                  value={discountCode}
-                  onChange={(event) => {
-                    setDiscountCode(event.target.value.toUpperCase());
-                    setDiscountPreview(null);
-                    setDiscountError("");
-                  }}
-                  placeholder="WELCOME10"
-                  disabled={isSubmitting || isDiscountLoading}
-                  aria-label="Discount code"
-                />
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={handleApplyDiscount}
-                  disabled={isSubmitting || isDiscountLoading}
-                >
-                  {isDiscountLoading ? "Checking..." : "Apply"}
-                </button>
-              </div>
-
-              {discountPreview && (
-                <div className="checkout-inline-success">
-                  <CheckCircle2 size={16} />
-                  {discountPreview.discountCode || discountCode} applied — you save {formatNaira(discountAmount)}.
+              <div className="checkout-discount-panel">
+                <label htmlFor="checkout-discount-code">Offer code</label>
+                <div className="checkout-discount-row">
+                  <input
+                    id="checkout-discount-code"
+                    className="checkout-discount-input"
+                    value={discountCode}
+                    onChange={(event) => {
+                      setDiscountCode(event.target.value.toUpperCase());
+                      setDiscountPreview(null);
+                      setDiscountError("");
+                    }}
+                    placeholder="Enter code"
+                    autoComplete="off"
+                    disabled={isSubmitting || isDiscountLoading}
+                  />
+                  <button
+                    type="button"
+                    className="checkout-discount-button"
+                    onClick={handleApplyDiscount}
+                    disabled={isSubmitting || isDiscountLoading}
+                  >
+                    {isDiscountLoading ? "Checking…" : "Apply"}
+                  </button>
                 </div>
-              )}
-              {discountError && <small className="form-error">{discountError}</small>}
+
+                {discountPreview && (
+                  <div className="checkout-inline-success">
+                    <CheckCircle2 size={16} />
+                    {discountPreview.discountCode || discountCode} applied — you save {formatNaira(discountAmount)}.
+                  </div>
+                )}
+                {discountError && <small className="form-error">{discountError}</small>}
+              </div>
               {serverError && <div className="checkout-error">{serverError}</div>}
 
               <button

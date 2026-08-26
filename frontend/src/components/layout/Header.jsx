@@ -184,6 +184,23 @@ export function Header() {
 
       {isOpen && (
         <div className="mobile-nav">
+          {currencyRates.length > 1 && (
+            <label className="mobile-currency-selector">
+              <span>Display currency</span>
+              <select
+                value={selectedCurrency}
+                onChange={handleCurrencyChange}
+                aria-label="Display currency"
+              >
+                {currencyRates.map((rate) => (
+                  <option key={rate.code} value={rate.code}>
+                    {rate.symbol} {rate.code}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
           {navLinks.map((link) => (
             <a
               key={link.label}
@@ -214,6 +231,5 @@ export function Header() {
     </header>
   );
 }
-
 
 

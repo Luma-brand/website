@@ -95,6 +95,17 @@ export function DeliveryZoneForm({
           </label>
 
           <label>
+            Area override
+            <input
+              name="area"
+              value={formData.area}
+              onChange={onChange}
+              placeholder="Optional area or Default"
+              disabled={isSaving || !migrationApplied}
+            />
+          </label>
+
+          <label>
             Delivery fee
             <input
               name="deliveryFee"
@@ -105,6 +116,68 @@ export function DeliveryZoneForm({
               onChange={onChange}
               placeholder="3000"
               disabled={isSaving || !migrationApplied}
+            />
+          </label>
+
+          <label>
+            Remote surcharge
+            <input
+              name="remoteSurcharge"
+              type="number"
+              min="0"
+              step="50"
+              value={formData.remoteSurcharge}
+              onChange={onChange}
+              placeholder="0"
+              disabled={isSaving || !migrationApplied}
+            />
+          </label>
+
+          <label>
+            Minimum ETA (days)
+            <input
+              name="etaMinDays"
+              type="number"
+              min="0"
+              value={formData.etaMinDays}
+              onChange={onChange}
+              placeholder="Optional"
+              disabled={isSaving || !migrationApplied}
+            />
+          </label>
+
+          <label>
+            Maximum ETA (days)
+            <input
+              name="etaMaxDays"
+              type="number"
+              min="0"
+              value={formData.etaMaxDays}
+              onChange={onChange}
+              placeholder="Optional"
+              disabled={isSaving || !migrationApplied}
+            />
+          </label>
+
+          <label>
+            International region
+            <input
+              name="internationalRegion"
+              value={formData.internationalRegion}
+              onChange={onChange}
+              placeholder="Example: West Africa"
+              disabled={isSaving || !migrationApplied}
+            />
+          </label>
+
+          <label>
+            Pickup label
+            <input
+              name="pickupLabel"
+              value={formData.pickupLabel}
+              onChange={onChange}
+              placeholder="Shown only for pickup zones"
+              disabled={isSaving || !migrationApplied || !formData.isPickup}
             />
           </label>
         </div>
@@ -130,6 +203,17 @@ export function DeliveryZoneForm({
               disabled={isSaving || !migrationApplied}
             />
             Active
+          </label>
+
+          <label>
+            <input
+              name="isPickup"
+              type="checkbox"
+              checked={formData.isPickup}
+              onChange={onChange}
+              disabled={isSaving || !migrationApplied}
+            />
+            Pickup option
           </label>
         </div>
 

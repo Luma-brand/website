@@ -12,7 +12,6 @@ const {
   recordAdminLogin,
 } = require("../services/adminSecurityService");
 
-const GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo";
 const RESET_CODE_TTL_MINUTES = 15;
 
 const createToken = (admin) => {
@@ -301,65 +300,6 @@ const hashResetCode = (email, code) => {
 
 const createResetCode = () => {
   return String(crypto.randomInt(100000, 1000000));
-};
-
-function getGoogleClientId() {
-  return process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
-}
-
-const verifyGoogleCredential = async (credential) => {
-  if (!getGoogleClientId()) {
-    const error = new Error("Google sign-in is not configured.");
-    error.statusCode = 500;
-    throw error;
-  }
-
-  if (!credential) {
-    const error = new Error("Google credential is required.");
-    error.statusCode = 400;
-    throw error;
-  }
-
-  if (typeof fetch !== "function") {
-    const error = new Error("Google sign-in requires a runtime with fetch support.");
-    error.statusCode = 500;
-    throw error;
-  }
-
-  const params = new URLSearchParams({ id_token: credential });
-  const response = await fetch(`${GOOGLE_TOKENINFO_URL}?${params.toString()}`);
-  const payload = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    const error = new Error(payload.error_description || "Invalid Google credential.");
-    error.statusCode = 401;
-    throw error;
-  }
-
-  if (payload.aud !== getGoogleClientId()) {
-    const error = new Error("Google credential was issued for a different client.");
-    error.statusCode = 401;
-    throw error;
-  }
-
-  if (payload.email_verified !== true && payload.email_verified !== "true") {
-    const error = new Error("Google email address is not verified.");
-    error.statusCode = 401;
-    throw error;
-  }
-
-  if (!payload.sub || !payload.email) {
-    const error = new Error("Google credential is missing required profile data.");
-    error.statusCode = 401;
-    throw error;
-  }
-
-  return {
-    sub: payload.sub,
-    email: normalizeEmail(payload.email),
-    name: payload.name || payload.given_name || payload.email.split("@")[0],
-    picture: payload.picture || null,
-  };
 };
 
 const registerAdmin = async (req, res) => {
@@ -662,7 +602,7 @@ const loginCustomer = async (req, res) => {
     if (!customerRecord.password_hash) {
       return res.status(401).json({
         success: false,
-        message: "Use Google sign-in for this account.",
+        message: "Set a password with Forgot password, then sign in again.",
       });
     }
 
@@ -707,127 +647,6 @@ const loginCustomer = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error while logging in customer.",
-    });
-  }
-};
-
-const loginCustomerWithGoogle = async (req, res) => {
-  try {
-    await ensureCustomerAuthTable();
-
-    const { credential } = req.body;
-    const googleProfile = await verifyGoogleCredential(credential);
-    let isNewCustomer = false;
-
-    const existingCustomer = await pool.query(
-      `
-        SELECT
-          ${getCustomerReturnFields},
-          password_hash
-        FROM customer_accounts
-        WHERE google_sub = $1
-           OR LOWER(email) = LOWER($2)
-        ORDER BY
-          CASE WHEN google_sub = $1 THEN 0 ELSE 1 END
-        LIMIT 1
-      `,
-      [googleProfile.sub, googleProfile.email]
-    );
-
-    let customerRecord;
-
-    if (existingCustomer.rows.length > 0) {
-      const existing = existingCustomer.rows[0];
-
-      if (existing.google_sub && existing.google_sub !== googleProfile.sub) {
-        return res.status(409).json({
-          success: false,
-          message:
-            "This email is already linked to a different Google account.",
-        });
-      }
-
-      const updatedCustomer = await pool.query(
-        `
-          UPDATE customer_accounts
-          SET
-            full_name = COALESCE(NULLIF(full_name, ''), $2),
-            google_sub = COALESCE(google_sub, $3),
-            avatar_url = COALESCE($4, avatar_url),
-            auth_provider = CASE
-              WHEN password_hash IS NULL THEN 'google'
-              WHEN google_sub IS NULL THEN 'email_google'
-              ELSE auth_provider
-            END,
-            profile_completed = $5,
-            last_login_at = CURRENT_TIMESTAMP,
-            updated_at = CURRENT_TIMESTAMP
-          WHERE id = $1
-          RETURNING
-            ${getCustomerReturnFields}
-        `,
-        [
-          existing.id,
-          googleProfile.name,
-          googleProfile.sub,
-          googleProfile.picture,
-          isProfileComplete(existing),
-        ]
-      );
-
-      customerRecord = updatedCustomer.rows[0];
-    } else {
-      const createdCustomer = await pool.query(
-        `
-          INSERT INTO customer_accounts (
-            full_name,
-            email,
-password_hash,
-            auth_provider,
-            google_sub,
-            avatar_url,
-            profile_completed,
-            marketing_opt_in,
-            last_login_at
-          )
-          VALUES ($1, $2, NULL, 'google', $3, $4, FALSE, TRUE, CURRENT_TIMESTAMP)
-          RETURNING
-            ${getCustomerReturnFields}
-        `,
-        [
-          googleProfile.name,
-          googleProfile.email,
-          googleProfile.sub,
-          googleProfile.picture,
-        ]
-      );
-
-      customerRecord = createdCustomer.rows[0];
-      isNewCustomer = true;
-    }
-
-    const customer = formatCustomer(customerRecord);
-    const token = createCustomerToken(customer);
-
-    if (isNewCustomer) {
-      sendWelcomeEmailWithoutBlocking(customer);
-      enrollCustomerAutomationWithoutBlocking("customer_signup", customer, { source: "google_signup" });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Google sign-in successful.",
-      token,
-      customer,
-      user: customer,
-      requiresProfileCompletion: !customer.profile_completed,
-    });
-  } catch (error) {
-    console.error("Google customer login error:", error.message);
-
-    return res.status(error.statusCode || 500).json({
-      success: false,
-      message: error.message || "Server error while signing in with Google.",
     });
   }
 };
@@ -1251,10 +1070,7 @@ const resetCustomerPassword = async (req, res) => {
         UPDATE customer_accounts
         SET
           password_hash = $1,
-          auth_provider = CASE
-            WHEN auth_provider = 'google' THEN 'email_google'
-            ELSE auth_provider
-          END,
+          auth_provider = 'email',
           updated_at = CURRENT_TIMESTAMP
         WHERE id = $2
       `,
@@ -1308,7 +1124,6 @@ module.exports = {
   loginAdmin,
   registerCustomer,
   loginCustomer,
-  loginCustomerWithGoogle,
   getCustomerMe,
   updateCustomerMe,
   forgotCustomerPassword,
@@ -1318,7 +1133,6 @@ module.exports = {
   getMe,
   formatCustomer,
 };
-
 
 
 

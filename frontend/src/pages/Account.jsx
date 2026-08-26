@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
@@ -8,7 +8,6 @@ import {
   LogOut,
   Mail,
   ShoppingBag,
-  Sparkles,
   UserRound,
 } from "lucide-react";
 import { Header } from "../components/layout/Header";
@@ -75,12 +74,6 @@ export function Account({ initialMode = "signin" }) {
   const [serverError, setServerError] = useState("");
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    setMode(initialMode);
-    setServerError("");
-    setNotice("");
-  }, [initialMode]);
 
   function switchMode(nextMode) {
     setMode(nextMode);
@@ -200,17 +193,11 @@ export function Account({ initialMode = "signin" }) {
       <main className="page-shell inner-page">
         <Header />
         <section className="luma-auth-page">
-          <div className="luma-auth-shell">
-            <div className="luma-auth-story">
-              <div className="luma-auth-story-content">
-                <p className="luma-auth-kicker">LUMA account</p>
-                <h1>One small step.</h1>
-                <p>Checking your saved LUMA session.</p>
-              </div>
-            </div>
-            <div className="luma-auth-card">
-              <h2>Loading...</h2>
-              <p>This should only take a moment.</p>
+          <div className="luma-auth-shell" aria-live="polite">
+            <div className="luma-auth-card luma-auth-loading-card">
+              <p className="luma-auth-kicker">LUMA account</p>
+              <h1>Opening your account.</h1>
+              <p>Please wait a moment.</p>
             </div>
           </div>
         </section>
@@ -225,17 +212,9 @@ export function Account({ initialMode = "signin" }) {
         <Header />
         <section className="luma-auth-page">
           <div className="luma-auth-shell">
-            <div className="luma-auth-story">
-              <div className="luma-auth-story-content">
-                <p className="luma-auth-kicker"><Sparkles size={15} /> Your LUMA</p>
-                <h1>Welcome back.</h1>
-                <p>Your bag, order details and account stay connected without getting in the way of shopping.</p>
-              </div>
-            </div>
-
             <div className="luma-auth-card">
-              <p className="luma-auth-kicker">Signed in</p>
-              <h2>{displayName}</h2>
+              <p className="luma-auth-kicker">Your account</p>
+              <h1>{displayName}</h1>
               <p>{user.email}</p>
 
               <div className="luma-account-actions">
@@ -274,37 +253,27 @@ export function Account({ initialMode = "signin" }) {
 
       <section className="luma-auth-page">
         <div className="luma-auth-shell">
-          <div className="luma-auth-story">
-            <div className="luma-auth-story-content">
-              <p className="luma-auth-kicker">No long forms. No Google sign-in.</p>
-              <h1>Your brows. Your bag. That simple.</h1>
-              <p>
-                LUMA accounts are intentionally lightweight. Use your email and password, then continue straight to shopping and checkout.
-              </p>
-            </div>
-          </div>
-
-          <div className="luma-auth-card">
+          <div className="luma-auth-card luma-auth-card-functional">
             <p className="luma-auth-kicker">
               {isSignUp ? "New to LUMA" : isForgot || isReset ? "Account recovery" : "Welcome back"}
             </p>
-            <h2>
+            <h1>
               {isSignUp
-                ? "Create your account."
+                ? "Create account."
                 : isForgot
-                  ? "Reset your password."
+                  ? "Reset password."
                   : isReset
-                    ? "Choose a new password."
+                    ? "New password."
                     : "Sign in."}
-            </h2>
+            </h1>
             <p>
               {isSignUp
-                ? "Email and password. That's it."
+                ? "Create your LUMA account with an email and password."
                 : isForgot
-                  ? "We'll email you a short reset code."
+                  ? "We’ll send a reset code to your email."
                   : isReset
                     ? "Enter the code from your email and your new password."
-                    : "Two fields, then you're back to your bag."}
+                    : "Enter your email and password to continue."}
             </p>
 
             {serverError && <div className="luma-auth-error">{serverError}</div>}
@@ -424,9 +393,6 @@ export function Account({ initialMode = "signin" }) {
               )}
             </div>
 
-            <p className="luma-auth-mini-note">
-              Your delivery name, phone number and address are collected at checkout only when they're actually needed for your order.
-            </p>
           </div>
         </div>
       </section>

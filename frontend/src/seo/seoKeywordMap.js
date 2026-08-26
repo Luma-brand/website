@@ -72,7 +72,7 @@ export const seoKeywordMap = {
 };
 
 export const noindexRouteGroups = {
-  transactional: ["/cart", "/checkout", "/order-success", "/payment/flutterwave/callback"],
+  transactional: ["/cart", "/checkout", "/order-success", "/payment/paystack/callback"],
   privateCustomer: [
     "/account",
     "/login",

@@ -13,7 +13,14 @@ const emptyDeliveryZoneForm = {
   country: "Nigeria",
   state: "",
   region: "",
+  area: "",
   deliveryFee: "",
+  remoteSurcharge: "",
+  etaMinDays: "",
+  etaMaxDays: "",
+  isPickup: false,
+  pickupLabel: "",
+  internationalRegion: "",
   isDefault: false,
   isActive: true,
 };
@@ -89,6 +96,7 @@ export function AdminDelivery() {
       country: location.country || current.country || "Nigeria",
       state: location.state || current.state,
       region: location.region || current.region,
+      area: location.area || current.area,
     }));
   }
 
@@ -98,7 +106,14 @@ export function AdminDelivery() {
       country: zone.country || "Nigeria",
       state: zone.state === "Default" ? "" : zone.state || "",
       region: zone.region === "Default" ? "" : zone.region || "",
+      area: zone.area === "Default" ? "" : zone.area || "",
       deliveryFee: String(zone.delivery_fee ?? ""),
+      remoteSurcharge: String(zone.remote_surcharge || ""),
+      etaMinDays: zone.eta_min_days === null ? "" : String(zone.eta_min_days ?? ""),
+      etaMaxDays: zone.eta_max_days === null ? "" : String(zone.eta_max_days ?? ""),
+      isPickup: Boolean(zone.is_pickup),
+      pickupLabel: zone.pickup_label || "",
+      internationalRegion: zone.international_region || "",
       isDefault: Boolean(zone.is_default),
       isActive: Boolean(zone.is_active),
     });
@@ -127,7 +142,14 @@ export function AdminDelivery() {
         country: formData.country || "Nigeria",
         state: formData.state || "Default",
         region: formData.region || "Default",
+        area: formData.area || "Default",
         deliveryFee: Number(formData.deliveryFee),
+        remoteSurcharge: Number(formData.remoteSurcharge || 0),
+        etaMinDays: formData.etaMinDays === "" ? null : Number(formData.etaMinDays),
+        etaMaxDays: formData.etaMaxDays === "" ? null : Number(formData.etaMaxDays),
+        isPickup: formData.isPickup,
+        pickupLabel: formData.pickupLabel,
+        internationalRegion: formData.internationalRegion,
         isDefault: formData.isDefault,
         isActive: formData.isActive,
       };
@@ -178,7 +200,7 @@ export function AdminDelivery() {
     <>
       <AdminTopbar
         title="Delivery Fee Management"
-        subtitle="Default and location-based delivery fees will be managed here."
+        subtitle="Manage hierarchical delivery zones, ETA, pickup, and remote surcharges."
       />
 
       <section className="admin-content">

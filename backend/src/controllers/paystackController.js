@@ -17,9 +17,6 @@ const {
 } = require("../services/growthService");
 const { recordAutomationAttempt } = require("../services/automationService");
 const {
-  markBrowseAbandonmentsConvertedForOrder,
-} = require("../services/browseAbandonmentService");
-const {
   initializeTransaction,
   verifyTransaction,
   isValidWebhook,
@@ -101,6 +98,7 @@ async function initializePaystackPayment(req, res) {
       country: body.country,
       state: deliveryState,
       region: deliveryRegion,
+      area: body.area,
     });
 
     const [deliveryColumns, discountColumns] = await Promise.all([
@@ -112,6 +110,7 @@ async function initializePaystackPayment(req, res) {
       items,
       deliveryFee: deliveryQuote.deliveryFee,
       discountCode: body.discountCode,
+      customerId: req.customer?.id,
     });
 
     if (!pricing.isValid) {
@@ -132,6 +131,7 @@ async function initializePaystackPayment(req, res) {
         ? String(body.deliveryNotes).trim()
         : null,
       state: deliveryState,
+      area: body.area,
     });
     const discountFields = await buildOrderDiscountFields({
       existingColumns: discountColumns,
@@ -394,9 +394,6 @@ async function finalizePaystackTransaction(
     await client.query("COMMIT");
 
     if (!wasAlreadyPaid && reconciliation.success) {
-      await markBrowseAbandonmentsConvertedForOrder(reconciliation.order).catch(
-        () => {}
-      );
       await emitPaidOrderEvents({
         order: reconciliation.order,
         stockReduction: reconciliation.stockReduction,
@@ -486,9 +483,9 @@ async function handlePaystackWebhook(req, res) {
     });
   } catch (error) {
     console.error("Paystack webhook processing error:", error.message);
-    return res.status(200).json({
-      success: true,
-      message: "Webhook acknowledged for retry review.",
+    return res.status(500).json({
+      success: false,
+      message: "Webhook processing will be retried.",
     });
   }
 }

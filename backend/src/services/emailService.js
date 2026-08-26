@@ -25,6 +25,34 @@ function getResendClient() {
   return resendClient;
 }
 
+function verifyResendWebhook({ headers = {}, rawBody = "", body = {} } = {}) {
+  const webhookSecret = String(process.env.RESEND_WEBHOOK_SECRET || "").trim();
+
+  if (!webhookSecret) {
+    const error = new Error("Resend webhook verification is not configured.");
+    error.statusCode = 503;
+    throw error;
+  }
+
+  const verifier = getResendClient() || new Resend("re_webhook_verifier");
+
+  try {
+    return verifier.webhooks.verify({
+      payload: rawBody || JSON.stringify(body || {}),
+      headers: {
+        id: headers["svix-id"],
+        timestamp: headers["svix-timestamp"],
+        signature: headers["svix-signature"],
+      },
+      webhookSecret,
+    });
+  } catch {
+    const error = new Error("Invalid Resend webhook signature.");
+    error.statusCode = 401;
+    throw error;
+  }
+}
+
 function getFromEmail() {
   return process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || "";
 }
@@ -655,4 +683,5 @@ module.exports = {
   sendAdminPasswordVerificationEmail,
   sendLifecycleEmail,
   sendOrderConfirmationEmails,
+  verifyResendWebhook,
 };

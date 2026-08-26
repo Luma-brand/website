@@ -1,7 +1,10 @@
 const pool = require("../config/db");
 const abandonedCartService = require("./abandonedCartService");
-const { getEmailConfigStatus, getRecentEmailLogs } = require("./emailService");
-const supportInboxService = require("./supportInboxService");
+const {
+  getEmailConfigStatus,
+  getRecentEmailLogs,
+  verifyResendWebhook,
+} = require("./emailService");
 
 function delayMinutes() {
   const value = Number(process.env.ABANDONED_CART_DELAY_MINUTES || 60);
@@ -151,12 +154,13 @@ async function listEmailLogs({ limit = 50 } = {}) {
 }
 
 async function recordEmailEvent(event = {}, context = {}) {
-  supportInboxService.verifyResendWebhook({ ...context, body: event });
-  const data = event.data || event;
-  const eventType = event.type || event.event || event.event_type || "unknown";
+  const verifiedEvent = verifyResendWebhook({ ...context, body: event });
+  const resolvedEvent = verifiedEvent || event;
+  const data = resolvedEvent.data || resolvedEvent;
+  const eventType = resolvedEvent.type || resolvedEvent.event || resolvedEvent.event_type || "unknown";
   const messageId = data.email_id || data.message_id || data.id || data.provider_message_id || null;
   const recipient = Array.isArray(data.to) ? data.to.join(", ") : data.to || data.recipient || data.email || data.from || null;
-  const providerEventId = event.id || data.event_id || data.id || `${eventType}:${messageId || Date.now()}`;
+  const providerEventId = resolvedEvent.id || data.event_id || data.id || `${eventType}:${messageId || Date.now()}`;
 
   const rows = await optionalQuery(
     `INSERT INTO email_events
@@ -165,13 +169,9 @@ async function recordEmailEvent(event = {}, context = {}) {
      ON CONFLICT (provider, provider_event_id) DO UPDATE
      SET payload = EXCLUDED.payload, occurred_at = EXCLUDED.occurred_at
      RETURNING id`,
-    [providerEventId, messageId, eventType, recipient, data.subject || null, JSON.stringify(event), data.created_at || event.created_at || null],
+    [providerEventId, messageId, eventType, recipient, data.subject || null, JSON.stringify(resolvedEvent), data.created_at || resolvedEvent.created_at || null],
     []
   );
-
-  if (eventType === "email.received") {
-    await supportInboxService.processInboundEmailEvent(event, context);
-  }
 
   return rows[0] || null;
 }
@@ -276,7 +276,6 @@ module.exports = {
   recordEmailEvent,
   runAbandonedCartCheck,
 };
-
 
 
 

@@ -18,7 +18,7 @@ const nativeFeatureGroups = [
       { label: "Checkout abandonment", detail: "Track checkout starts and recover unfinished checkouts", path: "/luma-control-room/abandoned-checkouts", status: "Live" },
       { label: "Browse abandonment", detail: "Product views are tracked and converted when shoppers buy", path: "/luma-control-room/growth", status: "Live" },
       { label: "Back-in-stock & waitlists", detail: "Collect demand and notify shoppers when stock returns", path: "/luma-control-room/product-waitlists", status: "Live" },
-      { label: "Welcome + exit intent", detail: "WELCOME10 and rate-limited exit recovery on the storefront", path: "/luma-control-room/discounts", status: "Live" },
+      { label: "Storefront promotion + exit intent", detail: "Admin-selected discount popup with schedule, eligibility, and frequency controls", path: "/luma-control-room/discounts", status: "Live" },
     ],
   },
   {

@@ -1,109 +1,62 @@
 .luma-auth-page {
-  min-height: 100vh;
-  padding: 150px 20px 70px;
+  min-height: calc(100svh - 110px);
+  padding: 126px 20px 64px;
 }
 
 .luma-auth-shell {
-  width: min(1080px, 100%);
+  width: min(520px, 100%);
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(360px, 0.72fr);
-  gap: 34px;
-  align-items: stretch;
 }
 
-.luma-auth-story,
 .luma-auth-card {
-  position: relative;
-  overflow: hidden;
+  width: 100%;
+  padding: clamp(26px, 5vw, 40px);
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-soft);
-}
-
-.luma-auth-story {
-  min-height: 590px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: clamp(34px, 6vw, 68px);
-  background:
-    radial-gradient(circle at 78% 16%, rgba(255, 241, 159, 0.98), transparent 34%),
-    linear-gradient(145deg, rgba(186, 185, 182, 0.62), rgba(255, 246, 214, 0.94));
-}
-
-.luma-auth-story::after {
-  content: "LUMA";
-  position: absolute;
-  top: 32px;
-  left: 42px;
-  color: rgba(22, 22, 22, 0.07);
-  font-size: clamp(5rem, 12vw, 10rem);
-  font-weight: 900;
-  letter-spacing: -0.09em;
-}
-
-.luma-auth-story-content {
-  position: relative;
-  z-index: 1;
-  max-width: 610px;
+  border-radius: 28px;
+  background: rgba(255, 250, 240, 0.9);
+  box-shadow: 0 18px 54px rgba(22, 22, 22, 0.07);
 }
 
 .luma-auth-kicker {
   display: inline-flex;
   width: fit-content;
-  margin: 0 0 18px;
-  padding: 9px 13px;
+  margin: 0 0 14px;
+  padding: 7px 11px;
   border-radius: 999px;
   background: var(--color-yellow);
   font-family: var(--font-serif);
-  font-size: 0.94rem;
+  font-size: 0.88rem;
 }
 
-.luma-auth-story h1 {
-  margin: 0;
-  max-width: 620px;
-  font-size: clamp(3.5rem, 7.5vw, 7rem);
-  line-height: 0.91;
-  letter-spacing: -0.075em;
-}
-
-.luma-auth-story p {
-  max-width: 500px;
-  margin: 24px 0 0;
-  color: var(--color-muted);
-  line-height: 1.8;
-}
-
-.luma-auth-card {
-  align-self: center;
-  padding: clamp(28px, 4vw, 44px);
-  background: rgba(255, 250, 240, 0.88);
-  backdrop-filter: blur(18px);
-}
-
+.luma-auth-card h1,
 .luma-auth-card h2 {
   margin: 0;
-  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  font-size: clamp(2.25rem, 7vw, 3.35rem);
   line-height: 0.98;
   letter-spacing: -0.06em;
 }
 
 .luma-auth-card > p {
-  margin: 13px 0 0;
+  margin: 12px 0 0;
   color: var(--color-muted);
-  line-height: 1.65;
+  line-height: 1.55;
+}
+
+.luma-auth-loading-card {
+  min-height: 230px;
+  display: grid;
+  align-content: center;
 }
 
 .luma-auth-form {
   display: grid;
-  gap: 17px;
-  margin-top: 28px;
+  gap: 15px;
+  margin-top: 24px;
 }
 
 .luma-auth-field {
   display: grid;
-  gap: 8px;
+  gap: 7px;
 }
 
 .luma-auth-field label {
@@ -118,7 +71,7 @@
 .luma-auth-input > svg:first-child {
   position: absolute;
   top: 50%;
-  left: 16px;
+  left: 15px;
   transform: translateY(-50%);
   color: #77746c;
   pointer-events: none;
@@ -126,26 +79,26 @@
 
 .luma-auth-input input {
   width: 100%;
-  min-height: 54px;
-  padding: 0 50px 0 46px;
-  border: 1px solid rgba(22, 22, 22, 0.14);
-  border-radius: 17px;
+  min-height: 52px;
+  padding: 0 48px 0 44px;
+  border: 1px solid rgba(22, 22, 22, 0.15);
+  border-radius: 16px;
   outline: none;
-  background: rgba(255, 255, 255, 0.58);
+  background: rgba(255, 255, 255, 0.66);
   color: var(--color-ink);
   transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
 }
 
 .luma-auth-input input:focus {
-  border-color: rgba(22, 22, 22, 0.55);
-  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(22, 22, 22, 0.5);
+  background: #fff;
   box-shadow: 0 0 0 4px rgba(255, 241, 159, 0.46);
 }
 
 .luma-auth-password-toggle {
   position: absolute;
   top: 50%;
-  right: 9px;
+  right: 8px;
   display: grid;
   width: 38px;
   height: 38px;
@@ -160,11 +113,11 @@
 
 .luma-auth-error,
 .luma-auth-notice {
-  margin: 18px 0 0;
-  padding: 13px 15px;
-  border-radius: 15px;
-  font-size: 0.88rem;
-  line-height: 1.55;
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 0.86rem;
+  line-height: 1.5;
 }
 
 .luma-auth-error {
@@ -180,18 +133,17 @@
 .luma-auth-submit {
   display: inline-flex;
   width: 100%;
-  min-height: 54px;
+  min-height: 50px;
   align-items: center;
   justify-content: center;
   gap: 9px;
-  margin-top: 4px;
+  margin-top: 2px;
   border: 0;
   border-radius: 999px;
   background: var(--color-ink);
   color: var(--color-cream);
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 18px 40px rgba(22, 22, 22, 0.16);
 }
 
 .luma-auth-submit:disabled {
@@ -204,7 +156,7 @@
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 18px;
   color: var(--color-muted);
   font-size: 0.85rem;
 }
@@ -219,47 +171,41 @@
   cursor: pointer;
 }
 
-.luma-auth-mini-note {
-  margin-top: 20px;
-  padding-top: 19px;
-  border-top: 1px solid var(--color-line);
-  color: #77746c;
-  font-size: 0.78rem;
-  line-height: 1.6;
-}
-
 .luma-account-actions {
   display: grid;
-  gap: 11px;
-  margin-top: 28px;
+  gap: 10px;
+  margin-top: 24px;
 }
 
 .luma-account-actions a,
 .luma-account-actions button {
   display: flex;
-  min-height: 52px;
+  min-height: 50px;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 18px;
+  padding: 0 17px;
   border: 1px solid var(--color-line);
-  border-radius: 17px;
-  background: rgba(255, 255, 255, 0.46);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.5);
   color: var(--color-ink);
   font-weight: 800;
   cursor: pointer;
 }
 
-@media (max-width: 860px) {
-  .luma-auth-page { padding-top: 120px; }
-  .luma-auth-shell { grid-template-columns: 1fr; }
-  .luma-auth-story { min-height: 390px; }
-  .luma-auth-story h1 { font-size: clamp(3.2rem, 15vw, 5.2rem); }
-}
-
 @media (max-width: 520px) {
-  .luma-auth-page { padding-inline: 12px; }
-  .luma-auth-story { min-height: 330px; padding: 30px 24px; }
-  .luma-auth-story::after { left: 22px; }
-  .luma-auth-card { padding: 28px 20px; border-radius: 26px; }
+  .luma-auth-page {
+    min-height: calc(100svh - 90px);
+    padding: 106px 12px 46px;
+  }
+
+  .luma-auth-card {
+    padding: 25px 20px;
+    border-radius: 24px;
+  }
+
+  .luma-auth-card h1,
+  .luma-auth-card h2 {
+    font-size: clamp(2.15rem, 11vw, 2.8rem);
+  }
 }

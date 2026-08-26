@@ -1,26 +1,39 @@
 import { spawn } from "node:child_process";
 import { Buffer } from "node:buffer";
 import fs from "node:fs/promises";
+import fsSync from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import process from "node:process";
 
-const chromePath = process.env.CHROME_PATH || "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+const chromePath = [
+  process.env.CHROME_PATH,
+  "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "/usr/bin/google-chrome",
+  "/usr/bin/google-chrome-stable",
+  "/usr/bin/chromium",
+  "/usr/bin/chromium-browser",
+].filter(Boolean).find((candidate) => fsSync.existsSync(candidate));
 const baseUrl = process.env.ADMIN_VERIFY_URL || "http://127.0.0.1:4173";
 const port = 9333;
-const profile = `${process.env.TEMP || "."}\\luma-admin-layout-${Date.now()}`;
+const profile = path.join(os.tmpdir(), `luma-admin-layout-${Date.now()}`);
 const routes = [
-  "analytics", "product-sales", "orders", "discounts", "currency-rates",
-  "customers", "product-waitlists", "mail", "inventory", "delivery",
+  "dashboard", "analytics", "products", "product-sales", "orders", "discounts",
+  "currency-rates", "customers", "waitlist", "enquiries", "inventory", "delivery",
   "growth", "email-broadcasts", "automations", "abandoned-carts",
+  "abandoned-checkouts", "product-waitlists", "settings",
 ];
-
-const chrome = spawn(chromePath, [
-  "--headless=new",
-  "--disable-gpu",
-  "--no-first-run",
-  `--remote-debugging-port=${port}`,
-  `--user-data-dir=${profile}`,
-  `${baseUrl}/luma-control-room/login`,
-], { stdio: "ignore" });
+const viewports = [
+  { width: 1440, height: 900 },
+  { width: 320, height: 720 },
+  { width: 360, height: 800 },
+  { width: 375, height: 812 },
+  { width: 390, height: 844 },
+  { width: 412, height: 915 },
+  { width: 430, height: 932 },
+];
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -106,8 +119,22 @@ const auditExpression = `(() => {
 })()`;
 
 let client;
+let chrome;
 let report = { checked: 0, failures: [], error: null };
 try {
+  if (!chromePath) {
+    throw new Error("Chrome or Chromium was not found. Set CHROME_PATH and run the verifier again.");
+  }
+
+  chrome = spawn(chromePath, [
+    "--headless=new",
+    "--disable-gpu",
+    "--no-first-run",
+    `--remote-debugging-port=${port}`,
+    `--user-data-dir=${profile}`,
+    `${baseUrl}/luma-control-room/login`,
+  ], { stdio: "ignore" });
+
   const target = await getDebuggerTarget();
   client = createClient(target.webSocketDebuggerUrl);
   await client.ready;
@@ -115,8 +142,7 @@ try {
   await client.send("Page.enable");
   await client.send("Fetch.enable", {
     patterns: [
-      { urlPattern: "http://localhost:5000/*", requestStage: "Request" },
-      { urlPattern: "http://127.0.0.1:5000/*", requestStage: "Request" },
+      { urlPattern: "*/api/*", requestStage: "Request" },
     ],
   });
   await client.send("Runtime.evaluate", {
@@ -124,7 +150,7 @@ try {
   });
 
   const results = [];
-  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+  for (const viewport of viewports) {
     await client.send("Emulation.setDeviceMetricsOverride", { ...viewport, deviceScaleFactor: 1, mobile: viewport.width < 600 });
     for (const route of routes) {
       await client.send("Runtime.evaluate", {
@@ -174,5 +200,5 @@ try {
 } finally {
   await fs.writeFile(new URL("./admin-layout-report.json", import.meta.url), JSON.stringify(report, null, 2));
   client?.close();
-  chrome.kill();
+  chrome?.kill();
 }

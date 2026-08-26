@@ -8,6 +8,7 @@ const frontendDirectory = path.resolve(scriptDirectory, "..");
 const publicDirectory = path.join(frontendDirectory, "public");
 const defaultSiteUrl = "https://shopwithluma.com";
 const defaultApiUrl = "https://website-ikv5.onrender.com/api";
+const fallbackProductIdentifiers = ["lamifix", "hybrid-stain"];
 
 async function loadLocalEnv() {
   try {
@@ -72,7 +73,7 @@ function getProductsFromResponse(payload) {
 
 async function fetchPublicProducts(apiUrl) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10_000);
+  const timeout = setTimeout(() => controller.abort(), 2_500);
 
   try {
     const response = await fetch(`${apiUrl}/products`, {
@@ -176,6 +177,25 @@ const entries = [
 ].map((entry) => ({ ...entry, loc: createUrl(siteUrl, entry.path) }));
 
 let productCount = 0;
+const seenProductPaths = new Set();
+
+function appendProductEntry(identifier, lastmod = buildDate) {
+  const value = String(identifier || "").trim();
+  if (!value) return;
+
+  const pathName = `/products/${encodeURIComponent(value)}`;
+  if (seenProductPaths.has(pathName)) return;
+  seenProductPaths.add(pathName);
+
+  entries.push({
+    path: pathName,
+    loc: createUrl(siteUrl, pathName),
+    lastmod,
+    changefreq: "weekly",
+    priority: "0.8",
+  });
+  productCount += 1;
+}
 
 try {
   let products;
@@ -191,30 +211,19 @@ try {
   }
 
   if (!products) throw lastError || new Error("No public product API was available");
-  const seenProductPaths = new Set();
-
   for (const product of products) {
     const identifier = String(product.slug || product.id || "").trim();
-    if (!identifier) continue;
-
-    const pathName = `/products/${encodeURIComponent(identifier)}`;
-    if (seenProductPaths.has(pathName)) continue;
-    seenProductPaths.add(pathName);
-
-    entries.push({
-      path: pathName,
-      loc: createUrl(siteUrl, pathName),
-      lastmod: toDate(
+    appendProductEntry(
+      identifier,
+      toDate(
         product.updated_at || product.updatedAt || product.seo_updated_at || product.created_at,
         buildDate
-      ),
-      changefreq: "weekly",
-      priority: "0.8",
-    });
-    productCount += 1;
+      )
+    );
   }
 } catch (error) {
-  console.warn(`[sitemap] Product fetch failed; generated static URLs only: ${error.message}`);
+  fallbackProductIdentifiers.forEach((identifier) => appendProductEntry(identifier));
+  console.warn(`[sitemap] Product fetch failed; used verified product fallbacks: ${error.message}`);
 }
 
 const uniqueEntries = Array.from(new Map(entries.map((entry) => [entry.loc, entry])).values());

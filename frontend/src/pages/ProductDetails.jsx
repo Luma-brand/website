@@ -6,6 +6,7 @@ import { useToast } from "../context/ToastContext";
 import { useAuth } from "../context/AuthContext";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
+import { PageSkeleton } from "../components/layout/PageSkeleton";
 import { PageSeo } from "../components/seo/PageSeo";
 import { ProductSalesStrip } from "../components/product/ProductSalesStrip";
 import { useCart } from "../context/CartContext";
@@ -29,7 +30,7 @@ function formatProduct(product) {
     slug: product.slug || product.id,
     image: getProductImage(product),
     priceValue: Number(product.price),
-        price: formatNaira(product.price),
+    price: formatNaira(product.price),
     description: product.description || "A soft luxury LUMA beauty product.",
   };
 }
@@ -69,15 +70,37 @@ export function ProductDetails() {
   const { showToast } = useToast();
 
   useEffect(() => {
+    let mounted = true;
+
     async function loadProductDetails() {
       try {
         setIsLoading(true);
         setError("");
 
         const singleResponse = await getProductById(slug);
-
         const selectedProduct = formatProduct(singleResponse.data);
 
+        if (!mounted) return;
+
+        const previousRecentlyViewed = getRecentlyViewedProducts()
+          .filter((item) => item.id !== selectedProduct.id)
+          .slice(0, 4);
+
+        setProduct(selectedProduct);
+        setBackInStockForm((current) => ({
+          email: current.email || user?.email || "",
+          phone:
+            current.phone ||
+            user?.whatsapp_e164 ||
+            user?.whatsapp_number ||
+            user?.phone_e164 ||
+            user?.phone ||
+            "",
+        }));
+        setRecentlyViewedProducts(previousRecentlyViewed);
+        setShowUpsell(false);
+        setIsLoading(false);
+        saveRecentlyViewedProduct(selectedProduct);
 
         const productViewKey = `${selectedProduct.id}:${user?.email || "guest"}`;
         if (trackedProductViewRef.current !== productViewKey) {
@@ -95,45 +118,41 @@ export function ProductDetails() {
           });
         }
 
-        const previousRecentlyViewed = getRecentlyViewedProducts()
-          .filter((item) => item.id !== selectedProduct.id)
-          .slice(0, 4);
-        const recommendationResponse = await getProductSalesRecommendations({
-          productId: selectedProduct.id,
-          limit: 4,
-        });
+        try {
+          const recommendationResponse = await getProductSalesRecommendations({
+            productId: selectedProduct.id,
+            limit: 4,
+          });
 
-        setProduct(selectedProduct);
-        setBackInStockForm((current) => ({
-          email: current.email || user?.email || "",
-          phone:
-            current.phone ||
-            user?.whatsapp_e164 ||
-            user?.whatsapp_number ||
-            user?.phone_e164 ||
-            user?.phone ||
-            "",
-        }));
-        setRecommendations({
-          relatedProducts:
-            recommendationResponse.data?.relatedProducts?.map(formatProduct) || [],
-          frequentlyBoughtTogether:
-            recommendationResponse.data?.frequentlyBoughtTogether?.map(formatProduct) ||
-            [],
-          upsells: recommendationResponse.data?.upsells?.map(formatProduct) || [],
-          bundles: recommendationResponse.data?.bundles?.map(formatProduct) || [],
-        });
-        setRecentlyViewedProducts(previousRecentlyViewed);
-        saveRecentlyViewedProduct(selectedProduct);
-        setShowUpsell(false);
+          if (!mounted) return;
+
+          setRecommendations({
+            relatedProducts:
+              recommendationResponse.data?.relatedProducts?.map(formatProduct) || [],
+            frequentlyBoughtTogether:
+              recommendationResponse.data?.frequentlyBoughtTogether?.map(formatProduct) ||
+              [],
+            upsells: recommendationResponse.data?.upsells?.map(formatProduct) || [],
+            bundles: recommendationResponse.data?.bundles?.map(formatProduct) || [],
+          });
+        } catch {
+          // Product recommendations are optional and must not block the core page.
+        }
       } catch (error) {
-        setError(error.message || "Failed to load product.");
+        if (mounted) {
+          setError(error.message || "Failed to load product.");
+          setProduct(null);
+          setIsLoading(false);
+        }
       } finally {
-        setIsLoading(false);
+        if (mounted) setIsLoading(false);
       }
     }
 
-    loadProductDetails();
+    void loadProductDetails();
+    return () => {
+      mounted = false;
+    };
   }, [slug, user?.email, user?.id, user?.phone, user?.phone_e164, user?.whatsapp_e164, user?.whatsapp_number]);
 
   if (isLoading) {
@@ -145,14 +164,7 @@ export function ProductDetails() {
           robots="noindex, nofollow"
         />
         <Header />
-
-        <section className="commerce-page">
-          <div className="empty-state">
-            <h2>Loading product...</h2>
-            <p>Please wait while we fetch this LUMA product.</p>
-          </div>
-        </section>
-
+        <PageSkeleton />
         <Footer />
       </main>
     );
@@ -419,10 +431,6 @@ export function ProductDetails() {
                   Stock: {product.stock_quantity ?? 0}
                 </span>
 
-                <span>
-                  <Check size={15} />
-                  Status: {product.status}
-                </span>
               </div>
 
               <div>
@@ -482,7 +490,6 @@ export function ProductDetails() {
     </main>
   );
 }
-
 
 
 

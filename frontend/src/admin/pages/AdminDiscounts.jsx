@@ -24,6 +24,13 @@ const emptyForm = {
   startsAt: "",
   expiresAt: "",
   isActive: true,
+  firstTimeCustomerOnly: false,
+  showInPopup: false,
+  popupHeadline: "",
+  popupMessage: "",
+  popupCtaLabel: "Shop LUMA",
+  popupCtaPath: "/products",
+  popupFrequencyHours: "168",
 };
 
 function formatDate(value) {
@@ -153,6 +160,13 @@ export function AdminDiscounts() {
       startsAt: toDateInputValue(discount.startsAt),
       expiresAt: toDateInputValue(discount.expiresAt),
       isActive: discount.isActive !== false,
+      firstTimeCustomerOnly: discount.firstTimeCustomerOnly === true,
+      showInPopup: discount.showInPopup === true,
+      popupHeadline: discount.popupHeadline || "",
+      popupMessage: discount.popupMessage || "",
+      popupCtaLabel: discount.popupCtaLabel || "Shop LUMA",
+      popupCtaPath: discount.popupCtaPath || "/products",
+      popupFrequencyHours: String(discount.popupFrequencyHours || 168),
     });
   }
 
@@ -173,6 +187,13 @@ export function AdminDiscounts() {
         startsAt: formData.startsAt || null,
         expiresAt: formData.expiresAt || null,
         isActive: formData.isActive,
+        firstTimeCustomerOnly: formData.firstTimeCustomerOnly,
+        showInPopup: formData.showInPopup,
+        popupHeadline: formData.popupHeadline,
+        popupMessage: formData.popupMessage,
+        popupCtaLabel: formData.popupCtaLabel,
+        popupCtaPath: formData.popupCtaPath,
+        popupFrequencyHours: Number(formData.popupFrequencyHours || 168),
       };
 
       if (editingDiscountId) {
@@ -264,7 +285,7 @@ export function AdminDiscounts() {
     <>
       <AdminTopbar
         title="Discounts"
-        subtitle="Manage promo codes and the free shipping threshold."
+        subtitle="Manage promo codes, the storefront promotion, and free shipping."
       />
 
       <section className="admin-content">
@@ -446,6 +467,96 @@ export function AdminDiscounts() {
               Active
             </label>
 
+            <label className="discount-checkbox">
+              <input
+                name="firstTimeCustomerOnly"
+                type="checkbox"
+                checked={formData.firstTimeCustomerOnly}
+                onChange={handleFormChange}
+              />
+              First paid order only
+            </label>
+
+            <label className="discount-checkbox full">
+              <input
+                name="showInPopup"
+                type="checkbox"
+                checked={formData.showInPopup}
+                onChange={handleFormChange}
+              />
+              Use this code for the storefront promotion popup
+            </label>
+
+            {formData.showInPopup && (
+              <>
+                <label className="full">
+                  Popup headline
+                  <input
+                    name="popupHeadline"
+                    maxLength="140"
+                    value={formData.popupHeadline}
+                    onChange={handleFormChange}
+                    placeholder="10% off your first ritual."
+                    required
+                  />
+                </label>
+
+                <label className="full">
+                  Popup message
+                  <textarea
+                    name="popupMessage"
+                    rows="3"
+                    value={formData.popupMessage}
+                    onChange={handleFormChange}
+                    placeholder="A short customer-facing offer message."
+                    required
+                  />
+                </label>
+
+                <label>
+                  CTA label
+                  <input
+                    name="popupCtaLabel"
+                    maxLength="60"
+                    value={formData.popupCtaLabel}
+                    onChange={handleFormChange}
+                    placeholder="Shop LUMA"
+                    required
+                  />
+                </label>
+
+                <label>
+                  CTA path
+                  <input
+                    name="popupCtaPath"
+                    value={formData.popupCtaPath}
+                    onChange={handleFormChange}
+                    placeholder="/products"
+                    pattern="/.*"
+                    required
+                  />
+                </label>
+
+                <label>
+                  Show at most every (hours)
+                  <input
+                    name="popupFrequencyHours"
+                    type="number"
+                    min="1"
+                    max="8760"
+                    value={formData.popupFrequencyHours}
+                    onChange={handleFormChange}
+                    required
+                  />
+                </label>
+
+                <p className="admin-form-note full">
+                  Selecting this promotion automatically deselects the previous popup.
+                  If it is inactive, expired, scheduled for later, or used up, no popup appears.
+                </p>
+              </>
+            )}
+
             <div className="discount-form-actions">
               <button type="submit" className="admin-button" disabled={isSaving}>
                 <BadgePercent size={16} />
@@ -507,6 +618,12 @@ export function AdminDiscounts() {
                       <td>
                         <strong>{discount.code}</strong>
                         <small>{discount.description || "No description"}</small>
+                        {discount.showInPopup && (
+                          <small>Storefront popup</small>
+                        )}
+                        {discount.firstTimeCustomerOnly && (
+                          <small>First paid order only</small>
+                        )}
                       </td>
                       <td>{formatDiscountValue(discount)}</td>
                       <td>{formatNaira(discount.minimumOrderAmount || 0)}</td>
