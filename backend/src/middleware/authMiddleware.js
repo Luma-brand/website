@@ -215,7 +215,19 @@ const protectCustomer = async (req, res, next) => {
   }
 };
 
+const optionalCustomer = (req, res, next) => {
+  const authorization = req.headers.authorization;
+
+  if (!authorization || !authorization.startsWith("Bearer ")) {
+    req.customer = null;
+    return next();
+  }
+
+  return protectCustomer(req, res, next);
+};
+
 module.exports = {
+  optionalCustomer,
   protectAdmin,
   protectCustomer,
 };

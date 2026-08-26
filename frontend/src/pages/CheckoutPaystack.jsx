@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -88,7 +88,7 @@ export function Checkout() {
     if (
       checkoutTrackedRef.current ||
       isAuthLoading ||
-      !isAuthenticated ||
+      !checkoutFormData.email.trim() ||
       cartItems.length === 0
     ) {
       return;
@@ -173,25 +173,6 @@ export function Checkout() {
     formData.state,
   ]);
 
-  if (isAuthLoading) {
-    return (
-      <main className="page-shell inner-page">
-        <Header />
-        <section className="commerce-page">
-          <div className="empty-state">
-            <h2>Opening secure checkout...</h2>
-            <p>One moment, please.</p>
-          </div>
-        </section>
-        <Footer />
-      </main>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
   function handleChange(event) {
     const { name, value } = event.target;
     setFormData((current) => ({ ...current, [name]: value }));
@@ -242,6 +223,7 @@ export function Checkout() {
       setDiscountError("");
       const response = await validateDiscountCode({
         discountCode: code,
+        customerEmail: checkoutFormData.email,
         country: formData.country || "Nigeria",
         state: formData.state || "Default",
         city: formData.region || formData.city || "Default",
@@ -372,6 +354,16 @@ export function Checkout() {
         ) : (
           <div className="checkout-layout">
             <form className="checkout-form" onSubmit={handleSubmit} noValidate>
+              {!isAuthenticated && (
+                <div className="guest-checkout-note">
+                  <div>
+                    <strong>Guest checkout</strong>
+                    <span>No account or sign-up is required.</span>
+                  </div>
+                  <Link to="/login">Sign in instead</Link>
+                </div>
+              )}
+
               <div className="form-section-title">
                 <LockKeyhole size={18} />
                 <h2>Delivery</h2>

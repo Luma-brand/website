@@ -12,12 +12,12 @@ const {
   updateFreeShippingThresholdHandler,
   validateDiscountHandler,
 } = require("../controllers/discountController");
-const { protectAdmin, protectCustomer } = require("../middleware/authMiddleware");
+const { optionalCustomer, protectAdmin } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
 router.get("/promotion", getActivePromotionHandler);
-router.post("/validate", protectCustomer, validateDiscountHandler);
+router.post("/validate", optionalCustomer, validateDiscountHandler);
 router.get("/", protectAdmin, listDiscountsHandler);
 router.post("/", protectAdmin, createDiscountHandler);
 router.get("/settings", protectAdmin, getDiscountSettingsHandler);

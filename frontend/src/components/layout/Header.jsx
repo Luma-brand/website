@@ -172,15 +172,25 @@ export function Header() {
         </Link>
       </div>
 
-      <button
-        className="mobile-menu-btn"
-        type="button"
-        aria-label="Toggle navigation menu"
-        aria-expanded={isOpen}
-        onClick={() => setIsOpen((prev) => !prev)}
-      >
-        {isOpen ? <X size={22} /> : <Menu size={22} />}
-      </button>
+      <div className="mobile-header-actions" aria-label="Quick actions">
+        <Link to="/wishlist" className="mobile-quick-action" aria-label="Wishlist">
+          <Heart size={19} />
+          {wishlistCount > 0 && <span className="cart-count">{wishlistCount}</span>}
+        </Link>
+        <Link to="/cart" className="mobile-quick-action" aria-label="Cart">
+          <ShoppingCart size={19} />
+          {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
+        </Link>
+        <button
+          className="mobile-menu-btn"
+          type="button"
+          aria-label="Toggle navigation menu"
+          aria-expanded={isOpen}
+          onClick={() => setIsOpen((prev) => !prev)}
+        >
+          {isOpen ? <X size={21} /> : <Menu size={21} />}
+        </button>
+      </div>
 
       {isOpen && (
         <div className="mobile-nav">
@@ -231,5 +241,4 @@ export function Header() {
     </header>
   );
 }
-
 
