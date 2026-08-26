@@ -554,6 +554,7 @@ async function validateDiscountCode({
   subtotal,
   subtotalAmount,
   customerId,
+  customerEmail,
   client = pool,
 } = {}) {
   const normalizedCode = normalizeDiscountCode(code);
@@ -619,10 +620,9 @@ async function validateDiscountCode({
   }
 
   if (discount.first_time_customer_only) {
-    if (!customerId) {
+    if (!customerId && !customerEmail) {
       throw buildServiceError(
-        "Please sign in before using this first-order discount.",
-        401
+        "Enter your email before using this first-order discount."
       );
     }
 
@@ -631,11 +631,14 @@ async function validateDiscountCode({
         SELECT EXISTS (
           SELECT 1
           FROM orders
-          WHERE customer_id = $1
-            AND payment_status = 'paid'
+          WHERE payment_status = 'paid'
+            AND (
+              ($1::uuid IS NOT NULL AND customer_id = $1::uuid)
+              OR ($2::text IS NOT NULL AND LOWER(customer_email) = LOWER($2::text))
+            )
         ) AS has_paid_order
       `,
-      [customerId]
+      [customerId || null, customerEmail || null]
     );
 
     if (paidOrderResult.rows[0]?.has_paid_order) {
@@ -667,6 +670,7 @@ async function calculateOrderPricing({
   deliveryFee = 0,
   discountCode = "",
   customerId = null,
+  customerEmail = null,
   client = pool,
 } = {}) {
   const initialSnapshot = await buildCartPricingSnapshot(items, {
@@ -697,6 +701,7 @@ async function calculateOrderPricing({
         code: normalizedDiscountCode,
         subtotalAmount: initialSnapshot.subtotalAmount,
         customerId,
+        customerEmail,
         client,
       })
     : {

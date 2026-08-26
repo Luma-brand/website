@@ -82,6 +82,7 @@ async function initializePaystackPayment(req, res) {
     }
 
     if (
+      req.customer &&
       String(req.customer?.email || "").toLowerCase() !==
       String(body.customerEmail).toLowerCase()
     ) {
@@ -111,6 +112,7 @@ async function initializePaystackPayment(req, res) {
       deliveryFee: deliveryQuote.deliveryFee,
       discountCode: body.discountCode,
       customerId: req.customer?.id,
+      customerEmail: body.customerEmail,
     });
 
     if (!pricing.isValid) {

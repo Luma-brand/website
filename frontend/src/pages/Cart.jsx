@@ -1,11 +1,10 @@
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Minus, Plus, Trash2, LockKeyhole } from "lucide-react";
+import { ArrowLeft, ArrowRight, Minus, Plus, Trash2 } from "lucide-react";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
 import { ProductSalesStrip } from "../components/product/ProductSalesStrip";
 import { useCart } from "../context/CartContext";
-import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { getCartSalesRecommendations } from "../services/api";
 import { formatNaira } from "../utils/currency";
@@ -22,7 +21,6 @@ export function Cart() {
     validateCartStock,
   } = useCart();
 
-  const { isAuthenticated } = useAuth();
   const { showToast } = useToast();
   const [crossSells, setCrossSells] = useState([]);
 
@@ -83,8 +81,8 @@ export function Cart() {
           <p className="eyebrow">Your cart</p>
           <h1>Your LUMA essentials.</h1>
           <p>
-            Review your beauty system before checkout. You’ll need a LUMA
-            account before placing an order.
+            Review your beauty system, then continue securely as a guest or
+            with your existing LUMA account.
           </p>
         </div>
 
@@ -197,21 +195,15 @@ export function Cart() {
                 >
                   Resolve stock issues
                 </button>
-              ) : isAuthenticated ? (
-                <Link to="/checkout" className="btn btn-primary summary-button">
-                  Checkout
-                  <ArrowRight size={18} />
-                </Link>
               ) : (
-                <Link to="/account" className="btn btn-primary summary-button">
-                  <LockKeyhole size={18} />
-                  Create account to checkout
+                <Link to="/checkout" className="btn btn-primary summary-button">
+                  Continue to checkout
+                  <ArrowRight size={18} />
                 </Link>
               )}
 
               <p>
-                Checkout is protected. You need a LUMA account before placing an
-                order.
+                No account is required. Payment is completed securely on Paystack.
               </p>
             </aside>
           </div>

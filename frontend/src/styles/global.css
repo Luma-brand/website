@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=GFS+Didot&family=Inter:wght@400;500;600;700;800;900&display=swap");
-
 :root {
   --color-silver: #bab9b6;
   --color-cream: #fff6d6;
@@ -168,6 +166,25 @@ img {
   background: var(--color-yellow);
   color: var(--color-ink);
   cursor: pointer;
+}
+
+.mobile-header-actions {
+  display: none;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.mobile-quick-action {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(22, 22, 22, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.86);
+  color: var(--color-ink);
 }
 
 .mobile-nav {
@@ -1895,6 +1912,10 @@ img {
   .header-actions {
     display: none;
   }
+
+  .mobile-header-actions {
+    display: flex;
+  }
 }
 
 .inner-page {
@@ -2071,6 +2092,37 @@ img {
   border-radius: 30px;
   background: rgba(255, 250, 240, 0.82);
   box-shadow: 0 18px 60px rgba(22, 22, 22, 0.05);
+}
+
+.guest-checkout-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(22, 22, 22, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 241, 159, 0.28);
+}
+
+.guest-checkout-note div,
+.guest-checkout-note strong,
+.guest-checkout-note span {
+  display: block;
+}
+
+.guest-checkout-note span {
+  margin-top: 3px;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+
+.guest-checkout-note a {
+  flex: 0 0 auto;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .order-summary {
@@ -6839,6 +6891,34 @@ textarea::placeholder {
 
 .payment-callback-card.failed svg {
   color: #8f3f35;
+}
+
+/* Keep below-the-fold work out of the mobile critical rendering path. */
+.intro-section,
+.products-section,
+.benefits-section,
+.ritual-section,
+.faq-section,
+.newsletter-section,
+.contact-section,
+.site-footer {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 760px;
+}
+
+.hero-image-card picture,
+.benefits-image-panel picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 640px) {
+  .guest-checkout-note {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 9px;
+  }
 }
 
 .spin {

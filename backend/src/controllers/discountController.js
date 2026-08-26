@@ -38,6 +38,7 @@ async function validateDiscountHandler(req, res) {
         code: requestedCode,
         subtotal,
         customerId: req.customer?.id,
+        customerEmail: req.customer?.email || req.body.customerEmail,
       });
       const finalSubtotal = Math.max(
         0,
@@ -69,6 +70,7 @@ async function validateDiscountHandler(req, res) {
       deliveryFee: deliveryQuote.deliveryFee,
       discountCode: requestedCode,
       customerId: req.customer?.id,
+      customerEmail: req.customer?.email || req.body.customerEmail,
     });
 
     if (!pricing.isValid) {

@@ -1,5 +1,5 @@
 const express = require("express");
-const { protectCustomer } = require("../middleware/authMiddleware");
+const { optionalCustomer } = require("../middleware/authMiddleware");
 const {
   initializePaystackPayment,
   verifyPaystackPayment,
@@ -7,7 +7,7 @@ const {
 
 const router = express.Router();
 
-router.post("/paystack/initialize", protectCustomer, initializePaystackPayment);
-router.post("/paystack/verify", protectCustomer, verifyPaystackPayment);
+router.post("/paystack/initialize", optionalCustomer, initializePaystackPayment);
+router.post("/paystack/verify", optionalCustomer, verifyPaystackPayment);
 
 module.exports = router;

@@ -87,13 +87,21 @@ export function Home() {
           transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
         >
           <div className="hero-image-card">
-            <img
-              src="/assets/images/hero-closeup.jpg"
-              alt="LUMA Skincare brow beauty close-up with polished natural brows"
-              onError={(event) => {
-                event.currentTarget.style.display = "none";
-              }}
-            />
+            <picture>
+              <source media="(max-width: 640px)" srcSet="/assets/images/hero-closeup-640.webp" />
+              <source srcSet="/assets/images/hero-closeup.webp" type="image/webp" />
+              <img
+                src="/assets/images/hero-closeup.jpg"
+                alt="LUMA Skincare brow beauty close-up with polished natural brows"
+                width="940"
+                height="1672"
+                fetchPriority="high"
+                decoding="async"
+                onError={(event) => {
+                  event.currentTarget.style.display = "none";
+                }}
+              />
+            </picture>
 
             <div className="image-fallback" aria-hidden="true" />
           </div>
@@ -172,13 +180,21 @@ export function Home() {
 
       <section id="results" className="benefits-section section-padding">
         <div className="benefits-image-panel">
-          <img
-            src="/assets/images/brand-in-action.jpg"
-            alt="LUMA brow product in use for a clean polished finish"
-            onError={(event) => {
-              event.currentTarget.style.display = "none";
-            }}
-          />
+          <picture>
+            <source media="(max-width: 720px)" srcSet="/assets/images/brand-in-action-720.webp" />
+            <source srcSet="/assets/images/brand-in-action.webp" type="image/webp" />
+            <img
+              src="/assets/images/brand-in-action.jpg"
+              alt="LUMA brow product in use for a clean polished finish"
+              width="1122"
+              height="1402"
+              loading="lazy"
+              decoding="async"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
+          </picture>
 
           <div className="benefits-fallback" aria-hidden="true" />
         </div>

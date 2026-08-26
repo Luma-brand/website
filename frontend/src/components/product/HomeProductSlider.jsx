@@ -133,6 +133,7 @@ export function HomeProductSlider() {
 
   function handlePointerDown(event) {
     if (event.pointerType === "touch") return;
+    if (event.target.closest("a, button")) return;
     const track = trackRef.current;
     dragRef.current = { active: true, moved: false, startX: event.clientX, scrollLeft: track.scrollLeft };
     track.setPointerCapture(event.pointerId);
