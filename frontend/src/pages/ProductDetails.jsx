@@ -326,10 +326,6 @@ export function ProductDetails() {
               )}
             </div>
 
-            <div className="product-image-caption">
-              <span>LUMA.</span>
-              <p>Functional beauty, designed for brows.</p>
-            </div>
           </div>
 
           <div className="product-detail-content">
@@ -449,8 +445,9 @@ export function ProductDetails() {
                 </Link>
               </div>
             )}
+          </div>
 
-            <div className="product-info-tabs">
+          <div className="product-info-tabs">
               <div className="product-info-tablist" role="tablist" aria-label="Product information">
                 {[
                   ["details", "Product details"],
@@ -506,7 +503,6 @@ export function ProductDetails() {
                   </p>
                 )}
               </div>
-            </div>
           </div>
         </div>
 
@@ -537,5 +533,4 @@ export function ProductDetails() {
     </main>
   );
 }
-
 
