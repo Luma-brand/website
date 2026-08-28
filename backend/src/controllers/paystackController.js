@@ -25,6 +25,7 @@ const {
   reconcileSuccessfulPaymentStock,
   emitPaidOrderEvents,
 } = require("../services/paymentLifecycleService");
+const { getCurrencyRateSnapshot } = require("../services/currencyService");
 
 function isUuid(value) {
   return /^[0-9a-fA-F-]{36}$/.test(String(value || ""));
@@ -93,14 +94,34 @@ async function initializePaystackPayment(req, res) {
       });
     }
 
+    const deliveryMethod = String(body.deliveryMethod || body.delivery_method || "").toUpperCase();
+    if (!["DELIVERY", "PICKUP"].includes(deliveryMethod)) {
+      return res.status(400).json({
+        success: false,
+        message: "Choose Pickup or Delivery.",
+        code: "DELIVERY_METHOD_REQUIRED",
+      });
+    }
+    if (deliveryMethod === "DELIVERY" && !String(body.deliveryAddress || "").trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Delivery address is required for home delivery.",
+        code: "DELIVERY_ADDRESS_REQUIRED",
+      });
+    }
+
     const deliveryState = body.state || body.city;
     const deliveryRegion = body.region || body.city;
     const deliveryQuote = await getDeliveryQuote({
+      deliveryMethod,
+      pickupLocationId: body.pickupLocationId || body.pickup_location_id,
       country: body.country,
       state: deliveryState,
       region: deliveryRegion,
       area: body.area,
+      items,
     });
+    const currencySnapshot = await getCurrencyRateSnapshot(body.displayCurrency || "NGN");
 
     const [deliveryColumns, discountColumns] = await Promise.all([
       getExistingOrderDeliveryColumns(),
@@ -134,6 +155,9 @@ async function initializePaystackPayment(req, res) {
         : null,
       state: deliveryState,
       area: body.area,
+      displayCurrency: currencySnapshot.code,
+      exchangeRate: currencySnapshot.rateToBase,
+      exchangeRateTimestamp: currencySnapshot.updatedAt,
     });
     const discountFields = await buildOrderDiscountFields({
       existingColumns: discountColumns,
@@ -175,6 +199,10 @@ async function initializePaystackPayment(req, res) {
       JSON.stringify({
         paymentCurrency: "NGN",
         paymentAmountKobo: amountKobo,
+        displayCurrency: currencySnapshot.code,
+        displayExchangeRate: currencySnapshot.rateToBase,
+        deliveryMethod,
+        pickupLocation: deliveryQuote.pickupLocation,
         growthSessionId: body.growthSessionId || null,
       }),
     ];

@@ -127,6 +127,7 @@ function formatProduct(product) {
       product.low_stock_threshold || DEFAULT_LOW_STOCK_THRESHOLD
     ),
     price: Number(product.price || 0),
+    shipping_weight_grams: Number(product.shipping_weight_grams || 500),
     stock_status: stockStatus,
     is_available: isAvailable,
     can_purchase: isAvailable,
@@ -144,6 +145,7 @@ const createProduct = async (req, res) => {
       size,
       stockQuantity,
       lowStockThreshold,
+      shippingWeightGrams,
       status,
       isActive,
       isFeatured,
@@ -164,6 +166,7 @@ const createProduct = async (req, res) => {
     const parsedLowStockThreshold = Number(
       lowStockThreshold || DEFAULT_LOW_STOCK_THRESHOLD
     );
+    const parsedShippingWeightGrams = Number(shippingWeightGrams || 500);
 
     if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
       return res.status(400).json({
@@ -186,6 +189,13 @@ const createProduct = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Low stock threshold must be a whole number.",
+      });
+    }
+
+    if (!Number.isInteger(parsedShippingWeightGrams) || parsedShippingWeightGrams <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Shipping weight must be a positive whole number of grams.",
       });
     }
 
@@ -224,6 +234,7 @@ const createProduct = async (req, res) => {
           size,
           stock_quantity,
           low_stock_threshold,
+          shipping_weight_grams,
           image_url,
           image_public_id,
           status,
@@ -234,7 +245,7 @@ const createProduct = async (req, res) => {
           meta_description,
           seo_updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, CURRENT_TIMESTAMP)
         RETURNING *
       `,
       [
@@ -244,6 +255,7 @@ const createProduct = async (req, res) => {
         size || null,
         parsedStockQuantity,
         parsedLowStockThreshold,
+        parsedShippingWeightGrams,
         imageUrl,
         imagePublicId,
         status || "draft",
@@ -446,6 +458,7 @@ const updateProduct = async (req, res) => {
       size,
       stockQuantity,
       lowStockThreshold,
+      shippingWeightGrams,
       status,
       isActive,
       isFeatured,
@@ -506,6 +519,11 @@ const updateProduct = async (req, res) => {
             currentProduct.low_stock_threshold || DEFAULT_LOW_STOCK_THRESHOLD
           );
 
+    const nextShippingWeightGrams =
+      shippingWeightGrams !== undefined && shippingWeightGrams !== null && shippingWeightGrams !== ""
+        ? Number(shippingWeightGrams)
+        : Number(currentProduct.shipping_weight_grams || 500);
+
     const nextPrice =
       price !== undefined && price !== null && price !== ""
         ? Number(price)
@@ -535,6 +553,14 @@ const updateProduct = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Low stock threshold must be a whole number.",
+      });
+    }
+
+    if (!Number.isInteger(nextShippingWeightGrams) || nextShippingWeightGrams <= 0) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        success: false,
+        message: "Shipping weight must be a positive whole number of grams.",
       });
     }
 
@@ -570,17 +596,18 @@ const updateProduct = async (req, res) => {
           size = $4,
           stock_quantity = $5,
           low_stock_threshold = $6,
-          image_url = $7,
-          image_public_id = $8,
-          status = $9,
-          is_active = $10,
-          is_featured = $11,
-          slug = $12,
-          meta_title = $13,
-          meta_description = $14,
+          shipping_weight_grams = $7,
+          image_url = $8,
+          image_public_id = $9,
+          status = $10,
+          is_active = $11,
+          is_featured = $12,
+          slug = $13,
+          meta_title = $14,
+          meta_description = $15,
           seo_updated_at = CURRENT_TIMESTAMP,
           updated_at = CURRENT_TIMESTAMP
-        WHERE id = $15
+        WHERE id = $16
         RETURNING *
       `,
       [
@@ -590,6 +617,7 @@ const updateProduct = async (req, res) => {
         size ?? currentProduct.size,
         nextStock,
         nextLowStockThreshold,
+        nextShippingWeightGrams,
         imageUrl,
         imagePublicId,
         status || currentProduct.status,

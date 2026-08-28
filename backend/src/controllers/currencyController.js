@@ -1,5 +1,7 @@
 const {
+  getCurrencyAdminOverview,
   getCurrencyRates,
+  syncCurrencyRates,
   updateCurrencyRate,
 } = require("../services/currencyService");
 
@@ -25,14 +27,16 @@ async function getPublicCurrencyRatesHandler(req, res) {
 
 async function getAdminCurrencyRatesHandler(req, res) {
   try {
-    const rates = await getCurrencyRates({ includeInactive: true });
+    const overview = await getCurrencyAdminOverview();
     return res.status(200).json({
       success: true,
       message: "Admin currency rates loaded.",
       data: {
         baseCurrency: "NGN",
         rateDirection: "Example: USD rate 1500 means 1 USD = NGN 1500.",
-        rates,
+        rates: overview.rates,
+        history: overview.history,
+        jobs: overview.jobs,
         checkoutCurrency: "NGN",
         paymentProvider: "paystack",
       },
@@ -40,6 +44,19 @@ async function getAdminCurrencyRatesHandler(req, res) {
   } catch (error) {
     console.error("Get admin currency rates error:", error);
     return res.status(500).json({ success: false, message: "Failed to load admin currency rates. Run migration 021_fix_currency_rates_schema.sql if this continues.", details: error.message });
+  }
+}
+
+async function syncCurrencyRatesHandler(req, res) {
+  try {
+    const data = await syncCurrencyRates({ trigger: "admin" });
+    return res.status(200).json({ success: true, message: "Currency rates synced successfully.", data });
+  } catch (error) {
+    console.error("Currency sync error:", error);
+    return res.status(502).json({
+      success: false,
+      message: `${error.message || "Currency provider sync failed."} Last known valid rates remain active.`,
+    });
   }
 }
 
@@ -56,5 +73,6 @@ async function updateCurrencyRateHandler(req, res) {
 module.exports = {
   getAdminCurrencyRatesHandler,
   getPublicCurrencyRatesHandler,
+  syncCurrencyRatesHandler,
   updateCurrencyRateHandler,
 };

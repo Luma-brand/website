@@ -7,6 +7,7 @@ const {
   getAutomationWorkerHealth,
   processDueAutomationSteps,
 } = require("../services/automationService");
+const { syncCurrencyRates } = require("../services/currencyService");
 
 const router = express.Router();
 
@@ -49,6 +50,18 @@ router.post("/automation-flows", requireCronSecret, async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message || "Failed to process due automation flow steps.",
+    });
+  }
+});
+
+router.post("/currency-rates", requireCronSecret, async (req, res) => {
+  try {
+    const data = await syncCurrencyRates({ trigger: "external_cron" });
+    return res.status(200).json({ success: true, message: "Currency rates synced.", data });
+  } catch (error) {
+    return res.status(502).json({
+      success: false,
+      message: `${error.message || "Currency sync failed."} Last known valid rates remain active.`,
     });
   }
 });

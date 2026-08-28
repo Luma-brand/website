@@ -23,7 +23,10 @@ function sendError(res, error, fallbackMessage) {
 
 async function validateDiscountHandler(req, res) {
   try {
-    const { items, code, discountCode, subtotal, country, state, city, area } = req.body;
+    const {
+      items, code, discountCode, subtotal, country, state, city, area,
+      deliveryMethod, pickupLocationId,
+    } = req.body;
     const requestedCode = discountCode || code;
 
     if ((!Array.isArray(items) || items.length === 0) && subtotal === undefined) {
@@ -60,10 +63,13 @@ async function validateDiscountHandler(req, res) {
 
     const deliveryState = state || city;
     const deliveryQuote = await getDeliveryQuote({
+      deliveryMethod,
+      pickupLocationId,
       country,
       state: deliveryState,
       region: city,
       area,
+      items,
     });
     const pricing = await calculateOrderPricing({
       items,

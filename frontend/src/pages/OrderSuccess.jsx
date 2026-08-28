@@ -145,6 +145,20 @@ export function OrderSuccess() {
 
             <div className="summary-line" />
 
+            {order.delivery_method && (
+              <div className="summary-row">
+                <span>Receiving method</span>
+                <strong>{order.delivery_method === "PICKUP" ? "Pickup" : "Home delivery"}</strong>
+              </div>
+            )}
+
+            {order.delivery_method === "PICKUP" && order.pickup_branch_name_snapshot && (
+              <div className="summary-row">
+                <span>Pickup branch</span>
+                <strong>{order.pickup_branch_name_snapshot} — {order.pickup_address_snapshot}</strong>
+              </div>
+            )}
+
             {(order.items || []).map((item) => (
               <div className="mini-cart-item" key={item.product_name}>
                 <span>
@@ -193,4 +207,3 @@ export function OrderSuccess() {
     </main>
   );
 }
-

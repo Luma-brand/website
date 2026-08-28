@@ -6,6 +6,7 @@ const {
   startAbandonedCartRecoveryWorker,
 } = require("./src/services/growthService");
 const { startAutomationWorker } = require("./src/services/automationService");
+const { startCurrencyRateWorker } = require("./src/services/currencyService");
 
 const PORT = process.env.PORT || 5000;
 
@@ -24,8 +25,8 @@ const startServer = async () => {
     console.log(`LUMA backend running on port ${PORT}`);
     startAbandonedCartRecoveryWorker();
     startAutomationWorker();
+    startCurrencyRateWorker();
   });
 };
 
 startServer();
-

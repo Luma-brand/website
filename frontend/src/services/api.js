@@ -1416,6 +1416,14 @@ export const updateAdminCurrencyRate = async (code, payload) => {
   return handleResponse(response);
 };
 
+export const syncAdminCurrencyRates = async () => {
+  const response = await fetch(`${API_BASE_URL}/currency/admin/sync`, {
+    method: "POST",
+    headers: getAdminHeaders(),
+  });
+  return handleResponse(response);
+};
+
 
 
 

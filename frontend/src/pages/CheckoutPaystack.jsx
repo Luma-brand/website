@@ -5,7 +5,10 @@ import {
   CheckCircle2,
   CreditCard,
   LockKeyhole,
+  MapPin,
+  PackageCheck,
   ShieldCheck,
+  Truck,
 } from "lucide-react";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
@@ -14,18 +17,23 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { validateDiscountCode } from "../services/api";
 import { initializePaystackPayment } from "../services/paymentApi";
-import { calculateDeliveryFee } from "../services/deliveryApi";
+import {
+  calculateDeliveryFee,
+  getPickupLocations,
+  getShippingStates,
+} from "../services/deliveryApi";
 import {
   getGrowthSessionId,
   saveCheckoutStart,
 } from "../services/growthApi";
-import { formatNaira } from "../utils/currency";
+import { formatNaira, getStoredCurrency } from "../utils/currency";
 import { getDeliveryFee } from "../utils/delivery";
 
 const initialCheckout = {
   fullName: "",
   email: "",
   phone: "",
+  deliveryMethod: "",
   address: "",
   city: "",
   state: "",
@@ -33,6 +41,9 @@ const initialCheckout = {
   area: "",
   country: "Nigeria",
   deliveryNotes: "",
+  pickupState: "",
+  pickupCity: "",
+  pickupLocationId: "",
 };
 
 export function Checkout() {
@@ -46,11 +57,31 @@ export function Checkout() {
   const [deliveryQuote, setDeliveryQuote] = useState(null);
   const [deliveryError, setDeliveryError] = useState("");
   const [isDeliveryLoading, setIsDeliveryLoading] = useState(false);
+  const [shippingStates, setShippingStates] = useState([]);
+  const [pickupLocations, setPickupLocations] = useState([]);
+  const [isPickupLoading, setIsPickupLoading] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
   const [discountPreview, setDiscountPreview] = useState(null);
   const [discountError, setDiscountError] = useState("");
   const [isDiscountLoading, setIsDiscountLoading] = useState(false);
   const checkoutTrackedRef = useRef(false);
+  const isPickup = formData.deliveryMethod === "PICKUP";
+  const isHomeDelivery = formData.deliveryMethod === "DELIVERY";
+
+  const pickupCities = useMemo(
+    () => [...new Set(pickupLocations.map((location) => location.city).filter(Boolean))].sort(),
+    [pickupLocations]
+  );
+  const visiblePickupLocations = useMemo(
+    () => pickupLocations.filter(
+      (location) => !formData.pickupCity || location.city === formData.pickupCity
+    ),
+    [formData.pickupCity, pickupLocations]
+  );
+  const selectedPickupLocation = useMemo(
+    () => pickupLocations.find((location) => location.id === formData.pickupLocationId) || null,
+    [formData.pickupLocationId, pickupLocations]
+  );
 
   const defaultFullName =
     user?.full_name ||
@@ -120,12 +151,57 @@ export function Checkout() {
   useEffect(() => {
     let mounted = true;
 
+    getShippingStates()
+      .then((response) => {
+        if (mounted) setShippingStates(response.data || []);
+      })
+      .catch(() => {
+        if (mounted) setShippingStates([]);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    queueMicrotask(() => {
+      if (!mounted) return;
+      if (!isPickup || !formData.pickupState) {
+        setPickupLocations([]);
+        setIsPickupLoading(false);
+        return;
+      }
+
+      setIsPickupLoading(true);
+      getPickupLocations({ state: formData.pickupState })
+        .then((response) => {
+          if (mounted) setPickupLocations(response.data || []);
+        })
+        .catch(() => {
+          if (mounted) setPickupLocations([]);
+        })
+        .finally(() => {
+          if (mounted) setIsPickupLoading(false);
+        });
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [formData.pickupState, isPickup]);
+
+  useEffect(() => {
+    let mounted = true;
+
     async function loadDeliveryQuote() {
       if (
         cartItems.length === 0 ||
-        !formData.country ||
-        !formData.state ||
-        !formData.region
+        !formData.deliveryMethod ||
+        (isHomeDelivery && (!formData.country || !formData.state)) ||
+        (isPickup && !formData.pickupLocationId)
       ) {
         if (mounted) {
           setDeliveryQuote(null);
@@ -138,11 +214,17 @@ export function Checkout() {
         setIsDeliveryLoading(true);
         setDeliveryError("");
         const response = await calculateDeliveryFee({
+          deliveryMethod: formData.deliveryMethod,
+          pickupLocationId: formData.pickupLocationId || null,
           address: formData.address,
           country: formData.country,
           state: formData.state,
           region: formData.region,
           area: formData.area,
+          items: cartItems.map((item) => ({
+            productId: item.id,
+            quantity: item.quantity,
+          })),
         });
 
         if (mounted) setDeliveryQuote(response.data || null);
@@ -165,24 +247,47 @@ export function Checkout() {
       window.clearTimeout(timer);
     };
   }, [
-    cartItems.length,
+    cartItems,
     formData.address,
     formData.area,
     formData.country,
+    formData.deliveryMethod,
+    formData.pickupLocationId,
     formData.region,
     formData.state,
+    isHomeDelivery,
+    isPickup,
   ]);
 
   function handleChange(event) {
     const { name, value } = event.target;
-    setFormData((current) => ({ ...current, [name]: value }));
+    setFormData((current) => ({
+      ...current,
+      [name]: value,
+      ...(name === "pickupState" ? { pickupCity: "", pickupLocationId: "" } : {}),
+      ...(name === "pickupCity" ? { pickupLocationId: "" } : {}),
+    }));
     setErrors((current) => ({ ...current, [name]: "" }));
     setServerError("");
 
-    if (["country", "state", "region", "city"].includes(name)) {
+    if (["country", "state", "region", "city", "pickupState", "pickupCity", "pickupLocationId"].includes(name)) {
       setDiscountPreview(null);
       setDiscountError("");
     }
+  }
+
+  function selectDeliveryMethod(deliveryMethod) {
+    setFormData((current) => ({
+      ...current,
+      deliveryMethod,
+      pickupState: deliveryMethod === "PICKUP" ? current.pickupState : "",
+      pickupCity: deliveryMethod === "PICKUP" ? current.pickupCity : "",
+      pickupLocationId: deliveryMethod === "PICKUP" ? current.pickupLocationId : "",
+    }));
+    setDeliveryQuote(null);
+    setDeliveryError("");
+    setDiscountPreview(null);
+    setErrors((current) => ({ ...current, deliveryMethod: "", delivery: "" }));
   }
 
   function handleLocationSelect(location) {
@@ -225,8 +330,10 @@ export function Checkout() {
         discountCode: code,
         customerEmail: checkoutFormData.email,
         country: formData.country || "Nigeria",
-        state: formData.state || "Default",
-        city: formData.region || formData.city || "Default",
+        deliveryMethod: formData.deliveryMethod,
+        pickupLocationId: formData.pickupLocationId || null,
+        state: isPickup ? formData.pickupState : formData.state || "Default",
+        city: isPickup ? formData.pickupCity : formData.region || formData.city || "Default",
         area: formData.area || "Default",
         items: getOrderItemsPayload(),
       });
@@ -248,10 +355,17 @@ export function Checkout() {
       nextErrors.email = "Enter a valid email.";
     }
     if (!checkoutFormData.phone.trim()) nextErrors.phone = "Phone number is required.";
-    if (!formData.address.trim()) nextErrors.address = "Delivery address is required.";
-    if (!formData.state.trim()) nextErrors.state = "State is required.";
-    if (!formData.region.trim()) nextErrors.region = "City or region is required.";
-    if (!formData.country.trim()) nextErrors.country = "Country is required.";
+    if (!formData.deliveryMethod) nextErrors.deliveryMethod = "Choose Pickup or Delivery.";
+    if (isHomeDelivery) {
+      if (!formData.address.trim()) nextErrors.address = "Delivery address is required.";
+      if (!formData.state.trim()) nextErrors.state = "State is required.";
+      if (!formData.region.trim()) nextErrors.region = "City or region is required.";
+      if (!formData.country.trim()) nextErrors.country = "Country is required.";
+    }
+    if (isPickup) {
+      if (!formData.pickupState) nextErrors.pickupState = "Select a pickup state.";
+      if (!formData.pickupLocationId) nextErrors.pickupLocationId = "Select a pickup branch.";
+    }
     if (
       cartItems.length > 0 &&
       deliveryQuote?.deliveryFee === undefined
@@ -292,15 +406,18 @@ export function Checkout() {
         customerName: checkoutFormData.fullName,
         customerEmail: checkoutFormData.email,
         customerPhone: checkoutFormData.phone,
-        deliveryAddress: formData.address,
-        city: formData.region || formData.city,
-        region: formData.region || formData.city,
+        deliveryMethod: formData.deliveryMethod,
+        pickupLocationId: formData.pickupLocationId || null,
+        deliveryAddress: isPickup ? selectedPickupLocation?.full_address || null : formData.address,
+        city: isPickup ? selectedPickupLocation?.city : formData.region || formData.city,
+        region: isPickup ? selectedPickupLocation?.city : formData.region || formData.city,
         area: formData.area || "Default",
-        state: formData.state,
+        state: isPickup ? selectedPickupLocation?.state : formData.state,
         country: formData.country,
         deliveryNotes: formData.deliveryNotes,
         discountCode: discountPreview?.discountCode || discountCode.trim() || null,
         growthSessionId: getGrowthSessionId(),
+        displayCurrency: getStoredCurrency(),
         items: getOrderItemsPayload(),
       });
 
@@ -411,6 +528,40 @@ export function Checkout() {
                 {errors.phone && <small>{errors.phone}</small>}
               </div>
 
+              <fieldset className="fulfilment-method-fieldset">
+                <legend>How would you like to receive your order?</legend>
+                <div className="fulfilment-method-grid">
+                  <button
+                    type="button"
+                    className={`fulfilment-method-card ${isPickup ? "is-selected" : ""}`}
+                    onClick={() => selectDeliveryMethod("PICKUP")}
+                    aria-pressed={isPickup}
+                    disabled={isSubmitting}
+                  >
+                    <PackageCheck size={22} />
+                    <span><strong>Pickup</strong><small>Collect from a GIG Logistics branch</small></span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`fulfilment-method-card ${isHomeDelivery ? "is-selected" : ""}`}
+                    onClick={() => selectDeliveryMethod("DELIVERY")}
+                    aria-pressed={isHomeDelivery}
+                    disabled={isSubmitting}
+                  >
+                    <Truck size={22} />
+                    <span><strong>Delivery</strong><small>Send directly to your address</small></span>
+                  </button>
+                </div>
+                {errors.deliveryMethod && <small className="form-error">{errors.deliveryMethod}</small>}
+              </fieldset>
+
+              {!formData.deliveryMethod && (
+                <div className="checkout-method-hint">
+                  Select Pickup or Delivery to continue with the correct details.
+                </div>
+              )}
+
+              {isHomeDelivery && <>
               <LocationAutocomplete
                 id="address"
                 name="address"
@@ -450,7 +601,97 @@ export function Checkout() {
                   {errors.region && <small>{errors.region}</small>}
                 </div>
               </div>
+              </>}
 
+              {isPickup && (
+                <div className="pickup-checkout-panel">
+                  <div className="pickup-panel-heading">
+                    <MapPin size={19} />
+                    <div>
+                      <strong>Choose a pickup location</strong>
+                      <span>State → City/area → GIG Logistics branch</span>
+                    </div>
+                  </div>
+
+                  <div className="form-grid two">
+                    <div className="form-field">
+                      <label htmlFor="pickupState">Pickup state</label>
+                      <select
+                        id="pickupState"
+                        name="pickupState"
+                        value={formData.pickupState}
+                        onChange={handleChange}
+                        disabled={isSubmitting}
+                      >
+                        <option value="">Select state</option>
+                        {shippingStates.map((item) => (
+                          <option key={item.state} value={item.state}>{item.state}</option>
+                        ))}
+                      </select>
+                      {errors.pickupState && <small>{errors.pickupState}</small>}
+                    </div>
+
+                    <div className="form-field">
+                      <label htmlFor="pickupCity">City / area</label>
+                      <select
+                        id="pickupCity"
+                        name="pickupCity"
+                        value={formData.pickupCity}
+                        onChange={handleChange}
+                        disabled={isSubmitting || !formData.pickupState || isPickupLoading}
+                      >
+                        <option value="">All cities / areas</option>
+                        {pickupCities.map((city) => <option key={city} value={city}>{city}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-field">
+                    <label htmlFor="pickupLocationId">GIG Logistics branch</label>
+                    <select
+                      id="pickupLocationId"
+                      name="pickupLocationId"
+                      value={formData.pickupLocationId}
+                      onChange={handleChange}
+                      disabled={isSubmitting || !formData.pickupState || isPickupLoading}
+                    >
+                      <option value="">
+                        {isPickupLoading ? "Loading branches…" : "Select pickup branch"}
+                      </option>
+                      {visiblePickupLocations.map((location) => (
+                        <option key={location.id} value={location.id}>
+                          {location.branch_name} — {location.full_address}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.pickupLocationId && <small>{errors.pickupLocationId}</small>}
+                  </div>
+
+                  {selectedPickupLocation && (
+                    <div className="selected-pickup-card">
+                      <MapPin size={18} />
+                      <div>
+                        <strong>{selectedPickupLocation.branch_name}</strong>
+                        <p>{selectedPickupLocation.full_address}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="delivery-fee-inline">
+                    <span>Pickup delivery fee</span>
+                    <strong>
+                      {isDeliveryLoading
+                        ? "Calculating…"
+                        : deliveryQuote?.deliveryFee !== undefined
+                          ? formatNaira(displayedDelivery)
+                          : "Select a branch"}
+                    </strong>
+                  </div>
+                  {(deliveryError || errors.delivery) && <small className="form-error">{deliveryError || errors.delivery}</small>}
+                </div>
+              )}
+
+              {isHomeDelivery && <>
               <div className="form-field">
                 <label htmlFor="area">Area / LGA <span style={{ opacity: 0.55 }}>(optional)</span></label>
                 <input
@@ -499,6 +740,7 @@ export function Checkout() {
                   )}
                 </div>
               </div>
+              </>}
 
               <div className="form-field">
                 <label htmlFor="deliveryNotes">Delivery notes <span style={{ opacity: 0.55 }}>(optional)</span></label>

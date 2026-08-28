@@ -299,6 +299,19 @@ export function AdminOrders() {
                 <h3>Delivery</h3>
 
                 <p>
+                  <strong>Method:</strong>{" "}
+                  {selectedOrder.delivery_method === "PICKUP" ? "Pickup" : "Home delivery"}
+                </p>
+
+                {selectedOrder.delivery_method === "PICKUP" && (
+                  <p>
+                    <strong>Pickup branch:</strong>{" "}
+                    {selectedOrder.pickup_branch_name_snapshot || "—"}<br />
+                    {selectedOrder.pickup_address_snapshot || "—"}
+                  </p>
+                )}
+
+                <p>
                   <strong>Address:</strong>{" "}
                   {selectedOrder.delivery_address || "—"}
                 </p>

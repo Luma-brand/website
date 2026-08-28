@@ -16,6 +16,7 @@ const initialForm = {
   size: "",
   stockQuantity: "",
   lowStockThreshold: "20",
+  shippingWeightGrams: "500",
   status: "draft",
   isActive: true,
   isFeatured: false,
@@ -129,6 +130,7 @@ export function AdminProducts() {
     data.append("size", formData.size);
     data.append("stockQuantity", formData.stockQuantity || "0");
     data.append("lowStockThreshold", formData.lowStockThreshold || "20");
+    data.append("shippingWeightGrams", formData.shippingWeightGrams || "500");
     data.append("status", formData.status);
     data.append("isActive", String(formData.isActive));
     data.append("isFeatured", String(formData.isFeatured));
@@ -159,6 +161,7 @@ export function AdminProducts() {
       size: product.size || "",
       stockQuantity: product.stock_quantity ?? "",
       lowStockThreshold: product.low_stock_threshold ?? "20",
+      shippingWeightGrams: product.shipping_weight_grams ?? "500",
       status: product.status || "draft",
       isActive: product.is_active !== false,
       isFeatured: product.is_featured === true,
@@ -346,6 +349,18 @@ export function AdminProducts() {
                   placeholder="20"
                   min="0"
                   value={formData.lowStockThreshold}
+                  onChange={handleChange}
+                />
+              </label>
+
+              <label>
+                Shipping weight (grams)
+                <input
+                  type="number"
+                  name="shippingWeightGrams"
+                  placeholder="500"
+                  min="1"
+                  value={formData.shippingWeightGrams}
                   onChange={handleChange}
                 />
               </label>

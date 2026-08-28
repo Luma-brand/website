@@ -2305,10 +2305,150 @@ img {
   font-weight: 900;
 }
 
+.fulfilment-method-fieldset {
+  min-width: 0;
+  margin: 4px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.fulfilment-method-fieldset legend {
+  margin-bottom: 10px;
+  color: var(--color-ink);
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.fulfilment-method-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.fulfilment-method-card {
+  min-width: 0;
+  min-height: 92px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 17px;
+  border: 1px solid rgba(22, 22, 22, 0.14);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.58);
+  color: var(--color-ink);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.fulfilment-method-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(22, 22, 22, 0.36);
+}
+
+.fulfilment-method-card.is-selected {
+  border-color: var(--color-ink);
+  background: rgba(255, 241, 159, 0.52);
+  box-shadow: inset 0 0 0 1px var(--color-ink);
+}
+
+.fulfilment-method-card span,
+.fulfilment-method-card strong,
+.fulfilment-method-card small {
+  display: block;
+}
+
+.fulfilment-method-card strong {
+  font-size: 0.95rem;
+}
+
+.fulfilment-method-card small {
+  margin-top: 4px;
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.checkout-method-hint {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 241, 159, 0.24);
+  color: var(--color-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.pickup-checkout-panel {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid rgba(22, 22, 22, 0.12);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.44);
+}
+
+.pickup-panel-heading,
+.selected-pickup-card,
+.delivery-fee-inline {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+.pickup-panel-heading strong,
+.pickup-panel-heading span {
+  display: block;
+}
+
+.pickup-panel-heading span {
+  margin-top: 3px;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
+.selected-pickup-card {
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 241, 159, 0.34);
+}
+
+.selected-pickup-card p {
+  margin: 4px 0 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.delivery-fee-inline {
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 13px;
+  border-top: 1px solid var(--color-line);
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.delivery-fee-inline strong {
+  color: var(--color-ink);
+  font-size: 1rem;
+}
+
 .form-grid.two {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
+}
+
+@media (max-width: 640px) {
+  .fulfilment-method-grid,
+  .pickup-checkout-panel .form-grid.two {
+    grid-template-columns: 1fr;
+  }
+
+  .fulfilment-method-card {
+    min-height: 82px;
+  }
 }
 
 .form-section-title {
