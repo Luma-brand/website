@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, Trash2 } from "lucide-react";
+import { Download, Pencil, Save, Trash2 } from "lucide-react";
 import { AdminTopbar } from "../components/AdminTopbar";
-import { deleteWaitlistUser, getWaitlistUsers } from "../../services/api";
+import { deleteWaitlistUser, getWaitlistUsers, updateWaitlistUser } from "../../services/api";
 
 export function AdminWaitlist() {
   const [waitlist, setWaitlist] = useState([]);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState("");
+  const [editingUser, setEditingUser] = useState(null);
   const [error, setError] = useState("");
 
   const loadWaitlist = useCallback(async () => {
@@ -61,13 +62,43 @@ export function AdminWaitlist() {
     }
   }
 
+  function beginEdit(user) {
+    setEditingUser({
+      id: user.id,
+      email: user.email,
+      fullName: user.full_name || "",
+      interest: user.interest || "",
+      status: user.status || "active",
+      adminNotes: user.admin_notes || "",
+    });
+  }
+
+  async function saveUser(event) {
+    event.preventDefault();
+    if (!editingUser) return;
+    try {
+      setActionLoadingId(editingUser.id);
+      const response = await updateWaitlistUser(editingUser.id, editingUser);
+      setWaitlist((current) => current.map((item) => (
+        item.id === editingUser.id ? response.data : item
+      )));
+      setEditingUser(null);
+    } catch (saveError) {
+      alert(saveError.message || "Failed to update waitlist user.");
+    } finally {
+      setActionLoadingId("");
+    }
+  }
+
   function exportCSV() {
-    const headers = ["Name", "Email", "Interest", "Created At"];
+    const headers = ["Name", "Email", "Interest", "Status", "Admin notes", "Created At"];
 
     const rows = filteredWaitlist.map((user) => [
       user.full_name || "",
       user.email || "",
       user.interest || "",
+      user.status || "active",
+      user.admin_notes || "",
       user.created_at || "",
     ]);
 
@@ -97,7 +128,7 @@ export function AdminWaitlist() {
     <>
       <AdminTopbar
         title="Waitlist"
-        subtitle="View, search, export, and delete LUMA waitlist signups."
+        subtitle="View, edit, track, export, and manage LUMA waitlist signups."
       />
 
       <section className="admin-content">
@@ -139,6 +170,7 @@ export function AdminWaitlist() {
                     <th>Name</th>
                     <th>Email</th>
                     <th>Interest</th>
+                    <th>Status</th>
                     <th>Date joined</th>
                     <th>Action</th>
                   </tr>
@@ -150,12 +182,16 @@ export function AdminWaitlist() {
                       <td>{user.full_name || "—"}</td>
                       <td>{user.email}</td>
                       <td>{user.interest || "—"}</td>
+                      <td><span className={`admin-badge ${user.status === "converted" ? "success" : ""}`}>{user.status || "active"}</span></td>
                       <td>
                         {user.created_at
                           ? new Date(user.created_at).toLocaleDateString()
                           : "—"}
                       </td>
                       <td>
+                        <button type="button" className="admin-button secondary" onClick={() => beginEdit(user)}>
+                          <Pencil size={15} /> Edit
+                        </button>
                         <button
                           type="button"
                           className="admin-button danger"
@@ -173,6 +209,22 @@ export function AdminWaitlist() {
             </div>
           )}
         </div>
+
+        {editingUser && (
+          <form className="admin-card pickup-location-form" onSubmit={saveUser}>
+            <div className="admin-table-header">
+              <div><h2>Edit waitlist entry</h2><p>{editingUser.email}</p></div>
+              <button type="button" className="admin-button secondary" onClick={() => setEditingUser(null)}>Cancel</button>
+            </div>
+            <div className="admin-form-grid compact">
+              <label>Name<input value={editingUser.fullName} onChange={(event) => setEditingUser({ ...editingUser, fullName: event.target.value })} /></label>
+              <label>Interest<input value={editingUser.interest} onChange={(event) => setEditingUser({ ...editingUser, interest: event.target.value })} /></label>
+              <label>Status<select value={editingUser.status} onChange={(event) => setEditingUser({ ...editingUser, status: event.target.value })}><option value="active">Active</option><option value="contacted">Contacted</option><option value="converted">Converted</option><option value="unsubscribed">Unsubscribed</option></select></label>
+              <label>Admin notes<textarea rows="4" value={editingUser.adminNotes} onChange={(event) => setEditingUser({ ...editingUser, adminNotes: event.target.value })} /></label>
+            </div>
+            <button className="admin-button" type="submit" disabled={actionLoadingId === editingUser.id}><Save size={16} /> {actionLoadingId === editingUser.id ? "Saving..." : "Save waitlist entry"}</button>
+          </form>
+        )}
       </section>
     </>
   );

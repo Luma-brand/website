@@ -103,7 +103,8 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
     "init-db": "node src/config/initDb.js",
-    "migrate:delivery-currency": "node scripts/runMigration.js 036_automated_delivery_currency_engine.sql"
+    "migrate:delivery-currency": "node scripts/runMigration.js 036_automated_delivery_currency_engine.sql",
+    "migrate:fulfilment-inquiries": "node scripts/runMigration.js 037_studio_pickup_inquiry_workflows.sql"
   },
   "keywords": [],
   "author": "",

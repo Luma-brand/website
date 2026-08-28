@@ -224,7 +224,8 @@ function orderConfirmationTemplate(order = {}) {
   const name = order.customer_name || order.customerName || "there";
   const reference = order.payment_reference || order.paystack_reference || order.reference || String(order.id || "").slice(0, 8).toUpperCase();
   const total = order.final_amount || order.total_amount || order.total || 0;
-  const delivery = order.delivery_method === "PICKUP"
+  const isPickup = ["PICKUP", "GIG_PICKUP", "STUDIO_PICKUP"].includes(order.delivery_method || order.fulfilment_type);
+  const delivery = isPickup
     ? [order.pickup_branch_name_snapshot, order.pickup_address_snapshot].filter(Boolean).join(" — ")
     : [order.delivery_address, order.city, order.state, order.country].filter(Boolean).join(", ");
   const html = baseEmailTemplate({
@@ -250,7 +251,8 @@ function orderConfirmationTemplate(order = {}) {
 function adminOrderNotificationTemplate(order = {}) {
   const reference = order.payment_reference || order.paystack_reference || order.reference || String(order.id || "").slice(0, 8).toUpperCase();
   const total = order.final_amount || order.total_amount || order.total || 0;
-  const delivery = order.delivery_method === "PICKUP"
+  const isPickup = ["PICKUP", "GIG_PICKUP", "STUDIO_PICKUP"].includes(order.delivery_method || order.fulfilment_type);
+  const delivery = isPickup
     ? [order.pickup_branch_name_snapshot, order.pickup_address_snapshot].filter(Boolean).join(" — ")
     : [order.delivery_address, order.city, order.state, order.country].filter(Boolean).join(", ");
   const html = baseEmailTemplate({
@@ -300,6 +302,74 @@ function waitlistConfirmationTemplate(data = {}) {
   return { subject: "You're on the LUMA waitlist", html, text: stripHtml(html) };
 }
 
+function inquiryAdminNotificationTemplate(inquiry = {}) {
+  const name = inquiry.full_name || inquiry.fullName || "Website visitor";
+  const email = inquiry.email || "-";
+  const phone = inquiry.phone || "Not provided";
+  const subjectLabel = inquiry.subject || "General enquiry";
+  const submittedAt = inquiry.created_at || inquiry.createdAt || new Date();
+  const formattedTime = new Date(submittedAt).toLocaleString("en-NG", {
+    dateStyle: "full",
+    timeStyle: "short",
+    timeZone: "Africa/Lagos",
+  });
+  const metadata = inquiry.metadata || {};
+  const replyUrl = `${getFrontendUrl()}/luma-control-room/enquiries?inquiry=${encodeURIComponent(inquiry.id || "")}`;
+  const html = baseEmailTemplate({
+    previewText: `${name} sent a new LUMA enquiry.`,
+    eyebrow: "New website enquiry",
+    title: `${name} would like a response.`,
+    body: `
+      ${infoPanel([
+        { label: "Name", value: name },
+        { label: "Email", value: email },
+        { label: "Phone", value: phone },
+        { label: "Enquiry type", value: subjectLabel },
+        { label: "Submitted", value: formattedTime },
+        ...(metadata.sourcePage ? [{ label: "Page", value: metadata.sourcePage }] : []),
+      ])}
+      <div style="margin-top:20px;padding:20px;border:1px solid ${BRAND.line};border-radius:18px;background:${BRAND.white};">
+        <p style="margin:0 0 8px;color:${BRAND.muted};font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;">Customer message</p>
+        <p style="margin:0;color:${BRAND.ink};white-space:pre-line;">${escapeHtml(inquiry.message || "")}</p>
+      </div>`,
+    buttonText: "Respond to enquiry",
+    buttonUrl: replyUrl,
+    footerText: "LUMA enquiry control room",
+  });
+  return {
+    subject: `New LUMA enquiry: ${subjectLabel} — ${name}`,
+    html,
+    text: stripHtml(html),
+  };
+}
+
+function inquiryResponseTemplate({ inquiry = {}, replyMessage = "" } = {}) {
+  const name = inquiry.full_name || inquiry.fullName || "there";
+  const subjectLabel = inquiry.subject || "your enquiry";
+  const html = baseEmailTemplate({
+    previewText: `LUMA has responded to ${subjectLabel}.`,
+    eyebrow: "Enquiry response",
+    title: "A response from LUMA.",
+    body: `
+      <p style="margin:0 0 18px;">Hi ${escapeHtml(name)}, thank you for contacting LUMA. Here is our response:</p>
+      <div style="padding:20px;border:1px solid ${BRAND.line};border-radius:18px;background:${BRAND.white};">
+        <p style="margin:0;color:${BRAND.ink};white-space:pre-line;">${escapeHtml(replyMessage)}</p>
+      </div>
+      <div style="margin-top:18px;padding:16px 18px;border-radius:16px;background:${BRAND.soft};">
+        <p style="margin:0 0 6px;color:${BRAND.muted};font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.09em;">Your original enquiry</p>
+        <p style="margin:0;color:${BRAND.muted};white-space:pre-line;">${escapeHtml(inquiry.message || "")}</p>
+      </div>
+      <p style="margin:18px 0 0;">You can reply directly to this email if you need anything else.</p>`,
+    buttonText: "Visit LUMA",
+    buttonUrl: getFrontendUrl(),
+  });
+  return {
+    subject: `LUMA inquiry response: ${subjectLabel}`,
+    html,
+    text: stripHtml(html),
+  };
+}
+
 function abandonedCartTemplate(cart = {}) {
   const name = cart.customer_name || cart.name || "there";
   const total = cart.total_value || cart.cart_total || cart.subtotal || 0;
@@ -336,6 +406,8 @@ module.exports = {
   escapeHtml,
   formatMoney,
   getFrontendUrl,
+  inquiryAdminNotificationTemplate,
+  inquiryResponseTemplate,
   newsletterConfirmationTemplate,
   orderConfirmationTemplate,
   stripHtml,

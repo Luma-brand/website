@@ -300,12 +300,16 @@ export function AdminOrders() {
 
                 <p>
                   <strong>Method:</strong>{" "}
-                  {selectedOrder.delivery_method === "PICKUP" ? "Pickup" : "Home delivery"}
+                  {selectedOrder.delivery_method === "STUDIO_PICKUP"
+                    ? "LUMA studio pickup"
+                    : ["PICKUP", "GIG_PICKUP"].includes(selectedOrder.delivery_method)
+                      ? "GIG branch collection"
+                      : "Doorstep delivery"}
                 </p>
 
-                {selectedOrder.delivery_method === "PICKUP" && (
+                {["PICKUP", "GIG_PICKUP", "STUDIO_PICKUP"].includes(selectedOrder.delivery_method) && (
                   <p>
-                    <strong>Pickup branch:</strong>{" "}
+                    <strong>Pickup location:</strong>{" "}
                     {selectedOrder.pickup_branch_name_snapshot || "—"}<br />
                     {selectedOrder.pickup_address_snapshot || "—"}
                   </p>

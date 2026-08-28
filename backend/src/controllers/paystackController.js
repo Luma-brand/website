@@ -95,14 +95,14 @@ async function initializePaystackPayment(req, res) {
     }
 
     const deliveryMethod = String(body.deliveryMethod || body.delivery_method || "").toUpperCase();
-    if (!["DELIVERY", "PICKUP"].includes(deliveryMethod)) {
+    if (!["DOORSTEP", "GIG_PICKUP", "STUDIO_PICKUP", "DELIVERY", "PICKUP"].includes(deliveryMethod)) {
       return res.status(400).json({
         success: false,
         message: "Choose Pickup or Delivery.",
         code: "DELIVERY_METHOD_REQUIRED",
       });
     }
-    if (deliveryMethod === "DELIVERY" && !String(body.deliveryAddress || "").trim()) {
+    if (["DELIVERY", "DOORSTEP"].includes(deliveryMethod) && !String(body.deliveryAddress || "").trim()) {
       return res.status(400).json({
         success: false,
         message: "Delivery address is required for home delivery.",

@@ -4,6 +4,7 @@ const {
   getContactMessages,
   markContactAsRead,
   deleteContactMessage,
+  replyToContactMessage,
 } = require("../controllers/contactController");
 
 const { protectAdmin } = require("../middleware/authMiddleware");
@@ -13,6 +14,7 @@ const router = express.Router();
 router.post("/", createContactMessage);
 router.get("/", protectAdmin, getContactMessages);
 router.patch("/:id/read", protectAdmin, markContactAsRead);
+router.post("/:id/replies", protectAdmin, replyToContactMessage);
 router.delete("/:id", protectAdmin, deleteContactMessage);
 
 module.exports = router;

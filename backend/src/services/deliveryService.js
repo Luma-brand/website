@@ -12,6 +12,7 @@ const ORDER_DELIVERY_COLUMNS = [
   "delivery_eta_max_days",
   "delivery_is_pickup",
   "delivery_method",
+  "fulfilment_type",
   "origin_state",
   "destination_state",
   "pickup_location_id",
@@ -592,17 +593,21 @@ async function updateDeliveryZone(zoneId, payload = {}) {
 }
 
 const DELIVERY_METHODS = Object.freeze({
-  DELIVERY: "DELIVERY",
-  PICKUP: "PICKUP",
+  DOORSTEP: "DOORSTEP",
+  GIG_PICKUP: "GIG_PICKUP",
+  STUDIO_PICKUP: "STUDIO_PICKUP",
 });
 
 function normalizeDeliveryMethod(value) {
   const normalized = String(value || "").trim().toUpperCase();
-  if (["DELIVERY", "HOME", "HOME_DELIVERY"].includes(normalized)) {
-    return DELIVERY_METHODS.DELIVERY;
+  if (["DELIVERY", "DOORSTEP", "HOME", "HOME_DELIVERY"].includes(normalized)) {
+    return DELIVERY_METHODS.DOORSTEP;
   }
-  if (["PICKUP", "PICK_UP", "PICKUP_LOCATION"].includes(normalized)) {
-    return DELIVERY_METHODS.PICKUP;
+  if (["PICKUP", "PICK_UP", "PICKUP_LOCATION", "GIG_PICKUP"].includes(normalized)) {
+    return DELIVERY_METHODS.GIG_PICKUP;
+  }
+  if (["STUDIO_PICKUP", "LUMA_STUDIO", "STUDIO"].includes(normalized)) {
+    return DELIVERY_METHODS.STUDIO_PICKUP;
   }
 
   const error = new Error("Choose Pickup or Delivery.");
@@ -750,7 +755,12 @@ async function getAutomatedDeliveryQuote(input = {}, { client = pool } = {}) {
     input.destinationState || input.destination_state || input.state
   );
 
-  if (deliveryMethod === DELIVERY_METHODS.PICKUP) {
+  const isLocationPickup = [
+    DELIVERY_METHODS.GIG_PICKUP,
+    DELIVERY_METHODS.STUDIO_PICKUP,
+  ].includes(deliveryMethod);
+
+  if (isLocationPickup) {
     const pickupLocationId = String(
       input.pickupLocationId || input.pickup_location_id || ""
     ).trim();
@@ -761,10 +771,15 @@ async function getAutomatedDeliveryQuote(input = {}, { client = pool } = {}) {
       throw error;
     }
 
-    await ensurePickupLocationsSeeded(client);
+    if (deliveryMethod === DELIVERY_METHODS.GIG_PICKUP) {
+      await ensurePickupLocationsSeeded(client);
+    }
+    const expectedProvider = deliveryMethod === DELIVERY_METHODS.STUDIO_PICKUP
+      ? "LUMA_STUDIO"
+      : "GIG_LOGISTICS";
     const locationResult = await client.query(
-      "SELECT * FROM logistics_locations WHERE id = $1 AND active = TRUE LIMIT 1",
-      [pickupLocationId]
+      "SELECT * FROM logistics_locations WHERE id = $1 AND provider = $2 AND active = TRUE LIMIT 1",
+      [pickupLocationId, expectedProvider]
     );
     pickupLocation = locationResult.rows[0];
     if (!pickupLocation) {
@@ -784,6 +799,42 @@ async function getAutomatedDeliveryQuote(input = {}, { client = pool } = {}) {
   }
 
   const shipmentWeightGrams = await getShipmentWeight(input.items, { client });
+
+  if (deliveryMethod === DELIVERY_METHODS.STUDIO_PICKUP) {
+    const settingsResult = await client.query(
+      "SELECT origin_state, formula_version FROM shipping_settings WHERE id = TRUE"
+    );
+    const settings = settingsResult.rows[0] || {};
+    return {
+      deliveryMethod,
+      fulfilmentType: deliveryMethod,
+      deliveryFee: 0,
+      deliveryFeeKobo: 0,
+      originState: settings.origin_state || "Lagos",
+      destinationState,
+      shipmentWeightGrams,
+      weightBand: null,
+      route: null,
+      pricingMode: "FREE_STUDIO_PICKUP",
+      formulaVersion: Number(settings.formula_version || 1),
+      calculationBreakdown: { studioPickup: true, feeKobo: 0 },
+      calculatedAt: new Date(),
+      isPickup: true,
+      pickupLocation: {
+        id: pickupLocation.id,
+        provider: pickupLocation.provider,
+        state: pickupLocation.state,
+        city: pickupLocation.city,
+        area: pickupLocation.area,
+        branchName: pickupLocation.branch_name,
+        fullAddress: pickupLocation.full_address,
+      },
+      etaMinDays: 0,
+      etaMaxDays: 0,
+      migrationApplied: true,
+    };
+  }
+
   const result = await client.query(
     `
       SELECT
@@ -826,12 +877,18 @@ async function getAutomatedDeliveryQuote(input = {}, { client = pool } = {}) {
     throw error;
   }
 
-  const deliveryFeeKobo = deliveryMethod === DELIVERY_METHODS.PICKUP
-    ? Number(row.effective_pickup_kobo)
+  const hasLocationOverride = deliveryMethod === DELIVERY_METHODS.GIG_PICKUP &&
+    pickupLocation?.pickup_fee_override_kobo !== null &&
+    pickupLocation?.pickup_fee_override_kobo !== undefined;
+  const deliveryFeeKobo = deliveryMethod === DELIVERY_METHODS.GIG_PICKUP
+    ? hasLocationOverride
+      ? Number(pickupLocation.pickup_fee_override_kobo)
+      : Number(row.effective_pickup_kobo)
     : Number(row.effective_home_kobo);
 
   return {
     deliveryMethod,
+    fulfilmentType: deliveryMethod,
     deliveryFee: fromKobo(deliveryFeeKobo),
     deliveryFeeKobo,
     originState: row.origin_state,
@@ -843,11 +900,11 @@ async function getAutomatedDeliveryQuote(input = {}, { client = pool } = {}) {
       distanceKm: Number(row.approximate_road_distance_km),
       zone: row.delivery_zone,
     },
-    pricingMode: row.pricing_mode,
+    pricingMode: hasLocationOverride ? "LOCATION_OVERRIDE" : row.pricing_mode,
     formulaVersion: Number(row.formula_version),
     calculationBreakdown: row.calculation_breakdown,
     calculatedAt: row.calculated_at,
-    isPickup: deliveryMethod === DELIVERY_METHODS.PICKUP,
+    isPickup: deliveryMethod !== DELIVERY_METHODS.DOORSTEP,
     pickupLocation: pickupLocation
       ? {
           id: pickupLocation.id,
@@ -917,6 +974,8 @@ async function getDeliveryEngineOverview() {
         (SELECT COUNT(*) FROM shipping_routes)::integer AS route_count,
         (SELECT COUNT(*) FROM shipping_route_overrides WHERE enabled = TRUE)::integer AS override_count,
         (SELECT COUNT(*) FROM logistics_locations WHERE active = TRUE)::integer AS active_pickup_count,
+        (SELECT COUNT(*) FROM logistics_locations WHERE provider = 'LUMA_STUDIO' AND active = TRUE)::integer AS active_studio_count,
+        (SELECT COUNT(*) FROM logistics_locations WHERE provider = 'GIG_LOGISTICS' AND active = TRUE)::integer AS active_gig_count,
         (SELECT MAX(calculated_at) FROM shipping_route_rates) AS last_recalculation
     `),
   ]);
@@ -1067,29 +1126,36 @@ async function savePickupLocation(payload = {}, adminId = null, locationId = nul
     fullAddress: String(payload.fullAddress || payload.full_address || "").trim(),
     latitude: payload.latitude === "" || payload.latitude === undefined ? null : Number(payload.latitude),
     longitude: payload.longitude === "" || payload.longitude === undefined ? null : Number(payload.longitude),
+    pickupFeeOverrideKobo: payload.pickupFeeOverride === "" || payload.pickupFeeOverride === undefined || payload.pickupFeeOverride === null
+      ? null
+      : toKobo(payload.pickupFeeOverride),
     active: parseBoolean(payload.active, true),
     lastVerifiedAt: payload.lastVerifiedAt || payload.last_verified_at || null,
   };
   if (!values.state || !values.city || !values.branchName || !values.fullAddress) {
     throw new Error("State, city, branch name, and full address are required.");
   }
+  if (values.provider === "LUMA_STUDIO") values.pickupFeeOverrideKobo = 0;
   if (locationId) {
     const result = await pool.query(
       `UPDATE logistics_locations SET provider=$2,state=$3,city=$4,area=$5,branch_name=$6,
-       full_address=$7,latitude=$8,longitude=$9,active=$10,last_verified_at=$11,updated_at=NOW()
+       full_address=$7,latitude=$8,longitude=$9,active=$10,last_verified_at=$11,
+       pickup_fee_override_kobo=$12,updated_at=NOW()
        WHERE id=$1 RETURNING *`,
       [locationId, values.provider, values.state, values.city, values.area, values.branchName,
-        values.fullAddress, values.latitude, values.longitude, values.active, values.lastVerifiedAt]
+        values.fullAddress, values.latitude, values.longitude, values.active, values.lastVerifiedAt,
+        values.pickupFeeOverrideKobo]
     );
     if (!result.rows[0]) throw new Error("Pickup location not found.");
     return result.rows[0];
   }
   const result = await pool.query(
     `INSERT INTO logistics_locations
-      (provider,state,city,area,branch_name,full_address,latitude,longitude,active,last_verified_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+      (provider,state,city,area,branch_name,full_address,latitude,longitude,active,last_verified_at,pickup_fee_override_kobo)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
     [values.provider, values.state, values.city, values.area, values.branchName,
-      values.fullAddress, values.latitude, values.longitude, values.active, values.lastVerifiedAt]
+      values.fullAddress, values.latitude, values.longitude, values.active, values.lastVerifiedAt,
+      values.pickupFeeOverrideKobo]
   );
   await pool.query(
     `INSERT INTO delivery_audit_log (action,entity_type,entity_id,new_value,admin_id)
@@ -1150,7 +1216,7 @@ async function buildOrderDeliveryFields({
   if (columns.has("delivery_fee")) {
     fields.push({
       column: "delivery_fee",
-      value: Number(deliveryQuote?.deliveryFee || DEFAULT_DELIVERY_FEE),
+      value: Number(deliveryQuote?.deliveryFee ?? DEFAULT_DELIVERY_FEE),
     });
   }
 
@@ -1205,6 +1271,7 @@ async function buildOrderDeliveryFields({
 
   const snapshotFields = [
     ["delivery_method", deliveryQuote?.deliveryMethod || null],
+    ["fulfilment_type", deliveryQuote?.fulfilmentType || deliveryQuote?.deliveryMethod || null],
     ["origin_state", deliveryQuote?.originState || null],
     ["destination_state", deliveryQuote?.destinationState || normalizeOptionalText(state)],
     ["pickup_location_id", deliveryQuote?.pickupLocation?.id || null],

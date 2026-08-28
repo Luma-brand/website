@@ -24,7 +24,7 @@ import {
 const AuthContext = createContext(null);
 
 function getNameFromEmail(email) {
-  const localPart = String(email || "").split("@")[0] || "LUMA customer";
+  const localPart = String(email || "").split("@")[0] || "";
   return localPart
     .replace(/[._-]+/g, " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -208,7 +208,7 @@ export function AuthProvider({ children }) {
   const resetPassword = useCallback((payload) => resetCustomerPassword(payload), []);
 
   const displayName =
-    user?.full_name || user?.name || user?.email?.split("@")[0] || "LUMA customer";
+    user?.full_name || user?.name || user?.email?.split("@")[0] || "";
 
   const value = useMemo(
     () => ({

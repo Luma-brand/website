@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowUpRight, Headphones, PackageSearch, Sparkles, Truck } from "lucide-react";
+import { ArrowUpRight, Headphones, Instagram, PackageSearch, Sparkles, Truck } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { submitContactForm } from "../../services/api";
@@ -34,8 +34,8 @@ export function ContactSection({ detailed = false }) {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (!form.fullName.trim() || !form.email.trim() || !form.message.trim()) {
-      setStatus({ type: "error", message: "Name, email and message are required." });
+    if (!form.fullName.trim() || !form.email.trim() || !form.phone.trim() || !form.message.trim()) {
+      setStatus({ type: "error", message: "Name, email, phone and inquiry details are required." });
       return;
     }
 
@@ -48,6 +48,9 @@ export function ContactSection({ detailed = false }) {
         phone: form.phone.trim(),
         subject: form.subject,
         message: form.message.trim(),
+        sourcePage: window.location.href,
+        browserTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        locale: navigator.language,
       });
       setForm(initialForm);
       setStatus({
@@ -112,6 +115,9 @@ export function ContactSection({ detailed = false }) {
               </div>
             ))}
           </div>
+          <a href="https://www.instagram.com/lumalabs_?utm_source=qr" target="_blank" rel="noreferrer" className="btn btn-secondary">
+            <Instagram size={18} /> Follow @lumalabs_
+          </a>
         </motion.div>
 
         <motion.div
@@ -139,7 +145,7 @@ export function ContactSection({ detailed = false }) {
 
             <div className="luma-enquiry-row">
               <div className="luma-enquiry-field">
-                <label htmlFor="contact-phone">Phone <span aria-hidden="true">·</span> optional</label>
+                <label htmlFor="contact-phone">Phone</label>
                 <input id="contact-phone" name="phone" value={form.phone} onChange={handleChange} placeholder="Phone number" autoComplete="tel" disabled={submitting} />
               </div>
               <div className="luma-enquiry-field">

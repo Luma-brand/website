@@ -1002,6 +1002,16 @@ export const deleteWaitlistUser = async (id) => {
   return handleResponse(response);
 };
 
+export const updateWaitlistUser = async (id, payload) => {
+  const response = await fetch(`${API_BASE_URL}/newsletter/${id}`, {
+    method: "PATCH",
+    headers: getAdminHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify(payload),
+  });
+
+  return handleResponse(response);
+};
+
 export const getEnquiries = async () => {
   const response = await fetch(`${API_BASE_URL}/contacts`, {
     headers: getAdminHeaders(),
@@ -1014,6 +1024,16 @@ export const markEnquiryAsRead = async (id) => {
   const response = await fetch(`${API_BASE_URL}/contacts/${id}/read`, {
     method: "PATCH",
     headers: getAdminHeaders(),
+  });
+
+  return handleResponse(response);
+};
+
+export const replyToEnquiry = async (id, message) => {
+  const response = await fetch(`${API_BASE_URL}/contacts/${id}/replies`, {
+    method: "POST",
+    headers: getAdminHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify({ message }),
   });
 
   return handleResponse(response);

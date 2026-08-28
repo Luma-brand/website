@@ -64,7 +64,7 @@ const getNewsletterSubscribers = async (req, res) => {
   try {
     const result = await pool.query(
       `
-      SELECT id, full_name, email, interest, created_at
+      SELECT id, full_name, email, interest, status, admin_notes, created_at, updated_at
       FROM newsletter_subscribers
       ORDER BY created_at DESC
       `
@@ -82,6 +82,33 @@ const getNewsletterSubscribers = async (req, res) => {
       success: false,
       message: "Server error while fetching waitlist subscribers",
     });
+  }
+};
+
+const updateNewsletterSubscriber = async (req, res) => {
+  try {
+    const fullName = String(req.body?.fullName ?? req.body?.full_name ?? "").trim().slice(0, 160) || null;
+    const interest = String(req.body?.interest || "").trim().slice(0, 160) || null;
+    const status = String(req.body?.status || "active").trim().toLowerCase();
+    const adminNotes = String(req.body?.adminNotes ?? req.body?.admin_notes ?? "").trim().slice(0, 2000) || null;
+    if (!["active", "contacted", "converted", "unsubscribed"].includes(status)) {
+      return res.status(400).json({ success: false, message: "Choose a valid waitlist status." });
+    }
+
+    const result = await pool.query(
+      `UPDATE newsletter_subscribers
+       SET full_name=$2, interest=$3, status=$4, admin_notes=$5, updated_at=NOW()
+       WHERE id=$1
+       RETURNING id, full_name, email, interest, status, admin_notes, created_at, updated_at`,
+      [req.params.id, fullName, interest, status, adminNotes]
+    );
+    if (!result.rows[0]) {
+      return res.status(404).json({ success: false, message: "Waitlist user not found." });
+    }
+    return res.status(200).json({ success: true, message: "Waitlist entry updated.", data: result.rows[0] });
+  } catch (error) {
+    console.error("Update waitlist user error:", error.message);
+    return res.status(500).json({ success: false, message: "Failed to update waitlist entry." });
   }
 };
 
@@ -124,4 +151,5 @@ module.exports = {
   subscribeNewsletter,
   getNewsletterSubscribers,
   deleteNewsletterSubscriber,
+  updateNewsletterSubscriber,
 };

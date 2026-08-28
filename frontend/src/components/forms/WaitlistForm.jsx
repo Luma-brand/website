@@ -67,7 +67,6 @@ export function WaitlistForm() {
   interest: formData.interest,
 });
 
-      console.log("LUMA waitlist submission:", formData);
 
       setIsSubmitted(true);
       setFormData(initialForm);

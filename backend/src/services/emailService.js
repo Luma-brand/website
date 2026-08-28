@@ -7,6 +7,8 @@ const {
   escapeHtml,
   formatMoney,
   getFrontendUrl,
+  inquiryAdminNotificationTemplate,
+  inquiryResponseTemplate,
   newsletterConfirmationTemplate,
   orderConfirmationTemplate,
   testEmailTemplate,
@@ -448,6 +450,29 @@ async function sendWaitlistConfirmationEmail(data = {}) {
   });
 }
 
+async function sendInquiryAdminNotificationEmail(inquiry = {}) {
+  const to = process.env.INQUIRY_ADMIN_EMAIL || "hello@shopwithluma.com";
+  const template = inquiryAdminNotificationTemplate(inquiry);
+  return sendEmail({
+    to,
+    ...template,
+    replyTo: inquiry.email || getReplyTo(),
+    type: "inquiry_admin_notification",
+    metadata: { inquiryId: inquiry.id || null, source: "website_enquiry" },
+  });
+}
+
+async function sendInquiryResponseEmail({ inquiry, replyMessage } = {}) {
+  const template = inquiryResponseTemplate({ inquiry, replyMessage });
+  return sendEmail({
+    to: inquiry?.email,
+    ...template,
+    replyTo: process.env.INQUIRY_ADMIN_EMAIL || getReplyTo() || "hello@shopwithluma.com",
+    type: "inquiry_response",
+    metadata: { inquiryId: inquiry?.id || null, source: "admin_enquiry_reply" },
+  });
+}
+
 async function sendAbandonedCartEmail(cartData = {}) {
   const template = abandonedCartTemplate(cartData);
   return sendEmail({
@@ -673,6 +698,8 @@ module.exports = {
   sendAdminOrderNotificationEmail,
   sendNewsletterConfirmationEmail,
   sendWaitlistConfirmationEmail,
+  sendInquiryAdminNotificationEmail,
+  sendInquiryResponseEmail,
   sendAbandonedCartEmail,
   sendAbandonedCartRecoveryEmail,
   sendBroadcastTestEmail,

@@ -8,6 +8,7 @@ import {
   MapPin,
   PackageCheck,
   ShieldCheck,
+  Store,
   Truck,
 } from "lucide-react";
 import { Header } from "../components/layout/Header";
@@ -34,6 +35,7 @@ const initialCheckout = {
   email: "",
   phone: "",
   deliveryMethod: "",
+  deliveryOption: "",
   address: "",
   city: "",
   state: "",
@@ -44,11 +46,12 @@ const initialCheckout = {
   pickupState: "",
   pickupCity: "",
   pickupLocationId: "",
+  studioLocationId: "",
 };
 
 export function Checkout() {
   const { cartItems, subtotal, validateCartStock } = useCart();
-  const { user, isAuthenticated, isAuthLoading, displayName } = useAuth();
+  const { user, isAuthenticated, isAuthLoading } = useAuth();
 
   const [formData, setFormData] = useState(initialCheckout);
   const [errors, setErrors] = useState({});
@@ -59,14 +62,18 @@ export function Checkout() {
   const [isDeliveryLoading, setIsDeliveryLoading] = useState(false);
   const [shippingStates, setShippingStates] = useState([]);
   const [pickupLocations, setPickupLocations] = useState([]);
+  const [studioLocations, setStudioLocations] = useState([]);
   const [isPickupLoading, setIsPickupLoading] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
   const [discountPreview, setDiscountPreview] = useState(null);
   const [discountError, setDiscountError] = useState("");
   const [isDiscountLoading, setIsDiscountLoading] = useState(false);
   const checkoutTrackedRef = useRef(false);
-  const isPickup = formData.deliveryMethod === "PICKUP";
-  const isHomeDelivery = formData.deliveryMethod === "DELIVERY";
+  const isStudioPickup = formData.deliveryMethod === "STUDIO_PICKUP";
+  const isDelivery = formData.deliveryMethod === "DELIVERY";
+  const isGigDelivery = isDelivery && formData.deliveryOption === "GIG_PICKUP";
+  const isHomeDelivery = isDelivery && formData.deliveryOption === "DOORSTEP";
+  const fulfilmentType = isStudioPickup ? "STUDIO_PICKUP" : formData.deliveryOption;
 
   const pickupCities = useMemo(
     () => [...new Set(pickupLocations.map((location) => location.city).filter(Boolean))].sort(),
@@ -82,12 +89,15 @@ export function Checkout() {
     () => pickupLocations.find((location) => location.id === formData.pickupLocationId) || null,
     [formData.pickupLocationId, pickupLocations]
   );
+  const selectedStudioLocation = useMemo(
+    () => studioLocations.find((location) => location.id === formData.studioLocationId) || null,
+    [formData.studioLocationId, studioLocations]
+  );
 
   const defaultFullName =
     user?.full_name ||
     user?.name ||
     user?.user_metadata?.name ||
-    displayName ||
     "";
   const defaultEmail = user?.email || "";
   const defaultPhone = user?.phone || "";
@@ -151,12 +161,20 @@ export function Checkout() {
   useEffect(() => {
     let mounted = true;
 
-    getShippingStates()
-      .then((response) => {
-        if (mounted) setShippingStates(response.data || []);
+    Promise.all([
+      getShippingStates(),
+      getPickupLocations({ provider: "LUMA_STUDIO" }),
+    ])
+      .then(([statesResponse, studiosResponse]) => {
+        if (!mounted) return;
+        setShippingStates(statesResponse.data || []);
+        setStudioLocations(studiosResponse.data || []);
       })
       .catch(() => {
-        if (mounted) setShippingStates([]);
+        if (mounted) {
+          setShippingStates([]);
+          setStudioLocations([]);
+        }
       });
 
     return () => {
@@ -169,14 +187,14 @@ export function Checkout() {
 
     queueMicrotask(() => {
       if (!mounted) return;
-      if (!isPickup || !formData.pickupState) {
+      if (!isGigDelivery || !formData.pickupState) {
         setPickupLocations([]);
         setIsPickupLoading(false);
         return;
       }
 
       setIsPickupLoading(true);
-      getPickupLocations({ state: formData.pickupState })
+      getPickupLocations({ provider: "GIG_LOGISTICS", state: formData.pickupState })
         .then((response) => {
           if (mounted) setPickupLocations(response.data || []);
         })
@@ -191,7 +209,7 @@ export function Checkout() {
     return () => {
       mounted = false;
     };
-  }, [formData.pickupState, isPickup]);
+  }, [formData.pickupState, isGigDelivery]);
 
   useEffect(() => {
     let mounted = true;
@@ -199,9 +217,10 @@ export function Checkout() {
     async function loadDeliveryQuote() {
       if (
         cartItems.length === 0 ||
-        !formData.deliveryMethod ||
+        !fulfilmentType ||
         (isHomeDelivery && (!formData.country || !formData.state)) ||
-        (isPickup && !formData.pickupLocationId)
+        (isGigDelivery && !formData.pickupLocationId) ||
+        (isStudioPickup && !formData.studioLocationId)
       ) {
         if (mounted) {
           setDeliveryQuote(null);
@@ -214,8 +233,10 @@ export function Checkout() {
         setIsDeliveryLoading(true);
         setDeliveryError("");
         const response = await calculateDeliveryFee({
-          deliveryMethod: formData.deliveryMethod,
-          pickupLocationId: formData.pickupLocationId || null,
+          deliveryMethod: fulfilmentType,
+          pickupLocationId: isStudioPickup
+            ? formData.studioLocationId
+            : formData.pickupLocationId || null,
           address: formData.address,
           country: formData.country,
           state: formData.state,
@@ -252,11 +273,15 @@ export function Checkout() {
     formData.area,
     formData.country,
     formData.deliveryMethod,
+    formData.deliveryOption,
     formData.pickupLocationId,
     formData.region,
     formData.state,
+    formData.studioLocationId,
+    fulfilmentType,
+    isGigDelivery,
     isHomeDelivery,
-    isPickup,
+    isStudioPickup,
   ]);
 
   function handleChange(event) {
@@ -270,7 +295,7 @@ export function Checkout() {
     setErrors((current) => ({ ...current, [name]: "" }));
     setServerError("");
 
-    if (["country", "state", "region", "city", "pickupState", "pickupCity", "pickupLocationId"].includes(name)) {
+    if (["country", "state", "region", "city", "pickupState", "pickupCity", "pickupLocationId", "studioLocationId"].includes(name)) {
       setDiscountPreview(null);
       setDiscountError("");
     }
@@ -280,14 +305,30 @@ export function Checkout() {
     setFormData((current) => ({
       ...current,
       deliveryMethod,
-      pickupState: deliveryMethod === "PICKUP" ? current.pickupState : "",
-      pickupCity: deliveryMethod === "PICKUP" ? current.pickupCity : "",
-      pickupLocationId: deliveryMethod === "PICKUP" ? current.pickupLocationId : "",
+      deliveryOption: deliveryMethod === "DELIVERY" ? current.deliveryOption : "",
+      pickupState: deliveryMethod === "DELIVERY" ? current.pickupState : "",
+      pickupCity: deliveryMethod === "DELIVERY" ? current.pickupCity : "",
+      pickupLocationId: deliveryMethod === "DELIVERY" ? current.pickupLocationId : "",
+      studioLocationId: deliveryMethod === "STUDIO_PICKUP" ? current.studioLocationId : "",
     }));
     setDeliveryQuote(null);
     setDeliveryError("");
     setDiscountPreview(null);
     setErrors((current) => ({ ...current, deliveryMethod: "", delivery: "" }));
+  }
+
+  function selectDeliveryOption(deliveryOption) {
+    setFormData((current) => ({
+      ...current,
+      deliveryOption,
+      pickupState: deliveryOption === "GIG_PICKUP" ? current.pickupState : "",
+      pickupCity: deliveryOption === "GIG_PICKUP" ? current.pickupCity : "",
+      pickupLocationId: deliveryOption === "GIG_PICKUP" ? current.pickupLocationId : "",
+    }));
+    setDeliveryQuote(null);
+    setDeliveryError("");
+    setDiscountPreview(null);
+    setErrors((current) => ({ ...current, deliveryOption: "", delivery: "" }));
   }
 
   function handleLocationSelect(location) {
@@ -330,10 +371,10 @@ export function Checkout() {
         discountCode: code,
         customerEmail: checkoutFormData.email,
         country: formData.country || "Nigeria",
-        deliveryMethod: formData.deliveryMethod,
-        pickupLocationId: formData.pickupLocationId || null,
-        state: isPickup ? formData.pickupState : formData.state || "Default",
-        city: isPickup ? formData.pickupCity : formData.region || formData.city || "Default",
+        deliveryMethod: fulfilmentType,
+        pickupLocationId: isStudioPickup ? formData.studioLocationId : formData.pickupLocationId || null,
+        state: isGigDelivery ? formData.pickupState : isStudioPickup ? selectedStudioLocation?.state : formData.state || "Default",
+        city: isGigDelivery ? formData.pickupCity : isStudioPickup ? selectedStudioLocation?.city : formData.region || formData.city || "Default",
         area: formData.area || "Default",
         items: getOrderItemsPayload(),
       });
@@ -356,20 +397,25 @@ export function Checkout() {
     }
     if (!checkoutFormData.phone.trim()) nextErrors.phone = "Phone number is required.";
     if (!formData.deliveryMethod) nextErrors.deliveryMethod = "Choose Pickup or Delivery.";
+    if (isDelivery && !formData.deliveryOption) nextErrors.deliveryOption = "Choose GIG branch collection or doorstep delivery.";
     if (isHomeDelivery) {
       if (!formData.address.trim()) nextErrors.address = "Delivery address is required.";
       if (!formData.state.trim()) nextErrors.state = "State is required.";
       if (!formData.region.trim()) nextErrors.region = "City or region is required.";
       if (!formData.country.trim()) nextErrors.country = "Country is required.";
     }
-    if (isPickup) {
+    if (isGigDelivery) {
       if (!formData.pickupState) nextErrors.pickupState = "Select a pickup state.";
       if (!formData.pickupLocationId) nextErrors.pickupLocationId = "Select a pickup branch.";
     }
-    if (
-      cartItems.length > 0 &&
-      deliveryQuote?.deliveryFee === undefined
-    ) {
+    if (isStudioPickup && !formData.studioLocationId) {
+      nextErrors.studioLocationId = "Select a LUMA studio pickup address.";
+    }
+    const isQuoteReadyForValidation =
+      (isStudioPickup && formData.studioLocationId) ||
+      (isGigDelivery && formData.pickupLocationId) ||
+      (isHomeDelivery && formData.address.trim() && formData.state.trim());
+    if (cartItems.length > 0 && isQuoteReadyForValidation && deliveryQuote?.deliveryFee === undefined) {
       nextErrors.delivery = "Enter a valid location so we can calculate delivery.";
     }
 
@@ -406,13 +452,29 @@ export function Checkout() {
         customerName: checkoutFormData.fullName,
         customerEmail: checkoutFormData.email,
         customerPhone: checkoutFormData.phone,
-        deliveryMethod: formData.deliveryMethod,
-        pickupLocationId: formData.pickupLocationId || null,
-        deliveryAddress: isPickup ? selectedPickupLocation?.full_address || null : formData.address,
-        city: isPickup ? selectedPickupLocation?.city : formData.region || formData.city,
-        region: isPickup ? selectedPickupLocation?.city : formData.region || formData.city,
+        deliveryMethod: fulfilmentType,
+        pickupLocationId: isStudioPickup ? formData.studioLocationId : formData.pickupLocationId || null,
+        deliveryAddress: isStudioPickup
+          ? selectedStudioLocation?.full_address || null
+          : isGigDelivery
+            ? selectedPickupLocation?.full_address || null
+            : formData.address,
+        city: isStudioPickup
+          ? selectedStudioLocation?.city
+          : isGigDelivery
+            ? selectedPickupLocation?.city
+            : formData.region || formData.city,
+        region: isStudioPickup
+          ? selectedStudioLocation?.area || selectedStudioLocation?.city
+          : isGigDelivery
+            ? selectedPickupLocation?.city
+            : formData.region || formData.city,
         area: formData.area || "Default",
-        state: isPickup ? selectedPickupLocation?.state : formData.state,
+        state: isStudioPickup
+          ? selectedStudioLocation?.state
+          : isGigDelivery
+            ? selectedPickupLocation?.state
+            : formData.state,
         country: formData.country,
         deliveryNotes: formData.deliveryNotes,
         discountCode: discountPreview?.discountCode || discountCode.trim() || null,
@@ -533,23 +595,23 @@ export function Checkout() {
                 <div className="fulfilment-method-grid">
                   <button
                     type="button"
-                    className={`fulfilment-method-card ${isPickup ? "is-selected" : ""}`}
-                    onClick={() => selectDeliveryMethod("PICKUP")}
-                    aria-pressed={isPickup}
+                    className={`fulfilment-method-card ${isStudioPickup ? "is-selected" : ""}`}
+                    onClick={() => selectDeliveryMethod("STUDIO_PICKUP")}
+                    aria-pressed={isStudioPickup}
                     disabled={isSubmitting}
                   >
-                    <PackageCheck size={22} />
-                    <span><strong>Pickup</strong><small>Collect from a GIG Logistics branch</small></span>
+                    <Store size={22} />
+                    <span><strong>Pick up from LUMA</strong><small>Collect free from a LUMA studio</small></span>
                   </button>
                   <button
                     type="button"
-                    className={`fulfilment-method-card ${isHomeDelivery ? "is-selected" : ""}`}
+                    className={`fulfilment-method-card ${isDelivery ? "is-selected" : ""}`}
                     onClick={() => selectDeliveryMethod("DELIVERY")}
-                    aria-pressed={isHomeDelivery}
+                    aria-pressed={isDelivery}
                     disabled={isSubmitting}
                   >
                     <Truck size={22} />
-                    <span><strong>Delivery</strong><small>Send directly to your address</small></span>
+                    <span><strong>Delivery</strong><small>Choose a GIG branch or your doorstep</small></span>
                   </button>
                 </div>
                 {errors.deliveryMethod && <small className="form-error">{errors.deliveryMethod}</small>}
@@ -558,6 +620,84 @@ export function Checkout() {
               {!formData.deliveryMethod && (
                 <div className="checkout-method-hint">
                   Select Pickup or Delivery to continue with the correct details.
+                </div>
+              )}
+
+              {isDelivery && (
+                <fieldset className="fulfilment-method-fieldset">
+                  <legend>Choose your delivery option</legend>
+                  <div className="fulfilment-method-grid">
+                    <button
+                      type="button"
+                      className={`fulfilment-method-card ${isGigDelivery ? "is-selected" : ""}`}
+                      onClick={() => selectDeliveryOption("GIG_PICKUP")}
+                      aria-pressed={isGigDelivery}
+                      disabled={isSubmitting}
+                    >
+                      <PackageCheck size={22} />
+                      <span><strong>GIG branch collection</strong><small>Collect from a GIG Logistics branch</small></span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`fulfilment-method-card ${isHomeDelivery ? "is-selected" : ""}`}
+                      onClick={() => selectDeliveryOption("DOORSTEP")}
+                      aria-pressed={isHomeDelivery}
+                      disabled={isSubmitting}
+                    >
+                      <Truck size={22} />
+                      <span><strong>Doorstep delivery</strong><small>Send directly to your address</small></span>
+                    </button>
+                  </div>
+                  {errors.deliveryOption && <small className="form-error">{errors.deliveryOption}</small>}
+                </fieldset>
+              )}
+
+              {isStudioPickup && (
+                <div className="pickup-checkout-panel">
+                  <div className="pickup-panel-heading">
+                    <Store size={19} />
+                    <div>
+                      <strong>Choose a LUMA studio</strong>
+                      <span>Studio collection is always free.</span>
+                    </div>
+                  </div>
+
+                  <div className="form-field">
+                    <label htmlFor="studioLocationId">Pickup address</label>
+                    <select
+                      id="studioLocationId"
+                      name="studioLocationId"
+                      value={formData.studioLocationId}
+                      onChange={handleChange}
+                      disabled={isSubmitting || studioLocations.length === 0}
+                    >
+                      <option value="">
+                        {studioLocations.length ? "Select a LUMA studio" : "No pickup studio is currently available"}
+                      </option>
+                      {studioLocations.map((location) => (
+                        <option key={location.id} value={location.id}>
+                          {location.branch_name} — {location.full_address}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.studioLocationId && <small>{errors.studioLocationId}</small>}
+                  </div>
+
+                  {selectedStudioLocation && (
+                    <div className="selected-pickup-card">
+                      <MapPin size={18} />
+                      <div>
+                        <strong>{selectedStudioLocation.branch_name}</strong>
+                        <p>{selectedStudioLocation.full_address}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="delivery-fee-inline">
+                    <span>Studio pickup fee</span>
+                    <strong>FREE</strong>
+                  </div>
+                  {(deliveryError || errors.delivery) && <small className="form-error">{deliveryError || errors.delivery}</small>}
                 </div>
               )}
 
@@ -603,12 +743,12 @@ export function Checkout() {
               </div>
               </>}
 
-              {isPickup && (
+              {isGigDelivery && (
                 <div className="pickup-checkout-panel">
                   <div className="pickup-panel-heading">
                     <MapPin size={19} />
                     <div>
-                      <strong>Choose a pickup location</strong>
+                      <strong>Choose a GIG pickup location</strong>
                       <span>State → City/area → GIG Logistics branch</span>
                     </div>
                   </div>
@@ -678,7 +818,7 @@ export function Checkout() {
                   )}
 
                   <div className="delivery-fee-inline">
-                    <span>Pickup delivery fee</span>
+                    <span>GIG branch delivery fee</span>
                     <strong>
                       {isDeliveryLoading
                         ? "Calculating…"

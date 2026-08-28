@@ -148,13 +148,17 @@ export function OrderSuccess() {
             {order.delivery_method && (
               <div className="summary-row">
                 <span>Receiving method</span>
-                <strong>{order.delivery_method === "PICKUP" ? "Pickup" : "Home delivery"}</strong>
+                <strong>{order.delivery_method === "STUDIO_PICKUP"
+                  ? "LUMA studio pickup"
+                  : ["PICKUP", "GIG_PICKUP"].includes(order.delivery_method)
+                    ? "GIG branch collection"
+                    : "Doorstep delivery"}</strong>
               </div>
             )}
 
-            {order.delivery_method === "PICKUP" && order.pickup_branch_name_snapshot && (
+            {["PICKUP", "GIG_PICKUP", "STUDIO_PICKUP"].includes(order.delivery_method) && order.pickup_branch_name_snapshot && (
               <div className="summary-row">
-                <span>Pickup branch</span>
+                <span>Pickup location</span>
                 <strong>{order.pickup_branch_name_snapshot} — {order.pickup_address_snapshot}</strong>
               </div>
             )}

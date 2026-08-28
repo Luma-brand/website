@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Instagram } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { subscribeNewsletter } from "../../services/api";
@@ -43,6 +43,11 @@ export function Footer() {
           <img src="/assets/logos/luma-logo.svg" alt="LUMA" className="footer-logo-image" />
         </Link>
         <p>Professional brow essentials, made simple.</p>
+        <div className="footer-socials">
+          <a href="https://www.instagram.com/lumalabs_?utm_source=qr" target="_blank" rel="noreferrer" aria-label="Follow LUMA on Instagram">
+            <Instagram size={19} />
+          </a>
+        </div>
 
         <form className="footer-newsletter" onSubmit={handleNewsletterSubmit} noValidate>
           <label htmlFor="footer-newsletter-email">Join the LUMA list</label>
@@ -100,6 +105,9 @@ export function Footer() {
           <Link to="/contact" className="footer-contact-link">
             Send an enquiry <ArrowRight size={15} />
           </Link>
+          <a href="https://www.instagram.com/lumalabs_?utm_source=qr" target="_blank" rel="noreferrer" className="footer-contact-link">
+            Instagram @lumalabs_ <Instagram size={15} />
+          </a>
         </section>
       </div>
 
