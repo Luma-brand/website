@@ -1,4 +1,5 @@
 const DEFAULT_FRONTEND_URL = "https://shopwithluma.com";
+const INQUIRY_SUPPORT_EMAIL = "hello@shopwithluma.com";
 
 const BRAND = {
   ink: "#161616",
@@ -321,12 +322,15 @@ function inquiryAdminNotificationTemplate(inquiry = {}) {
     title: `${name} would like a response.`,
     body: `
       ${infoPanel([
+        { label: "Enquiry reference", value: inquiry.id || "Pending" },
         { label: "Name", value: name },
         { label: "Email", value: email },
         { label: "Phone", value: phone },
         { label: "Enquiry type", value: subjectLabel },
         { label: "Submitted", value: formattedTime },
         ...(metadata.sourcePage ? [{ label: "Page", value: metadata.sourcePage }] : []),
+        ...(metadata.browserTimezone ? [{ label: "Customer timezone", value: metadata.browserTimezone }] : []),
+        ...(metadata.locale ? [{ label: "Customer locale", value: metadata.locale }] : []),
       ])}
       <div style="margin-top:20px;padding:20px;border:1px solid ${BRAND.line};border-radius:18px;background:${BRAND.white};">
         <p style="margin:0 0 8px;color:${BRAND.muted};font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;">Customer message</p>
@@ -338,6 +342,42 @@ function inquiryAdminNotificationTemplate(inquiry = {}) {
   });
   return {
     subject: `New LUMA enquiry: ${subjectLabel} — ${name}`,
+    html,
+    text: stripHtml(html),
+  };
+}
+
+function inquiryConfirmationTemplate(inquiry = {}) {
+  const name = inquiry.full_name || inquiry.fullName || "there";
+  const subjectLabel = inquiry.subject || "General enquiry";
+  const submittedAt = inquiry.created_at || inquiry.createdAt || new Date();
+  const formattedTime = new Date(submittedAt).toLocaleString("en-NG", {
+    dateStyle: "full",
+    timeStyle: "short",
+    timeZone: "Africa/Lagos",
+  });
+  const html = baseEmailTemplate({
+    previewText: "Your enquiry has been sent to the LUMA team.",
+    eyebrow: "Enquiry received",
+    title: "We’ve received your enquiry.",
+    body: `
+      <p style="margin:0 0 18px;">Hi ${escapeHtml(name)}, your enquiry has been sent to the LUMA team. We’ll review the details and respond to you by email.</p>
+      ${infoPanel([
+        { label: "Enquiry reference", value: inquiry.id || "Pending" },
+        { label: "Enquiry type", value: subjectLabel },
+        { label: "Submitted", value: formattedTime },
+      ])}
+      <div style="margin-top:18px;padding:16px 18px;border-radius:16px;background:${BRAND.soft};">
+        <p style="margin:0 0 6px;color:${BRAND.muted};font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.09em;">Your message</p>
+        <p style="margin:0;color:${BRAND.muted};white-space:pre-line;">${escapeHtml(inquiry.message || "")}</p>
+      </div>
+      <p style="margin:18px 0 0;">Need more help? Contact LUMA directly for support at <a href="mailto:${INQUIRY_SUPPORT_EMAIL}" style="color:${BRAND.ink};font-weight:800;">${INQUIRY_SUPPORT_EMAIL}</a>.</p>`,
+    buttonText: "Contact LUMA directly",
+    buttonUrl: `mailto:${INQUIRY_SUPPORT_EMAIL}`,
+    footerText: "LUMA customer support",
+  });
+  return {
+    subject: `We’ve received your LUMA enquiry — ${subjectLabel}`,
     html,
     text: stripHtml(html),
   };
@@ -359,9 +399,10 @@ function inquiryResponseTemplate({ inquiry = {}, replyMessage = "" } = {}) {
         <p style="margin:0 0 6px;color:${BRAND.muted};font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.09em;">Your original enquiry</p>
         <p style="margin:0;color:${BRAND.muted};white-space:pre-line;">${escapeHtml(inquiry.message || "")}</p>
       </div>
-      <p style="margin:18px 0 0;">You can reply directly to this email if you need anything else.</p>`,
-    buttonText: "Visit LUMA",
-    buttonUrl: getFrontendUrl(),
+      <p style="margin:18px 0 0;">You can reply directly to this email if you need anything else, or contact LUMA directly for support at <a href="mailto:${INQUIRY_SUPPORT_EMAIL}" style="color:${BRAND.ink};font-weight:800;">${INQUIRY_SUPPORT_EMAIL}</a>.</p>`,
+    buttonText: "Contact LUMA directly",
+    buttonUrl: `mailto:${INQUIRY_SUPPORT_EMAIL}`,
+    footerText: "LUMA customer support",
   });
   return {
     subject: `LUMA inquiry response: ${subjectLabel}`,
@@ -407,6 +448,7 @@ module.exports = {
   formatMoney,
   getFrontendUrl,
   inquiryAdminNotificationTemplate,
+  inquiryConfirmationTemplate,
   inquiryResponseTemplate,
   newsletterConfirmationTemplate,
   orderConfirmationTemplate,

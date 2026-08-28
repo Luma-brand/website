@@ -1,6 +1,7 @@
 const pool = require("../config/db");
 const {
   sendInquiryAdminNotificationEmail,
+  sendInquiryConfirmationEmail,
   sendInquiryResponseEmail,
 } = require("../services/emailService");
 
@@ -48,20 +49,26 @@ async function createContactMessage(req, res) {
     );
 
     const inquiry = result.rows[0];
-    const emailResult = await sendInquiryAdminNotificationEmail(inquiry);
-    if (emailResult?.success) {
+    const adminEmailResult = await sendInquiryAdminNotificationEmail(inquiry);
+    const customerEmailResult = await sendInquiryConfirmationEmail(inquiry);
+    if (adminEmailResult?.success) {
       await pool.query(
         `UPDATE contacts
          SET admin_notification_email_id=$2, admin_notified_at=NOW(), updated_at=NOW()
          WHERE id=$1`,
-        [inquiry.id, emailResult.providerMessageId || emailResult.id || null]
+        [inquiry.id, adminEmailResult.providerMessageId || adminEmailResult.id || null]
       );
     }
 
     return res.status(201).json({
       success: true,
       message: "Your enquiry has been received. LUMA will respond by email.",
-      data: { id: inquiry.id, status: inquiry.status, created_at: inquiry.created_at },
+      data: {
+        id: inquiry.id,
+        status: inquiry.status,
+        created_at: inquiry.created_at,
+        confirmation_email_sent: Boolean(customerEmailResult?.success),
+      },
     });
   } catch (error) {
     console.error("Create contact error:", error.message);

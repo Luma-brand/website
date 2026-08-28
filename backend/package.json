@@ -100,6 +100,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "test:inquiry-emails": "node --test tests/inquiryEmailTemplates.test.js",
     "dev": "nodemon server.js",
     "start": "node server.js",
     "init-db": "node src/config/initDb.js",

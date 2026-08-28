@@ -14,13 +14,13 @@ Set these in Render or the backend hosting provider:
 RESEND_API_KEY=actual_key_from_resend
 EMAIL_FROM=LUMA <hello@shopwithluma.com>
 RESEND_FROM_EMAIL=LUMA <hello@shopwithluma.com>
-EMAIL_REPLY_TO=support@shopwithluma.com
-SUPPORT_EMAIL=support@shopwithluma.com
-SUPPORT_FROM=LUMA Support <support@shopwithluma.com>
+EMAIL_REPLY_TO=hello@shopwithluma.com
+SUPPORT_EMAIL=hello@shopwithluma.com
+SUPPORT_FROM=LUMA Support <hello@shopwithluma.com>
 HELLO_EMAIL=hello@shopwithluma.com
 HELLO_FROM=LUMA <hello@shopwithluma.com>
-MAIL_INBOXES=support@shopwithluma.com,hello@shopwithluma.com
-DEFAULT_MAIL_INBOX=support@shopwithluma.com
+MAIL_INBOXES=hello@shopwithluma.com
+DEFAULT_MAIL_INBOX=hello@shopwithluma.com
 ADMIN_EMAIL=your_admin_email
 ADMIN_TEST_EMAIL=your_test_email
 FRONTEND_URL=https://shopwithluma.com
@@ -128,4 +128,3 @@ https://YOUR-TUNNEL-DOMAIN/api/webhooks/resend
 ```
 
 Do not log or paste `RESEND_API_KEY` into frontend env files, Vercel variables, screenshots, or browser code.
-

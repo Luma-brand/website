@@ -8,6 +8,7 @@ const {
   formatMoney,
   getFrontendUrl,
   inquiryAdminNotificationTemplate,
+  inquiryConfirmationTemplate,
   inquiryResponseTemplate,
   newsletterConfirmationTemplate,
   orderConfirmationTemplate,
@@ -451,7 +452,7 @@ async function sendWaitlistConfirmationEmail(data = {}) {
 }
 
 async function sendInquiryAdminNotificationEmail(inquiry = {}) {
-  const to = process.env.INQUIRY_ADMIN_EMAIL || "hello@shopwithluma.com";
+  const to = "hello@shopwithluma.com";
   const template = inquiryAdminNotificationTemplate(inquiry);
   return sendEmail({
     to,
@@ -462,12 +463,23 @@ async function sendInquiryAdminNotificationEmail(inquiry = {}) {
   });
 }
 
+async function sendInquiryConfirmationEmail(inquiry = {}) {
+  const template = inquiryConfirmationTemplate(inquiry);
+  return sendEmail({
+    to: inquiry.email,
+    ...template,
+    replyTo: "hello@shopwithluma.com",
+    type: "inquiry_customer_confirmation",
+    metadata: { inquiryId: inquiry.id || null, source: "website_enquiry" },
+  });
+}
+
 async function sendInquiryResponseEmail({ inquiry, replyMessage } = {}) {
   const template = inquiryResponseTemplate({ inquiry, replyMessage });
   return sendEmail({
     to: inquiry?.email,
     ...template,
-    replyTo: process.env.INQUIRY_ADMIN_EMAIL || getReplyTo() || "hello@shopwithluma.com",
+    replyTo: "hello@shopwithluma.com",
     type: "inquiry_response",
     metadata: { inquiryId: inquiry?.id || null, source: "admin_enquiry_reply" },
   });
@@ -699,6 +711,7 @@ module.exports = {
   sendNewsletterConfirmationEmail,
   sendWaitlistConfirmationEmail,
   sendInquiryAdminNotificationEmail,
+  sendInquiryConfirmationEmail,
   sendInquiryResponseEmail,
   sendAbandonedCartEmail,
   sendAbandonedCartRecoveryEmail,
