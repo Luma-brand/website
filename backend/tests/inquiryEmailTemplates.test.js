@@ -2,9 +2,15 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  abandonedCartTemplate,
+  adminOrderNotificationTemplate,
   inquiryAdminNotificationTemplate,
   inquiryConfirmationTemplate,
   inquiryResponseTemplate,
+  newsletterConfirmationTemplate,
+  orderConfirmationTemplate,
+  waitlistConfirmationTemplate,
+  welcomeEmailTemplate,
 } = require("../src/utils/emailTemplates");
 
 const inquiry = {
@@ -55,3 +61,34 @@ test("LUMA enquiry response includes the same direct support link", () => {
   assert.match(template.html, /hello@shopwithluma\.com/);
 });
 
+test("shared email shell uses Zoho-safe solid backgrounds and mobile layout", () => {
+  const template = inquiryAdminNotificationTemplate(inquiry);
+
+  assert.match(template.html, /content="only light"/);
+  assert.match(template.html, /class="luma-card"/);
+  assert.match(template.html, /bgcolor="#161616"/);
+  assert.match(template.html, /bgcolor="#ffffff"/);
+  assert.match(template.html, /@media only screen and \(max-width: 620px\)/);
+  assert.doesNotMatch(template.html, /linear-gradient/);
+  assert.doesNotMatch(template.html, /box-shadow/);
+});
+
+test("every transactional email uses the same responsive email shell", () => {
+  const templates = [
+    abandonedCartTemplate({ email: "ada@example.com", items: [] }),
+    adminOrderNotificationTemplate({ id: "order-1", items: [] }),
+    inquiryAdminNotificationTemplate(inquiry),
+    inquiryConfirmationTemplate(inquiry),
+    inquiryResponseTemplate({ inquiry, replyMessage: "We can help." }),
+    newsletterConfirmationTemplate({ email: "ada@example.com" }),
+    orderConfirmationTemplate({ id: "order-1", email: "ada@example.com", items: [] }),
+    waitlistConfirmationTemplate({ email: "ada@example.com" }),
+    welcomeEmailTemplate({ email: "ada@example.com" }),
+  ];
+
+  for (const template of templates) {
+    assert.match(template.html, /class="luma-card"/);
+    assert.match(template.html, /content="only light"/);
+    assert.doesNotMatch(template.html, /linear-gradient/);
+  }
+});

@@ -51,10 +51,10 @@ function renderButton(buttonText, buttonUrl) {
   if (!buttonText || !buttonUrl) return "";
 
   return `
-    <table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:30px;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin-top:26px;border-collapse:separate;">
       <tr>
-        <td style="border-radius:999px;background:${BRAND.ink};">
-          <a href="${escapeHtml(buttonUrl)}" style="display:inline-block;padding:15px 24px;color:${BRAND.cream};font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:800;text-decoration:none;letter-spacing:-0.01em;">
+        <td bgcolor="${BRAND.ink}" style="border-radius:10px;background-color:${BRAND.ink};">
+          <a href="${escapeHtml(buttonUrl)}" style="display:inline-block;padding:14px 22px;color:${BRAND.white};font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;text-decoration:none;letter-spacing:0;">
             ${escapeHtml(buttonText)} &nbsp;→
           </a>
         </td>
@@ -76,56 +76,62 @@ function baseEmailTemplate({
   const buttonHtml = renderButton(buttonText, buttonUrl);
 
   return `<!doctype html>
-<html>
+<html lang="en" style="color-scheme:only light;supported-color-schemes:only light;">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light" />
-    <meta name="supported-color-schemes" content="light" />
+    <meta name="color-scheme" content="only light" />
+    <meta name="supported-color-schemes" content="only light" />
     <title>${safeTitle}</title>
+    <style>
+      :root { color-scheme: only light; supported-color-schemes: only light; }
+      body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+      table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+      table { border-spacing: 0; }
+      a[x-apple-data-detectors] { color: inherit !important; text-decoration: none !important; }
+      @media only screen and (max-width: 620px) {
+        .luma-page { padding: 14px 8px 26px !important; }
+        .luma-card { border-radius: 18px !important; }
+        .luma-brand { padding: 20px !important; }
+        .luma-content { padding: 24px 20px 28px !important; }
+        .luma-title { font-size: 28px !important; line-height: 1.12 !important; }
+        .luma-footer { padding: 18px 18px 0 !important; }
+      }
+    </style>
   </head>
-  <body style="margin:0;padding:0;background:${BRAND.soft};color:${BRAND.ink};font-family:Arial,Helvetica,sans-serif;">
+  <body bgcolor="#f3f0e8" style="margin:0;padding:0;background-color:#f3f0e8;color:${BRAND.ink};font-family:Arial,Helvetica,sans-serif;">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${safePreview}</div>
 
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:${BRAND.soft};">
+    <table class="luma-bg" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f3f0e8" style="width:100%;background-color:#f3f0e8;">
       <tr>
-        <td align="center" style="padding:32px 14px 40px;">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:640px;">
+        <td class="luma-page" align="center" style="padding:28px 14px 36px;">
+          <table class="luma-card" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="${BRAND.white}" style="width:100%;max-width:600px;background-color:${BRAND.white};border:1px solid #ded9cd;border-radius:22px;overflow:hidden;">
             <tr>
-              <td style="padding:0 4px 18px;">
+              <td class="luma-brand" bgcolor="${BRAND.ink}" style="padding:22px 26px;background-color:${BRAND.ink};">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
-                    <td align="left" style="font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:900;letter-spacing:-0.08em;color:${BRAND.silver};">
-                      LUMA<span style="color:${BRAND.ink};">.</span>
-                    </td>
-                    <td align="right" style="font-family:Georgia,'Times New Roman',serif;font-size:12px;color:${BRAND.muted};">soft luxury beauty</td>
+                    <td align="left" style="font-family:Arial,Helvetica,sans-serif;font-size:23px;font-weight:900;letter-spacing:-0.06em;color:${BRAND.white};">LUMA<span style="color:${BRAND.yellow};">.</span></td>
+                    <td align="right" style="font-family:Georgia,'Times New Roman',serif;font-size:12px;color:#f3f0e8;">soft luxury beauty</td>
                   </tr>
                 </table>
               </td>
             </tr>
-
             <tr>
-              <td style="overflow:hidden;border:1px solid ${BRAND.line};border-radius:30px;background:${BRAND.cream};box-shadow:0 22px 70px rgba(22,22,22,0.08);">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-                  <tr>
-                    <td style="padding:38px 34px 12px;background:linear-gradient(135deg,${BRAND.cream} 0%,${BRAND.yellow} 100%);">
-                      <span style="display:inline-block;padding:8px 12px;border-radius:999px;background:${BRAND.soft};font-family:Georgia,'Times New Roman',serif;font-size:12px;color:${BRAND.ink};">${escapeHtml(eyebrow)}</span>
-                      <h1 style="margin:18px 0 0;max-width:540px;font-family:Georgia,'Times New Roman',serif;font-size:36px;line-height:1.05;letter-spacing:-0.045em;font-weight:700;color:${BRAND.ink};">${safeTitle}</h1>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td style="padding:24px 34px 36px;background:${BRAND.cream};font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.75;color:${BRAND.muted};">
-                      ${body}
-                      ${buttonHtml}
-                    </td>
-                  </tr>
-                </table>
+              <td height="6" bgcolor="${BRAND.yellow}" style="height:6px;line-height:6px;font-size:0;background-color:${BRAND.yellow};">&nbsp;</td>
+            </tr>
+            <tr>
+              <td class="luma-content" bgcolor="${BRAND.white}" style="padding:30px 30px 34px;background-color:${BRAND.white};font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:${BRAND.muted};">
+                <p style="margin:0 0 10px;font-size:11px;line-height:1.4;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:${BRAND.muted};">${escapeHtml(eyebrow)}</p>
+                <h1 class="luma-title" style="margin:0 0 22px;max-width:520px;font-family:Georgia,'Times New Roman',serif;font-size:34px;line-height:1.1;letter-spacing:-0.025em;font-weight:700;color:${BRAND.ink};">${safeTitle}</h1>
+                ${body}
+                ${buttonHtml}
               </td>
             </tr>
+          </table>
 
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;">
             <tr>
-              <td align="center" style="padding:22px 20px 0;font-family:Arial,Helvetica,sans-serif;color:${BRAND.muted};font-size:11px;line-height:1.65;">
+              <td class="luma-footer" align="center" style="padding:20px 20px 0;font-family:Arial,Helvetica,sans-serif;color:${BRAND.muted};font-size:11px;line-height:1.65;">
                 <strong style="color:${BRAND.ink};">${escapeHtml(footerText)}</strong><br />
                 You received this email because you interacted with LUMA or placed an order with us.<br />
                 <a href="${getFrontendUrl()}" style="color:${BRAND.ink};font-weight:700;text-decoration:none;">shopwithluma.com</a>
@@ -143,17 +149,25 @@ function infoPanel(rows = []) {
   const content = rows
     .filter((row) => row && row.label)
     .map(
-      (row) => `
+      (row, index, filteredRows) => `
         <tr>
-          <td style="padding:8px 0;color:${BRAND.muted};font-size:13px;">${escapeHtml(row.label)}</td>
-          <td align="right" style="padding:8px 0;color:${BRAND.ink};font-size:13px;font-weight:800;">${escapeHtml(row.value ?? "-")}</td>
+          <td style="padding:12px 0;${index < filteredRows.length - 1 ? `border-bottom:1px solid ${BRAND.line};` : ""}">
+            <span style="display:block;margin-bottom:3px;color:${BRAND.muted};font-size:10px;line-height:1.4;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;">${escapeHtml(row.label)}</span>
+            <span style="display:block;color:${BRAND.ink};font-size:14px;line-height:1.45;font-weight:700;word-break:break-word;overflow-wrap:anywhere;">${escapeHtml(row.value ?? "-")}</span>
+          </td>
         </tr>`
     )
     .join("");
 
   return `
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:22px 0;padding:14px 18px;border:1px solid ${BRAND.line};border-radius:18px;background:${BRAND.soft};">
-      ${content}
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f7f5ef" style="width:100%;margin:20px 0;background-color:#f7f5ef;border:1px solid ${BRAND.line};border-radius:14px;">
+      <tr>
+        <td style="padding:6px 18px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;">
+            ${content}
+          </table>
+        </td>
+      </tr>
     </table>`;
 }
 
