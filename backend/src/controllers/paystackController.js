@@ -26,6 +26,7 @@ const {
   emitPaidOrderEvents,
 } = require("../services/paymentLifecycleService");
 const { getCurrencyRateSnapshot } = require("../services/currencyService");
+const { attributeOrder, ensureSchema: ensureAffiliateSchema } = require("../services/affiliateService");
 
 function isUuid(value) {
   return /^[0-9a-fA-F-]{36}$/.test(String(value || ""));
@@ -213,6 +214,7 @@ async function initializePaystackPayment(req, res) {
       values.push(field.value);
     }
 
+    if (body.affiliateToken) await ensureAffiliateSchema();
     client = await pool.connect();
     await client.query("BEGIN");
     transactionOpen = true;
@@ -224,6 +226,8 @@ async function initializePaystackPayment(req, res) {
       values
     );
     const order = orderResult.rows[0];
+
+    await attributeOrder({ client, order, token: body.affiliateToken, customer: req.customer, pricing });
 
     for (const item of pricing.items) {
       await client.query(

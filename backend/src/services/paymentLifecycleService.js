@@ -2,6 +2,7 @@ const { reduceStockAfterPaidOrder } = require("./inventoryService");
 const { emitOrderCompleted, emitStockTransition } = require("./automationEventBridge");
 const { isMissingWaitlistTable, markWaitlistsPurchasedForPaidOrder } = require("./productWaitlistService");
 const { markBrowseAbandonmentsConvertedForOrder } = require("./browseAbandonmentService");
+const { recordPaidOrder } = require("./affiliateService");
 
 async function reconcileSuccessfulPaymentStock({ client, order, reference, createdBy }) {
   const stockReduction = await reduceStockAfterPaidOrder({ client, orderId: order.id, paymentReference: reference, createdBy });
@@ -14,6 +15,7 @@ async function reconcileSuccessfulPaymentStock({ client, order, reference, creat
      RETURNING *`,
     [order.id, stockReduction.success]
   );
+  if (stockReduction.success) await recordPaidOrder({ client, order: updatedOrderResult.rows[0] });
   try {
     await markWaitlistsPurchasedForPaidOrder({ client, order: updatedOrderResult.rows[0] });
   } catch (error) {

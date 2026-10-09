@@ -99,7 +99,9 @@
     "xtend": "^4.0.2"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test tests/*.test.js",
+    "test:affiliates": "node --test tests/affiliate*.test.js",
+    "migrate:affiliates": "node scripts/runMigration.js 038_affiliate_marketing.sql",
     "test:inquiry-emails": "node --test tests/inquiryEmailTemplates.test.js",
     "dev": "nodemon server.js",
     "start": "node server.js",
@@ -112,6 +114,7 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "nodemon": "^3.1.14"
   }
 }

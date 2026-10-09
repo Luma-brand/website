@@ -1,0 +1,19 @@
+.affiliate-admin-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
+.affiliate-admin-metrics span { display: block; color: var(--admin-ink-soft); font-size: .8rem; }
+.affiliate-admin-metrics strong { display: block; margin-top: 12px; font-size: 1.65rem; overflow-wrap: anywhere; }
+.affiliate-settings-form { grid-template-columns: repeat(3,minmax(0,1fr)); align-items: end; margin-top: 15px; }
+.affiliate-admin-tabs,.affiliate-admin-filters,.affiliate-admin-pagination { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.affiliate-admin-filters input { min-width: 210px; }
+.affiliate-admin-pagination { padding: 20px; justify-content: center; font-size: .85rem; }
+.affiliate-admin-dialog { width: min(580px,calc(100% - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; border: 1px solid #e4e0d9; border-radius: 20px; background: #fffdf8; padding: 30px; color: #1c2420; }
+.affiliate-admin-dialog::backdrop { background: rgb(16 24 20 / 48%); }
+.affiliate-dialog-close { position: absolute; top: 14px; right: 14px; border: 0; border-radius: 999px; display: grid; place-items: center; width: 36px; height: 36px; background: #eeeee8; cursor: pointer; }
+.affiliate-admin-dialog h2 { font-size: 1.5rem; margin-top: 0; }
+.affiliate-admin-dialog > p { font-size: .85rem; color: #59635a; overflow-wrap: anywhere; }
+.affiliate-review-details { padding: 16px; background: #f4f3eb; border-radius: 12px; margin: 18px 0; overflow-wrap: anywhere; font-size: .86rem; line-height: 1.6; }
+.affiliate-review-details a { text-decoration: underline; }
+.affiliate-review-details strong { font-size: 1.5rem; }
+.affiliate-admin-dialog input,.affiliate-admin-dialog select,.affiliate-admin-dialog textarea { width: 100%; border: 1px solid #d6dbd4; background: white; color: #1c2420; border-radius: 10px; padding: 12px; }
+.affiliate-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media(max-width:1000px) { .affiliate-admin-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .affiliate-settings-form { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) { .affiliate-settings-form { grid-template-columns: 1fr; } .affiliate-admin-filters,.affiliate-admin-filters input,.affiliate-admin-filters select { width: 100%; } .affiliate-admin-dialog { padding: 24px; } .affiliate-admin-metrics { gap: 10px; } .affiliate-admin-metrics strong { font-size: 1.3rem; } }

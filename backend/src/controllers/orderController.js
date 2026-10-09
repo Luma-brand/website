@@ -1,5 +1,6 @@
 const pool = require("../config/db");
 const { buildCartPricingSnapshot } = require("../services/inventoryService");
+const { syncOrder, ensureSchema: ensureAffiliateSchema } = require("../services/affiliateService");
 const {
   buildOrderDeliveryFields,
   getDeliveryQuote,
@@ -264,11 +265,16 @@ const getSingleOrder = async (req, res) => {
 };
 
 const updateOrderStatus = async (req, res) => {
+  let client;
   try {
     const { id } = req.params;
     const { status, paymentStatus } = req.body;
 
-    const result = await pool.query(
+    await ensureAffiliateSchema();
+    client = await pool.connect();
+    await client.query("BEGIN");
+
+    const result = await client.query(
       `
       UPDATE orders
       SET
@@ -282,11 +288,15 @@ const updateOrderStatus = async (req, res) => {
     );
 
     if (result.rows.length === 0) {
+      await client.query("ROLLBACK");
       return res.status(404).json({
         success: false,
         message: "Order not found",
       });
     }
+
+    await syncOrder({ client, orderId: id });
+    await client.query("COMMIT");
 
     return res.status(200).json({
       success: true,
@@ -294,12 +304,15 @@ const updateOrderStatus = async (req, res) => {
       data: result.rows[0],
     });
   } catch (error) {
+    if (client) await client.query("ROLLBACK").catch(() => {});
     console.error("Update order error:", error.message);
 
     return res.status(500).json({
       success: false,
       message: "Server error while updating order",
     });
+  } finally {
+    if (client) client.release();
   }
 };
 
@@ -330,6 +343,14 @@ const deleteOrder = async (req, res) => {
     });
   } catch (error) {
     console.error("Delete order error:", error.message);
+
+    if (["23503", "23001"].includes(error.code) && /affiliate/i.test(error.constraint || error.message || "")) {
+      return res.status(409).json({
+        success: false,
+        message: "This order is linked to affiliate earnings. Cancel or refund it to preserve the earnings record.",
+        code: "AFFILIATE_ORDER_RETAINED",
+      });
+    }
 
     return res.status(500).json({
       success: false,

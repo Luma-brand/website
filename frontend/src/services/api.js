@@ -147,6 +147,26 @@ const getCustomerHeaders = (extraHeaders = {}) => {
   };
 };
 
+async function affiliateRequest(path, { method = "GET", payload, admin = false } = {}) {
+  const headers = (admin ? getAdminHeaders : getCustomerHeaders)({ "Content-Type": "application/json" });
+  const response = await fetch(`${API_BASE_URL}/affiliates${path}`, {
+    method, headers, ...(payload === undefined ? {} : { body: JSON.stringify(payload) }),
+    signal: AbortSignal.timeout(20000),
+  });
+  return handleResponse(response);
+}
+
+export const getAffiliateProgram = () => affiliateRequest("/program");
+export const trackAffiliateReferral = (payload) => affiliateRequest("/track", { method: "POST", payload });
+export const getAffiliateDashboard = () => affiliateRequest("/me");
+export const applyForAffiliate = (payload) => affiliateRequest("/apply", { method: "POST", payload });
+export const saveAffiliateBank = (payload) => affiliateRequest("/me/bank", { method: "PATCH", payload });
+export const requestAffiliatePayout = (payload) => affiliateRequest("/me/payouts", { method: "POST", payload });
+export const getAdminAffiliates = (params = {}) => affiliateRequest(`/admin?${new URLSearchParams(params)}`, { admin: true });
+export const saveAffiliateSettings = (payload) => affiliateRequest("/admin/settings", { method: "PATCH", payload, admin: true });
+export const updateAffiliateAccount = (id, payload) => affiliateRequest(`/admin/accounts/${encodeURIComponent(id)}`, { method: "PATCH", payload, admin: true });
+export const reviewAffiliatePayout = (id, payload) => affiliateRequest(`/admin/payouts/${encodeURIComponent(id)}`, { method: "PATCH", payload, admin: true });
+
 export const getAdminDashboardStats = async () => {
   const response = await fetch(`${API_BASE_URL}/dashboard`, {
     headers: getAdminHeaders(),

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
   Eye,
@@ -54,6 +54,8 @@ function PasswordField({ value, onChange, placeholder = "Password", autoComplete
 
 export function Account({ initialMode = "signin" }) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const afterSignIn = searchParams.get("next") === "/affiliates" ? "/affiliates" : "/cart";
   const {
     user,
     displayName,
@@ -107,7 +109,7 @@ export function Account({ initialMode = "signin" }) {
         await signIn({ email: email.trim(), password });
       }
 
-      navigate("/cart");
+      navigate(afterSignIn);
     } catch (error) {
       setServerError(error.message || "We could not access your account.");
     } finally {
@@ -228,6 +230,10 @@ export function Account({ initialMode = "signin" }) {
                 </Link>
                 <Link to="/settings">
                   <span><UserRound size={17} /> Account settings</span>
+                  <ArrowRight size={17} />
+                </Link>
+                <Link to="/affiliates">
+                  <span>Your affiliate dashboard</span>
                   <ArrowRight size={17} />
                 </Link>
                 <button type="button" onClick={handleSignOut} disabled={isSubmitting}>

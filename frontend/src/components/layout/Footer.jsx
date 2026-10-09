@@ -95,6 +95,7 @@ export function Footer() {
         <section className="footer-column">
           <h2>Company</h2>
           <Link to="/about">About LUMA</Link>
+          <Link to="/affiliates">Become an affiliate</Link>
           <Link to="/privacy-policy">Privacy policy</Link>
           <Link to="/terms-and-conditions">Terms & conditions</Link>
         </section>

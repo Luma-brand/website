@@ -4,6 +4,7 @@ import { ScrollToTop } from "../components/layout/ScrollToTop";
 import { RouteSkeleton } from "../components/layout/RouteSkeleton";
 import { PageSkeleton } from "../components/layout/PageSkeleton";
 import { GrowthTracker } from "../components/marketing/GrowthTracker";
+import { AffiliateTracker } from "../components/marketing/AffiliateTracker";
 import { RouteIndexingGuard } from "../components/seo/RouteIndexingGuard";
 
 function lazyNamed(loader, exportName) {
@@ -19,6 +20,7 @@ const Checkout = lazyNamed(() => import("../pages/CheckoutPaystack"), "Checkout"
 const OrderSuccess = lazyNamed(() => import("../pages/OrderSuccess"), "OrderSuccess");
 const PaystackCallback = lazyNamed(() => import("../pages/PaystackCallback"), "PaystackCallback");
 const Account = lazyNamed(() => import("../pages/Account"), "Account");
+const Affiliates = lazyNamed(() => import("../pages/Affiliates"), "Affiliates");
 const CompleteProfile = lazyNamed(() => import("../pages/CompleteProfile"), "CompleteProfile");
 const Settings = lazyNamed(() => import("../pages/Settings"), "Settings");
 const About = lazyNamed(() => import("../pages/About"), "About");
@@ -49,6 +51,7 @@ const AdminAbandonedCheckouts = lazyNamed(() => import("../admin/pages/AdminAban
 const AdminBackInStock = lazyNamed(() => import("../admin/pages/AdminBackInStock"), "AdminBackInStock");
 const AdminDiscounts = lazyNamed(() => import("../admin/pages/AdminDiscounts"), "AdminDiscounts");
 const AdminCurrencyRates = lazyNamed(() => import("../admin/pages/AdminCurrencyRates"), "AdminCurrencyRates");
+const AdminAffiliates = lazyNamed(() => import("../admin/pages/AdminAffiliates"), "AdminAffiliates");
 
 export function AppRoutes() {
   return (
@@ -57,6 +60,7 @@ export function AppRoutes() {
       <RouteIndexingGuard />
       <RouteSkeleton />
       <GrowthTracker />
+      <AffiliateTracker />
 
       <Suspense fallback={<PageSkeleton />}>
       <Routes>
@@ -70,6 +74,7 @@ export function AppRoutes() {
         <Route path="/order-success/:orderId" element={<OrderSuccess />} />
         <Route path="/payment/paystack/callback" element={<PaystackCallback />} />
         <Route path="/account" element={<Account initialMode="signin" />} />
+        <Route path="/affiliates" element={<Affiliates />} />
         <Route path="/login" element={<Account initialMode="signin" />} />
         <Route path="/register" element={<Account initialMode="signup" />} />
         <Route path="/signup" element={<Account initialMode="signup" />} />
@@ -99,6 +104,7 @@ export function AppRoutes() {
           <Route path="delivery" element={<AdminDelivery />} />
           <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="growth" element={<AdminGrowth />} />
+          <Route path="affiliates" element={<AdminAffiliates />} />
           <Route path="growth-tools" element={<Navigate to="/luma-control-room/growth" replace />} />
           <Route path="email-broadcasts" element={<AdminEmailBroadcasts />} />
           <Route path="automations" element={<AdminAutomations />} />

@@ -7,12 +7,14 @@ const {
 } = require("./src/services/growthService");
 const { startAutomationWorker } = require("./src/services/automationService");
 const { startCurrencyRateWorker } = require("./src/services/currencyService");
+const { ensureSchema: ensureAffiliateSchema } = require("./src/services/affiliateService");
 
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
     await pool.query("SELECT NOW()");
+    await ensureAffiliateSchema();
     console.log("Database startup check successful");
   } catch (error) {
     console.error(

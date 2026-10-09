@@ -38,6 +38,7 @@ const adminAbandonedCartRoutes = require("./routes/adminAbandonedCartRoutes");
 const cronRoutes = require("./routes/cronRoutes");
 const integrationRoutes = require("./routes/integrationRoutes");
 const seoRoutes = require("./routes/seoRoutes");
+const affiliateRoutes = require("./routes/affiliateRoutes");
 
 const app = express();
 
@@ -170,6 +171,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/admin/abandoned-carts", adminAbandonedCartRoutes);
 app.use("/api/discounts", discountRoutes);
 app.use("/api/currency", currencyRoutes);
+app.use("/api/affiliates", affiliateRoutes);
 app.use("/api/automation", automationRoutes);
 app.use("/api/admin/automations", automationRoutes);
 app.use("/api/email-broadcasts", emailBroadcastRoutes);

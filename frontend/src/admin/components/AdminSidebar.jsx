@@ -61,6 +61,7 @@ const navGroups = [
     label: "Growth",
     items: [
       { label: "Growth tools", path: "/luma-control-room/growth", icon: TrendingUp },
+      { label: "Affiliates", path: "/luma-control-room/affiliates", icon: Users },
       { label: "Email broadcasts", path: "/luma-control-room/email-broadcasts", icon: Mail },
       { label: "Automations", path: "/luma-control-room/automations", icon: Workflow },
       { label: "Abandoned carts", path: "/luma-control-room/abandoned-carts", icon: ShoppingCart },

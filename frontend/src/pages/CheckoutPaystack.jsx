@@ -18,6 +18,7 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { validateDiscountCode } from "../services/api";
 import { initializePaystackPayment } from "../services/paymentApi";
+import { getAffiliateCheckoutToken } from "../lib/affiliateReferral";
 import {
   calculateDeliveryFee,
   getPickupLocations,
@@ -448,6 +449,7 @@ export function Checkout() {
       setIsSubmitting(true);
       setServerError("");
 
+      const affiliateToken = await getAffiliateCheckoutToken();
       const response = await initializePaystackPayment({
         customerName: checkoutFormData.fullName,
         customerEmail: checkoutFormData.email,
@@ -479,6 +481,7 @@ export function Checkout() {
         deliveryNotes: formData.deliveryNotes,
         discountCode: discountPreview?.discountCode || discountCode.trim() || null,
         growthSessionId: getGrowthSessionId(),
+        affiliateToken,
         displayCurrency: getStoredCurrency(),
         items: getOrderItemsPayload(),
       });
