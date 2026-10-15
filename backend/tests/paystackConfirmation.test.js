@@ -5,7 +5,7 @@ const { PGlite } = require("@electric-sql/pglite");
 const pool = require("../src/config/db");
 
 let db, verifyPaystackPayment, handlePaystackWebhook, getPublicOrder;
-let transactionOverrides, followUpFailure, notifications, activeClients;
+let transactionOverrides, followUpFailure, notifications, activeClients, forceCommitRollback;
 const orderId = "11111111-1111-4111-8111-111111111111";
 const productId = "22222222-2222-4222-8222-222222222222";
 const reference = "LUMA-PAY-confirmation-regression";
@@ -64,7 +64,13 @@ before(async () => {
     queue = new Promise((resolve) => { unlock = resolve; });
     await previous;
     activeClients += 1;
-    return { query: (sql, params) => db.query(sql, params), release: () => { activeClients -= 1; unlock(); } };
+    return { query: async (sql, params) => {
+      if (sql === "COMMIT" && forceCommitRollback) {
+        await db.query("ROLLBACK");
+        return { command: "ROLLBACK", rows: [] };
+      }
+      return db.query(sql, params);
+    }, release: () => { activeClients -= 1; unlock(); } };
   });
   // Keep the real payment SQL, stock reconciliation and recovery queries. Stub external notifications only.
   mock.method(require("../src/services/affiliateService"), "recordPaidOrder", async () => {});
@@ -93,6 +99,7 @@ beforeEach(async () => {
   followUpFailure = false;
   notifications = 0;
   activeClients = 0;
+  forceCommitRollback = false;
   await db.exec("TRUNCATE orders,products,order_items,inventory_movements,abandoned_carts,abandoned_checkouts,product_waitlists;");
   await db.query("INSERT INTO orders(id,customer_name,customer_email,total_amount,payment_reference,delivery_method,delivery_fee,pickup_branch_name_snapshot,pickup_address_snapshot) VALUES($1,'Test customer','shopper@example.com',5000,$2,'STUDIO_PICKUP',0,'LUMA studio','Test collection address')", [orderId, reference]);
   await db.query("INSERT INTO products(id,name,stock_quantity,is_active,status) VALUES($1,'Brow pencil',10,TRUE,'active')", [productId]);
@@ -177,4 +184,54 @@ test("public tracking returns current fulfilment data and no-store cache header"
   assert.equal(response.body.data.items.length, 1);
   assert.equal(response.headers["Cache-Control"], "no-store");
   assert.equal(response.body.data.customer_phone, undefined);
+});
+
+test("missing optional checkout recovery table cannot silently roll back a confirmed payment", async () => {
+  await db.exec("ALTER TABLE abandoned_checkouts RENAME TO unavailable_abandoned_checkouts");
+  try {
+    const response = await verify();
+    assert.equal(response.body.success, true);
+    assert.equal((await db.query("SELECT payment_status FROM orders")).rows[0].payment_status, "paid");
+    assert.equal((await db.query("SELECT stock_quantity FROM products")).rows[0].stock_quantity, 9);
+  } finally {
+    await db.exec("ALTER TABLE unavailable_abandoned_checkouts RENAME TO abandoned_checkouts");
+  }
+});
+
+test("missing optional waitlist table cannot abort the payment transaction", async () => {
+  await db.exec("ALTER TABLE product_waitlists RENAME TO unavailable_product_waitlists");
+  try {
+    const response = await verify();
+    assert.equal(response.body.success, true);
+    assert.equal((await db.query("SELECT payment_status FROM orders")).rows[0].payment_status, "paid");
+  } finally {
+    await db.exec("ALTER TABLE unavailable_product_waitlists RENAME TO product_waitlists");
+  }
+});
+
+test("legacy cart recovery columns use the fallback without aborting payment confirmation", async () => {
+  await db.exec("ALTER TABLE abandoned_carts RENAME COLUMN recovered_at TO legacy_recovered_at");
+  try {
+    const response = await verify();
+    assert.equal(response.body.success, true);
+    assert.equal((await db.query("SELECT payment_status FROM orders")).rows[0].payment_status, "paid");
+  } finally {
+    await db.exec("ALTER TABLE abandoned_carts RENAME COLUMN legacy_recovered_at TO recovered_at");
+  }
+});
+
+test("missing optional discount usage table cannot silently roll back a payment", async () => {
+  await db.query("UPDATE orders SET discount_code_id=gen_random_uuid()");
+  const response = await verify();
+  assert.equal(response.body.success, true);
+  assert.equal((await db.query("SELECT payment_status FROM orders")).rows[0].payment_status, "paid");
+});
+
+test("a PostgreSQL COMMIT response of ROLLBACK never reports payment success", async () => {
+  forceCommitRollback = true;
+  const response = await verify();
+  assert.equal(response.statusCode, 503);
+  assert.equal(response.body.code, "PAYMENT_COMMIT_FAILED");
+  assert.equal((await db.query("SELECT payment_status FROM orders")).rows[0].payment_status, "pending");
+  assert.equal(notifications, 0);
 });

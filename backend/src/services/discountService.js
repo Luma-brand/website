@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const { withTransactionSavepoint } = require("../utils/transactionSavepoint");
 const { buildCartPricingSnapshot } = require("./inventoryService");
 
 const DISCOUNT_ORDER_COLUMNS = [
@@ -823,7 +824,7 @@ async function incrementDiscountUsage({ client = pool, discountCodeId } = {}) {
   if (!discountCodeId) return;
 
   try {
-    await client.query(
+    const updateUsage = () => client.query(
       `
         UPDATE discount_codes
         SET used_count = used_count + 1,
@@ -832,6 +833,8 @@ async function incrementDiscountUsage({ client = pool, discountCodeId } = {}) {
       `,
       [discountCodeId]
     );
+    if (client === pool) await updateUsage();
+    else await withTransactionSavepoint(client, "payment_discount_usage", updateUsage);
   } catch (error) {
     if (!isMissingSchemaError(error)) {
       throw error;

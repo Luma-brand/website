@@ -432,7 +432,13 @@ async function finalizePaystackTransaction(
       });
     }
 
-    await client.query("COMMIT");
+    const commitResult = await client.query("COMMIT");
+    if (commitResult.command === "ROLLBACK") {
+      throw Object.assign(new Error("Your payment is received, but the order confirmation needs another check."), {
+        statusCode: 503,
+        code: "PAYMENT_COMMIT_FAILED",
+      });
+    }
 
     if (!wasAlreadyPaid && reconciliation.success) {
       followUp = {

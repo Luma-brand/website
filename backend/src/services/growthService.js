@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const { withTransactionSavepoint } = require("../utils/transactionSavepoint");
 const { queueAutomationEvent } = require("./automationService");
 const { emitAutomationEvent } = require("./automationEventBridge");
 const {
@@ -34,7 +35,10 @@ function isTransientDatabaseError(error) {
 
 async function runOptionalQuery(query, params = [], fallback, { client = pool } = {}) {
   try {
-    const result = await client.query(query, params);
+    const execute = () => client.query(query, params);
+    const result = client === pool
+      ? await execute()
+      : await withTransactionSavepoint(client, "optional_growth_query", execute);
     return result.rows;
   } catch (error) {
     if (isOptionalTableError(error) || isTransientDatabaseError(error)) {

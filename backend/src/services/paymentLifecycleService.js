@@ -3,6 +3,7 @@ const { emitOrderCompleted, emitStockTransition } = require("./automationEventBr
 const { isMissingWaitlistTable, markWaitlistsPurchasedForPaidOrder } = require("./productWaitlistService");
 const { markBrowseAbandonmentsConvertedForOrder } = require("./browseAbandonmentService");
 const { recordPaidOrder } = require("./affiliateService");
+const { withTransactionSavepoint } = require("../utils/transactionSavepoint");
 
 async function reconcileSuccessfulPaymentStock({ client, order, reference, createdBy }) {
   const stockReduction = await reduceStockAfterPaidOrder({ client, orderId: order.id, paymentReference: reference, createdBy });
@@ -17,7 +18,9 @@ async function reconcileSuccessfulPaymentStock({ client, order, reference, creat
   );
   if (stockReduction.success) await recordPaidOrder({ client, order: updatedOrderResult.rows[0] });
   try {
-    await markWaitlistsPurchasedForPaidOrder({ client, order: updatedOrderResult.rows[0] });
+    await withTransactionSavepoint(client, "payment_waitlist_conversion", () =>
+      markWaitlistsPurchasedForPaidOrder({ client, order: updatedOrderResult.rows[0] })
+    );
   } catch (error) {
     if (!isMissingWaitlistTable(error)) console.error("Product waitlist conversion error:", error.message);
   }
