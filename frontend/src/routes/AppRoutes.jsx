@@ -70,8 +70,9 @@ export function AppRoutes() {
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
-        <Route path="/order-success" element={<OrderSuccess />} />
+        <Route path="/order-success" element={<PaystackCallback />} />
         <Route path="/order-success/:orderId" element={<OrderSuccess />} />
+        <Route path="/track-order/:orderId" element={<OrderSuccess tracking />} />
         <Route path="/payment/paystack/callback" element={<PaystackCallback />} />
         <Route path="/account" element={<Account initialMode="signin" />} />
         <Route path="/affiliates" element={<Affiliates />} />

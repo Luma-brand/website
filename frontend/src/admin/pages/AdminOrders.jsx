@@ -9,7 +9,7 @@ import {
   updateOrderStatus,
 } from "../../services/api";
 
-const orderStatuses = ["pending", "processing", "delivered", "cancelled"];
+const orderStatuses = ["pending", "processing", "ready_for_pickup", "shipped", "delivered", "cancelled"];
 const paymentStatuses = ["unpaid", "paid", "refunded"];
 
 function formatDate(value) {
@@ -191,7 +191,7 @@ export function AdminOrders() {
                         >
                           {orderStatuses.map((status) => (
                             <option key={status} value={status}>
-                              {status}
+                              {status.replaceAll("_", " ")}
                             </option>
                           ))}
                         </select>

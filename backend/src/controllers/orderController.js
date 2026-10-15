@@ -363,12 +363,25 @@ const deleteOrder = async (req, res) => {
 const getPublicOrder = async (req, res) => {
   try {
     const { id } = req.params;
+    res.set("Cache-Control", "no-store");
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || "")) {
+      return res.status(400).json({ success: false, message: "A valid order ID is required." });
+    }
     const optionalColumns = [
       "delivery_fee",
       "discount_code",
       "discount_amount",
       "final_amount",
       "subtotal_amount",
+      "updated_at",
+      "paid_at",
+      "payment_provider",
+      "payment_reference",
+      "paystack_reference",
+      "payment_currency",
+      "delivery_method",
+      "pickup_branch_name_snapshot",
+      "pickup_address_snapshot",
     ];
     const existingColumns = await getExistingOrderColumns(optionalColumns);
     const selectedOptionalColumns = optionalColumns.filter((column) =>

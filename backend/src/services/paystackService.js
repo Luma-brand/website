@@ -17,6 +17,7 @@ function getSecretKey() {
 
 async function paystackRequest(path, options = {}) {
   const response = await fetch(`${PAYSTACK_API_BASE}${path}`, {
+    signal: AbortSignal.timeout(15000),
     ...options,
     headers: {
       Authorization: `Bearer ${getSecretKey()}`,
@@ -69,7 +70,8 @@ function isValidWebhook(rawBody, headers = {}) {
     return false;
   }
 
-  const payload = typeof rawBody === "string" ? rawBody : JSON.stringify(rawBody || {});
+  if (typeof rawBody !== "string" && !Buffer.isBuffer(rawBody)) return false;
+  const payload = rawBody;
   const hash = crypto.createHmac("sha512", secret).update(payload).digest("hex");
 
   const signatureBuffer = Buffer.from(signature);
