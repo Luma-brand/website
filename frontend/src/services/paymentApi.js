@@ -55,11 +55,12 @@ export async function initializePaystackPayment(paymentData) {
   return handleResponse(response);
 }
 
-export async function verifyPaystackPayment(reference) {
+export async function verifyPaystackPayment(reference, { signal } = {}) {
   const response = await fetch(`${API_BASE_URL}/payments/paystack/verify`, {
     method: "POST",
     headers: getCustomerHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ reference }),
+    signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(25000)]) : AbortSignal.timeout(25000),
   });
 
   return handleResponse(response);

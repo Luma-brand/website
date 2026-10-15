@@ -313,20 +313,36 @@ async function initializePaystackPayment(req, res) {
 async function finalizePaystackTransaction(
   transaction,
   source,
-  expectedCustomerEmail = null
+  expectedCustomerEmail = null,
+  expectedReference = transaction?.reference
 ) {
-  const reference = transaction.reference;
+  const reference = transaction?.reference;
+  if (!reference || reference !== expectedReference) {
+    throw Object.assign(new Error("The payment reference could not be verified."), {
+      statusCode: 400,
+      code: "PAYMENT_MISMATCH",
+    });
+  }
+  const paymentStatus = String(transaction.status || "").toLowerCase();
+  if (["pending", "ongoing", "processing", "queued"].includes(paymentStatus)) {
+    throw Object.assign(new Error("Paystack is still confirming your payment. Please check again shortly."), {
+      statusCode: 409,
+      code: "PAYMENT_PENDING",
+    });
+  }
   const metadata = parseMetadata(transaction.metadata);
   const client = await pool.connect();
+  let result;
+  let followUp;
 
   try {
     await client.query("BEGIN");
 
-    const result = await client.query(
+    const orderResult = await client.query(
       "SELECT * FROM orders WHERE payment_reference=$1 FOR UPDATE",
       [reference]
     );
-    const order = result.rows[0];
+    const order = orderResult.rows[0];
 
     if (!order) {
       const error = new Error("Order not found for this payment.");
@@ -353,7 +369,6 @@ async function finalizePaystackTransaction(
 
     if (
       status !== "success" ||
-      transaction.reference !== reference ||
       currency !== "NGN" ||
       paidAmountKobo !== expectedAmountKobo
     ) {
@@ -368,8 +383,8 @@ async function finalizePaystackTransaction(
 
     await client.query(
       `UPDATE orders
-       SET paystack_reference=$2,
-           provider_reference=$2,
+       SET paystack_reference=$2::text,
+           provider_reference=$2::text,
            payment_provider='paystack',
            payment_verified_at=COALESCE(payment_verified_at,NOW()),
            paid_at=COALESCE(paid_at,NOW()),
@@ -415,43 +430,19 @@ async function finalizePaystackTransaction(
         client,
         discountCodeId: order.discount_code_id,
       });
-      await recordAnalyticsEvent({
-        eventType: "purchase_completed",
-        sessionId: growthSessionId,
-        customerEmail: order.customer_email,
-        orderId: order.id,
-        value: Number(order.total_amount || 0),
-        metadata: { source, reference, gateway: "paystack" },
-      });
     }
 
     await client.query("COMMIT");
 
     if (!wasAlreadyPaid && reconciliation.success) {
-      await emitPaidOrderEvents({
+      followUp = {
         order: reconciliation.order,
         stockReduction: reconciliation.stockReduction,
-        sessionId: growthSessionId,
-        source,
-      });
-
-      const email = await sendOrderConfirmationEmails(order.id);
-      await recordAutomationAttempt({
-        eventType: "order_confirmation",
-        status: email?.sent ? "sent" : "failed",
-        customerEmail: order.customer_email,
-        customerPhone: order.customer_phone,
-        orderId: order.id,
-        payload: {
-          source,
-          gateway: "paystack",
-          emailStatus: email?.status || "unknown",
-        },
-        errorMessage: email?.sent ? null : email?.message,
-      });
+        growthSessionId,
+      };
     }
 
-    return {
+    result = {
       order: reconciliation.order,
       alreadyPaid: wasAlreadyPaid,
       stockIssue: !reconciliation.success,
@@ -462,6 +453,51 @@ async function finalizePaystackTransaction(
   } finally {
     client.release();
   }
+
+  // The order is committed and the connection released before optional services run.
+  // A notification/analytics failure must never turn a paid order into a failed callback.
+  if (followUp) {
+    const { order, stockReduction, growthSessionId } = followUp;
+    await Promise.allSettled([
+      recordAnalyticsEvent({
+        eventType: "purchase_completed",
+        sessionId: growthSessionId,
+        customerEmail: order.customer_email,
+        orderId: order.id,
+        value: Number(order.total_amount || 0),
+        metadata: { source, reference, gateway: "paystack" },
+      }),
+      emitPaidOrderEvents({
+        order,
+        stockReduction,
+        sessionId: growthSessionId,
+        source,
+      }),
+      (async () => {
+        const email = await sendOrderConfirmationEmails(order.id);
+        await recordAutomationAttempt({
+          eventType: "order_confirmation",
+          status: email?.sent ? "sent" : "failed",
+          customerEmail: order.customer_email,
+          customerPhone: order.customer_phone,
+          orderId: order.id,
+          payload: {
+            source,
+            gateway: "paystack",
+            emailStatus: email?.status || "unknown",
+          },
+          errorMessage: email?.sent ? null : email?.message,
+        });
+      })(),
+    ]).then((outcomes) => {
+      for (const outcome of outcomes) {
+        if (outcome.status === "rejected") {
+          console.error("Paid order follow-up error:", outcome.reason?.message);
+        }
+      }
+    });
+  }
+  return result;
 }
 
 async function verifyPaystackPayment(req, res) {
@@ -471,7 +507,8 @@ async function verifyPaystackPayment(req, res) {
     const result = await finalizePaystackTransaction(
       verified.data,
       "paystack_callback",
-      req.customer?.email
+      req.customer?.email,
+      reference
     );
 
     return res.json({

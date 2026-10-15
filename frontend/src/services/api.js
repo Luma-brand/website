@@ -1429,8 +1429,11 @@ export const deleteOrder = async (id) => {
   return handleResponse(response);
 };
 
-export const getPublicOrderById = async (id) => {
-  const response = await fetch(`${API_BASE_URL}/orders/public/${id}`);
+export const getPublicOrderById = async (id, { signal } = {}) => {
+  const response = await fetch(`${API_BASE_URL}/orders/public/${encodeURIComponent(id)}`, {
+    cache: "no-store",
+    signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(20000)]) : AbortSignal.timeout(20000),
+  });
 
   return handleResponse(response);
 };
